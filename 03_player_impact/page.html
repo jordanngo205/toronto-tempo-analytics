@@ -2,15 +2,20 @@
 .heat-wrap { overflow-x: auto; }
 .heat-wrap svg { min-width: 760px; }
 .net-side { display: grid; gap: 10px; align-content: start; }
-.net-side .who { font-family: var(--display); font-weight: 800; font-size: 1.8rem; line-height: 1; }
+.net-side .who { font-family: var(--display); font-weight: 800; font-size: 1.8rem; text-transform: uppercase; line-height: 1; }
 .partner { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; font-size: 0.85rem; border-bottom: 1px solid var(--rule); padding: 4px 0; }
 .partner .num { color: var(--ink-3); }
 .lu { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--rule); }
 .lu .names { display: flex; flex-wrap: wrap; gap: 4px; }
-.lu .names span { font: 600 0.8rem var(--ui); background: var(--grid); padding: 2px 7px; }
-.lu .meta { font-size: 0.78rem; color: var(--ink-3); font-family: var(--ui); font-variant-numeric: tabular-nums; }
+.lu .names span { font: 600 0.8rem var(--body); background: var(--grid); padding: 2px 7px; }
+.lu .meta { font-size: 0.75rem; color: var(--ink-3); font-family: var(--mono); }
 .lu svg { width: 100%; height: 30px; display: block; overflow: visible; }
 @media (max-width: 760px) { .lu { grid-template-columns: minmax(0, 1fr); } }
+.multiples { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.multiples .figure { padding: 12px 12px 8px; }
+.multiples h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 1rem; margin-bottom: 4px; }
+.multiples h3 small { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-3); font-weight: 400; text-transform: none; letter-spacing: 0; }
+@media (max-width: 900px) { .multiples { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 
 <section class="hero">
@@ -19,7 +24,7 @@
   <div class="stat-row" id="tiles"></div>
 </section>
 
-<section class="section">
+<section class="section wide">
   <header>
     <h2>Minutes for every player in every game</h2>
     <p class="lede">Each row is a player and each column is a game. Darker cells mean more minutes, and a navy tick on top marks a start. ✕ marks a game missed through injury or illness, and a small dot marks a coach's decision. The bars across the top show each final margin. Hover any cell for the box score line.</p>
@@ -31,6 +36,25 @@
 </section>
 
 <section class="section">
+  <header>
+    <h2>Does production fade the longer a player stays on?</h2>
+    <p class="lede" id="st-lede"></p>
+  </header>
+  <div class="figure">
+    <svg id="stint-team" viewBox="0 0 640 430" role="img" aria-label="Game Score and plus-minus per 40 minutes by minutes into the stint"></svg>
+    <div class="cap">Game Score is John Hollinger's one-number box score: points + 0.4·FGM − 0.7·FGA − 0.4·missed FT + 0.7·OREB + 0.3·DREB + STL + 0.7·AST + 0.7·BLK − 0.4·PF − TOV. Every Tempo stint of 2026, rebuilt from the play-by-play substitutions. A stint runs from check-in to check-out; the short breaks after the first and third quarters don't end it, halftime does. Grey bars at the bottom show how many minutes were played in each part of a stint.</div>
+  </div>
+</section>
+
+<section class="section wide">
+  <header>
+    <h2>Game Score per 40 by stint minute, player by player</h2>
+    <p class="lede">Each panel is one player. The bordeaux line is her Game Score per 40 minutes at each point of her stints, and the grey line is the team. Parts of a stint with fewer than 25 minutes of data are left blank. The number in the corner is her average stint length.</p>
+  </header>
+  <div class="multiples" id="stint-players"></div>
+</section>
+
+<section class="section wide">
   <header>
     <h2>Which pairs outscored opponents</h2>
     <p class="lede">Each line connects two players who shared the floor. Thicker lines mean more minutes together. Navy lines mean Toronto outscored opponents with that pair on the court, and bordeaux lines mean it was outscored. Hover or tap a player to see their best and worst partners.</p>
@@ -144,6 +168,75 @@ const last = n => n.split(" ").slice(-1)[0];
     });
     // minutes per game at the end of each row
     if (st) txt(s, left + G.length * cw + 8, y + ch / 2 + 4, `${st.mpg} mpg`, "lbl", { style: "font-size:10px" });
+  });
+})();
+
+/* stints */
+(function () {
+  const ST = D.stint, B = ST.bins, T = ST.team;
+  // only the parts of a stint that have data (the last bins can be empty)
+  const n = B.length;
+  // the lede is built from the numbers so it stays true if the data changes
+  const first = T.gs40[0], lastI = T.gs40.map((v, i) => v == null ? -1 : i).filter(i => i >= 0).pop();
+  const worstPm = T.pm40.reduce((w, v, i) => v != null && (w < 0 || v < T.pm40[w]) ? i : w, -1);
+  const share = ST.check.matched_credits / (ST.check.matched_credits + ST.check.unmatched_credits);
+  const longest = [...ST.players].sort((a, b) => b.avg_stint - a.avg_stint)[0], shortest = [...ST.players].sort((a, b) => a.avg_stint - b.avg_stint)[0];
+  document.getElementById("st-lede").innerHTML = `No fade showed up in the box score. Toronto's Game Score per 40 minutes rose from <strong>${first.toFixed(1)}</strong> in the first two minutes of a stint to <strong>${T.gs40[lastI].toFixed(1)}</strong> in the ${B[lastI]} minute range. Plus-minus was worst <strong>${B[worstPm]} minutes</strong> in (${fmt(T.pm40[worstPm])} per 40). This isn't proof players don't tire: a coach takes out a struggling player early and leaves a hot one on, so long stints are mostly good stints. ${longest.name} averaged the longest stints (${longest.avg_stint} min) and ${shortest.name} the shortest (${shortest.avg_stint}). Rebuilt lineups place ${pct(share, 1)} of all box-score events on a player who was on the floor.`;
+
+  // team chart: Game Score per 40 on top, plus-minus per 40 in the middle, minutes played at the bottom
+  const s = document.getElementById("stint-team");
+  const W = 640, left = 56, right = 16, cw = (W - left - right) / n;
+  const cx = i => left + i * cw + cw / 2;
+  const panels = [
+    { key: "gs40", top: 24, h: 150, lo: 0, hi: 20, title: "Game Score per 40 minutes", step: 5, line: true },
+    { key: "pm40", top: 214, h: 120, lo: -20, hi: 5, title: "Plus-minus per 40 minutes", step: 5, line: false },
+  ];
+  for (const P of panels) {
+    const y = scale(P.lo, P.hi, P.top + P.h, P.top);
+    txt(s, left, P.top - 8, P.title, "lbl-ink", { style: "font-size:13px" });
+    for (let v = P.lo; v <= P.hi; v += P.step) { el("line", { x1: left, x2: W - right, y1: y(v), y2: y(v), class: v === 0 ? "zero" : "gridline" }, s); txt(s, left - 6, y(v) + 4, v, "lbl", { "text-anchor": "end" }); }
+    const vals = T[P.key];
+    if (P.line) {
+      // line through the bins that have data, with a dot and label on each
+      const pts = vals.map((v, i) => v == null ? null : [cx(i), y(K.clamp(v, P.lo, P.hi))]).filter(Boolean);
+      el("polyline", { points: pts.map(p => p.join(",")).join(" "), fill: "none", stroke: "var(--tor)", "stroke-width": 2.5 }, s);
+      vals.forEach((v, i) => { if (v == null) return;
+        const c = el("circle", { cx: cx(i), cy: y(v), r: 5, fill: "var(--tor)", stroke: "var(--panel)", "stroke-width": 2 }, s);
+        txt(s, cx(i), y(v) - 10, v.toFixed(1), "lbl", { "text-anchor": "middle", style: "fill:var(--ink)" });
+        hover(c, `<b>${B[i]} min into a stint</b><div class="num">Game Score ${v.toFixed(1)} per 40 · ${T.mins[i].toLocaleString()} min</div>`); });
+    } else {
+      // bars from zero: navy above, bordeaux below
+      vals.forEach((v, i) => { if (v == null) return;
+        const yv = y(K.clamp(v, P.lo, P.hi)), y0 = y(0);
+        const r = el("rect", { x: cx(i) - cw * 0.3, y: Math.min(yv, y0), width: cw * 0.6, height: Math.abs(yv - y0), rx: 3, fill: v >= 0 ? "var(--good)" : "var(--bad)" }, s);
+        txt(s, cx(i), v >= 0 ? yv - 5 : yv + 13, fmt(v), "lbl", { "text-anchor": "middle", style: "fill:var(--ink)" });
+        hover(r, `<b>${B[i]} min into a stint</b><div class="num">Plus-minus ${fmt(v)} per 40 · ${T.mins[i].toLocaleString()} min</div>`); });
+    }
+  }
+  // minutes played in each part of a stint
+  const mt = 360, mh = 36, mmax = Math.max(...T.mins);
+  txt(s, left, mt - 6, "Minutes played", "lbl");
+  T.mins.forEach((m, i) => {
+    const h = mh * m / mmax;
+    el("rect", { x: cx(i) - cw * 0.3, y: mt + mh - h, width: cw * 0.6, height: Math.max(1, h), rx: 2, fill: "var(--hist)", opacity: 0.6 }, s);
+    txt(s, cx(i), mt + mh + 14, B[i], "lbl", { "text-anchor": "middle" });
+  });
+  txt(s, (left + W - right) / 2, 428, "Minutes into the stint", "lbl", { "text-anchor": "middle" });
+
+  // small multiples, one per player
+  const box = document.getElementById("stint-players");
+  box.innerHTML = ST.players.map((p, j) => `<div class="figure"><h3>${p.name.split(" ").slice(-1)[0]}<small>${p.avg_stint} min avg</small></h3><svg id="sp${j}" viewBox="0 0 220 130" role="img" aria-label="${p.name} Game Score by stint minute"></svg></div>`).join("");
+  ST.players.forEach((p, j) => {
+    const s2 = document.getElementById("sp" + j);
+    const L = 26, R = 6, w = (220 - L - R) / n, x = i => L + i * w + w / 2, y = scale(0, 30, 108, 6);
+    for (const v of [0, 10, 20, 30]) { el("line", { x1: L, x2: 220 - R, y1: y(v), y2: y(v), class: "gridline" }, s2); txt(s2, L - 4, y(v) + 4, v, "lbl", { "text-anchor": "end", style: "font-size:9px" }); }
+    const path = vals => vals.map((v, i) => v == null ? null : `${x(i)},${y(K.clamp(v, 0, 30))}`).filter(Boolean).join(" ");
+    el("polyline", { points: path(T.gs40), fill: "none", stroke: "var(--hist)", "stroke-width": 1.5, "stroke-dasharray": "3 2" }, s2);
+    el("polyline", { points: path(p.gs40), fill: "none", stroke: "var(--tor)", "stroke-width": 2.2 }, s2);
+    p.gs40.forEach((v, i) => { if (v == null) return;
+      const c = el("circle", { cx: x(i), cy: y(K.clamp(v, 0, 30)), r: 3.2, fill: "var(--tor)" }, s2);
+      hover(c, `<b>${p.name}</b><div class="num">${B[i]} min in: Game Score ${v.toFixed(1)} per 40</div><div class="num">plus-minus ${p.pm40[i] == null ? "–" : fmt(p.pm40[i])} per 40 · ${p.mins[i]} min</div>`); });
+    [0, 2, 4, 6].forEach(i => { if (i < n) txt(s2, x(i), 124, B[i].split("–")[0], "lbl", { "text-anchor": "middle", style: "font-size:9px" }); });
   });
 })();
 
