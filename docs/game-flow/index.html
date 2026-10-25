@@ -7,7 +7,7 @@
 <meta name="description" content="How every Toronto Tempo game of 2026 unfolded: the game grid, margin worms, scoring runs and Elo upsets.">
 <link rel="icon" href="../assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap">
 <link rel="stylesheet" href="../assets/site.css">
 <style>
 .gg-wrap { overflow-x: auto; }
@@ -16,8 +16,8 @@
 .sel-card .score { font-family: var(--display); font-weight: 800; font-size: 2.2rem; line-height: 1; }
 .sel-card .meta { font-size: 0.85rem; color: var(--ink-3); }
 .qbox { display: flex; gap: 4px; }
-.qbox span { font: 500 0.8rem var(--mono); padding: 3px 7px; background: var(--grid); }
-.pill { font: 700 0.75rem var(--display); letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; color: #fff; }
+.qbox span { font: 600 0.8rem var(--ui); font-variant-numeric: tabular-nums; padding: 3px 7px; background: var(--grid); }
+.pill { font: 700 0.75rem var(--display); letter-spacing: 0.06em; padding: 2px 8px; color: #fff; }
 </style>
 </head>
 <body>
@@ -26,15 +26,13 @@
 
 
 <section class="hero">
-  <div class="eyebrow">Toronto Tempo · 2026 regular season · play-by-play</div>
-  <h1>Game Flow<span class="sub">Toronto spent most of 2026 chasing.</span></h1>
+  <h1>Game Flow<span class="sub">Toronto trailed for 65% of its playing time in 2026.</span></h1>
   <p class="dek" id="dek"></p>
   <div class="stat-row" id="tiles"></div>
 </section>
 
 <section class="section">
   <header>
-    <div class="eyebrow">01 · The game grid</div>
     <h2>Every minute of every game</h2>
     <p class="lede">Each row is one game, running from tip-off on the left to the final buzzer on the right. Navy means Toronto was ahead and bordeaux means it was behind, with darker shades for bigger margins. Sort the rows to see patterns, then click a row to see that game below.</p>
   </header>
@@ -58,8 +56,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">02 · Runs</div>
-    <h2>The 8–0 problem</h2>
+    <h2>Opponents had twice as many 8–0 runs</h2>
     <p class="lede" id="runs-lede"></p>
   </header>
   <div class="figure">
@@ -71,8 +68,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">03 · Upsets & heartbreaks</div>
-    <h2>Expected vs what happened</h2>
+    <h2>Pregame odds against final margins</h2>
     <p class="lede" id="odds-lede"></p>
   </header>
   <div class="figure">
@@ -83,7 +79,6 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">04 · By quarter</div>
     <h2>Quarter by quarter</h2>
     <p class="lede">Each cell is Toronto's margin within that quarter of that game. Read across a row to follow one game, or down a column to compare quarters across the season.</p>
   </header>
@@ -252,7 +247,7 @@ drawGrid(curOrder); drawWorm();
   }
   // by-quarter bars
   // little bar chart on the right: number of runs in each quarter
-  const bx = W - m.r + 30, bw = 100;
+  const bx = W - m.r + 24, bw = 80;  // bars max 80px so the count after them stays inside the 640px chart
   txt(s, bx, m.t - 6, "Runs by quarter", "lbl-ink", { style: "font-size:12px" });
   // [Tempo runs, opponent runs] in quarter q (any overtime counts as 5)
   const per = q => [RUNS.filter(r => r.team === "TOR" && Math.min(r.per, 5) === q).length, RUNS.filter(r => r.team === "OPP" && Math.min(r.per, 5) === q).length];
