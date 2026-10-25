@@ -5,8 +5,8 @@
 .sel-card .score { font-family: var(--display); font-weight: 800; font-size: 2.2rem; line-height: 1; }
 .sel-card .meta { font-size: 0.85rem; color: var(--ink-3); }
 .qbox { display: flex; gap: 4px; }
-.qbox span { font: 600 0.8rem var(--ui); font-variant-numeric: tabular-nums; padding: 3px 7px; background: var(--grid); }
-.pill { font: 700 0.75rem var(--display); letter-spacing: 0.06em; padding: 2px 8px; color: #fff; }
+.qbox span { font: 500 0.8rem var(--mono); padding: 3px 7px; background: var(--grid); }
+.pill { font: 700 0.75rem var(--display); letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; color: #fff; }
 </style>
 
 <section class="hero">
@@ -15,7 +15,7 @@
   <div class="stat-row" id="tiles"></div>
 </section>
 
-<section class="section">
+<section class="section wide">
   <header>
     <h2>Every minute of every game</h2>
     <p class="lede">Each row is one game, running from tip-off on the left to the final buzzer on the right. Navy means Toronto was ahead and bordeaux means it was behind, with darker shades for bigger margins. Sort the rows to see patterns, then click a row to see that game below.</p>
@@ -34,7 +34,7 @@
   <div class="figure">
     <div class="sel-card" id="sel-card"></div>
     <svg id="worm" viewBox="0 0 640 260" role="img" aria-label="Margin through the selected game" style="margin-top:10px"></svg>
-    <div class="cap">The black line is the selected game. Faint lines are the other 43 games, and the shaded band covers the middle half of all games. Shaded blocks mark scoring runs of 8+ points.</div>
+    <div class="cap">The black line is the selected game, with its biggest lead and deficit marked. The dashed line is the median of all 44 games, and the grey band covers the middle half of them. Shaded blocks mark scoring runs of 8+ points.</div>
   </div>
 </section>
 
@@ -61,7 +61,7 @@
   </div>
 </section>
 
-<section class="section">
+<section class="section wide">
   <header>
     <h2>Quarter by quarter</h2>
     <p class="lede">Each cell is Toronto's margin within that quarter of that game. Read across a row to follow one game, or down a column to compare quarters across the season.</p>
@@ -71,7 +71,7 @@
 
 <section class="methods">
   <h3>Method</h3>
-  <p>Score and clock come from ESPN play-by-play. Margin is sampled every 20 seconds for the grid, and overtime is left off the grid but included everywhere else. A run is consecutive points by one team with no opposing points between them, free throws included. Elo uses K = 20, an 80-point home edge, a margin-of-victory multiplier and 25% regression between seasons. New teams start at 1300.</p>
+  <p>Score and clock come from ESPN play-by-play. Margin is sampled every 20 seconds for the grid, and overtime is left off the grid but included everywhere else. A run is consecutive points by one team with no opposing points between them, free throws included. Elo uses K = 25, a 60-point home edge, a margin-of-victory multiplier and 40% regression to 1500 between seasons (settings tuned on 2004–2023 games and tested on 2024–2026). New teams start at 1300.</p>
 </section>
 <!--FOOTER-->
 <div id="tip" role="status" aria-live="polite"></div>
@@ -178,12 +178,21 @@ function drawWorm() {
   for (let i = 0; i < n; i++) { const v = G.map(q => q.s[i]).sort((a, b) => a - b); lo.push(v[Math.floor(v.length * 0.25)]); hi.push(v[Math.floor(v.length * 0.75)]); }
   el("path", { d: "M" + hi.map((v, i) => `${x(i * D.grid_step)} ${y(K.clamp(v, -lim, lim))}`).join("L") + "L" + lo.map((v, i) => [x(i * D.grid_step), y(K.clamp(v, -lim, lim))]).reverse().map(p => p.join(" ")).join("L") + "Z", fill: "var(--grid)", opacity: 0.9 }, s);
   // every other game as a faint line
-  for (const o of G) if (o.n !== g.n) el("polyline", { points: o.s.map((v, i) => `${x(i * D.grid_step)},${y(K.clamp(v, -lim, lim))}`).join(" "), fill: "none", stroke: "var(--hist)", "stroke-width": 0.6, opacity: 0.35 }, s);
+  // median of all 44 games at each moment = a "typical Tempo game" line (instead of 43 faint lines)
+  const med = [];
+  for (let i = 0; i < n; i++) { const v = G.map(q => q.s[i]).sort((a, b) => a - b); med.push(v[Math.floor(v.length / 2)]); }
+  el("polyline", { points: med.map((v, i) => `${x(i * D.grid_step)},${y(K.clamp(v, -lim, lim))}`).join(" "), fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, s);
   // shade this game's scoring runs
   for (const r of RUNS.filter(r => r.g === g.n)) el("rect", { x: x(r.t0), y: m.t, width: Math.max(2, x(r.t1) - x(r.t0)), height: H - m.t - m.b, fill: r.team === "TOR" ? "var(--good)" : "var(--bad)", opacity: 0.12 }, s);
   // the selected game's line. H then V makes a "staircase" because the score jumps on each basket
   const d = g.steps.map((p, i) => (i ? `H${x(p[0]).toFixed(1)}V${y(p[1]).toFixed(1)}` : `M${x(p[0])} ${y(p[1])}`)).join("");
   el("path", { d, fill: "none", stroke: "var(--ink)", "stroke-width": 2 }, s);
+  // mark the biggest lead and the biggest deficit of this game
+  const hiP = g.steps.reduce((b, p) => p[1] > b[1] ? p : b, g.steps[0]), loP = g.steps.reduce((b, p) => p[1] < b[1] ? p : b, g.steps[0]);
+  if (hiP[1] > 0) { el("circle", { cx: x(hiP[0]), cy: y(hiP[1]), r: 5, fill: "var(--good)", stroke: "var(--panel)", "stroke-width": 2 }, s);
+    txt(s, x(hiP[0]), y(hiP[1]) - 9, `up ${hiP[1]}`, "lbl", { "text-anchor": "middle", style: "fill:var(--good);font-weight:600" }); }
+  if (loP[1] < 0) { el("circle", { cx: x(loP[0]), cy: y(loP[1]), r: 5, fill: "var(--bad)", stroke: "var(--panel)", "stroke-width": 2 }, s);
+    txt(s, x(loP[0]), y(loP[1]) + 17, `down ${-loP[1]}`, "lbl", { "text-anchor": "middle", style: "fill:var(--bad);font-weight:600" }); }
   // hover: a dot follows the line and the tooltip shows the margin at that moment
   const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, class: "hit" }, s);
   const dot = el("circle", { r: 4, fill: "var(--ink)", opacity: 0 }, s);
@@ -285,7 +294,7 @@ drawGrid(curOrder); drawWorm();
   const s = document.getElementById("qgrid");
   // quarter grid: one column per game, one row per quarter, colour = margin in that quarter
   const cols = G.length, cw = 16, left = 46, top = 26, rh = 22, W = left + cols * cw + 60;
-  s.setAttribute("viewBox", `0 0 ${W} ${top + 4 * rh + 40}`);
+  s.setAttribute("viewBox", `0 0 ${W} ${top + 4 * rh + 36}`);
   ["Q1", "Q2", "Q3", "Q4"].forEach((q, r) => {
     txt(s, left - 8, top + r * rh + rh / 2 + 4, q, "lbl-ink", { "text-anchor": "end", style: "font-size:12px" });
     // average margin in this quarter over the season, written at the end of the row
@@ -301,8 +310,12 @@ drawGrid(curOrder); drawWorm();
       const c = el("rect", { x: left + i * cw + 1, y: top + r * rh + 1, width: cw - 2, height: rh - 2, rx: 2, fill: K.div(v / 12, "var(--bad)", "var(--good)") }, s);
       hover(c, `<b>Game ${g.n} · Q${r + 1}</b><div>${g.date} ${g.home ? "vs" : "at"} ${g.opp}</div><div class="num">Quarter margin ${fmt(v, 0)}</div>`);
     }
-    el("rect", { x: left + i * cw + 3, y: top + 4 * rh + 4, width: cw - 6, height: 6, rx: 1, fill: g.pf > g.pa ? "var(--good)" : "var(--bad)", opacity: g.pf > g.pa ? 1 : 0.5 }, s);
+    // result under each column: a W or L, plus the final margin
+    const won = g.pf > g.pa, cxm = left + i * cw + cw / 2;
+    txt(s, cxm, top + 4 * rh + 15, won ? "W" : "L", "lbl-ink", { "text-anchor": "middle", style: `font-size:12px;fill:${won ? "var(--good)" : "var(--ink-3)"}` });
+    txt(s, cxm, top + 4 * rh + 28, fmt(g.pf - g.pa, 0), "lbl", { "text-anchor": "middle", style: "font-size:8px" });
   });
-  txt(s, left - 8, top + 4 * rh + 11, "W/L", "lbl", { "text-anchor": "end" });
+  txt(s, left - 8, top + 4 * rh + 15, "Result", "lbl", { "text-anchor": "end" });
+  txt(s, left - 8, top + 4 * rh + 28, "Margin", "lbl", { "text-anchor": "end", style: "font-size:9px" });
 })();
 </script>
