@@ -34,7 +34,7 @@
   <div class="figure">
     <div class="sel-card" id="sel-card"></div>
     <svg id="worm" viewBox="0 0 640 260" role="img" aria-label="Margin through the selected game" style="margin-top:10px"></svg>
-    <div class="cap">The black line is the selected game, with its biggest lead and deficit marked. The dashed line is the median of all 44 games, and the grey band covers the middle half of them. Shaded blocks mark scoring runs of 8+ points.</div>
+    <div class="cap">The black line is the selected game, with its biggest lead and deficit marked. Faint lines are the other 43 games, and the shaded band covers the middle half of all games. Shaded blocks mark scoring runs of 8+ points.</div>
   </div>
 </section>
 
@@ -178,10 +178,8 @@ function drawWorm() {
   for (let i = 0; i < n; i++) { const v = G.map(q => q.s[i]).sort((a, b) => a - b); lo.push(v[Math.floor(v.length * 0.25)]); hi.push(v[Math.floor(v.length * 0.75)]); }
   el("path", { d: "M" + hi.map((v, i) => `${x(i * D.grid_step)} ${y(K.clamp(v, -lim, lim))}`).join("L") + "L" + lo.map((v, i) => [x(i * D.grid_step), y(K.clamp(v, -lim, lim))]).reverse().map(p => p.join(" ")).join("L") + "Z", fill: "var(--grid)", opacity: 0.9 }, s);
   // every other game as a faint line
-  // median of all 44 games at each moment = a "typical Tempo game" line (instead of 43 faint lines)
-  const med = [];
-  for (let i = 0; i < n; i++) { const v = G.map(q => q.s[i]).sort((a, b) => a - b); med.push(v[Math.floor(v.length / 2)]); }
-  el("polyline", { points: med.map((v, i) => `${x(i * D.grid_step)},${y(K.clamp(v, -lim, lim))}`).join(" "), fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, s);
+  // every other game as a faint line behind the selected one
+  for (const o of G) if (o.n !== g.n) el("polyline", { points: o.s.map((v, i) => `${x(i * D.grid_step)},${y(K.clamp(v, -lim, lim))}`).join(" "), fill: "none", stroke: "var(--hist)", "stroke-width": 0.6, opacity: 0.35 }, s);
   // shade this game's scoring runs
   for (const r of RUNS.filter(r => r.g === g.n)) el("rect", { x: x(r.t0), y: m.t, width: Math.max(2, x(r.t1) - x(r.t0)), height: H - m.t - m.b, fill: r.team === "TOR" ? "var(--good)" : "var(--bad)", opacity: 0.12 }, s);
   // the selected game's line. H then V makes a "staircase" because the score jumps on each basket
