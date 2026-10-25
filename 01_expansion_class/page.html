@@ -1,78 +1,169 @@
 <title>The Expansion Class</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* page-only styles; colours, type and the base components come from ../assets/site.css.
-   Teams always appear in the same order: GS, TOR, POR */
-:root { --exp1: #d9d5dc; --exp2: #aaa3b0; --exp3: #6e6675; --exp4: #352e3a; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --exp1: #2e2a33; --exp2: #4f4856; --exp3: #8a8290; --exp4: #cfc8d4; } }
-:root[data-theme="dark"] { --exp1: #2e2a33; --exp2: #4f4856; --exp3: #8a8290; --exp4: #cfc8d4; }
-
-/* hero: one card per team, the team logo carries the identity */
-.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.card { background: var(--panel); padding: 16px 18px 12px; display: grid; gap: 8px; min-width: 0; font-family: var(--ui); }
+/* Layout: one editorial column (scoreboard-style headers) with full-width chart bands; teams always in the same order GS, TOR, POR */
+:root {
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --ink: #12161d;
+  --ink-2: #4a5160;
+  --ink-3: #7a8191;
+  --rule: #dfe2e8;
+  --grid: #eceef2;
+  /* official team colours (from logos), stepped for chart legibility */
+  --gs: #9b6fc6;
+  --tor: #8a1f42;
+  --tor-2: #33476d;
+  --por: #e8379b;
+  --hist: #9aa1ad;
+  --hot: #e07b1f;
+  --cold: #33476d;
+  --mid: #eceae6;
+  --plate: transparent;
+  --exp1: #d6dbe4; --exp2: #a7b1c2; --exp3: #6c7a92; --exp4: #34405a;
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1217; --panel: #171b22; --ink: #eef0f4; --ink-2: #b7bdc9; --ink-3: #8a91a0;
+    --rule: #2a303b; --grid: #222833; --gs: #a47dd1; --tor: #b33a55; --tor-2: #7e9bd0; --por: #f070c0; --hist: #6b7280;
+    --hot: #f0923a; --cold: #7e9bd0; --mid: #383835; --plate: #eef0f4;
+    --exp1: #2b3240; --exp2: #4a5568; --exp3: #8090aa; --exp4: #c3cddd;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1217; --panel: #171b22; --ink: #eef0f4; --ink-2: #b7bdc9; --ink-3: #8a91a0;
+  --rule: #2a303b; --grid: #222833; --gs: #a47dd1; --tor: #b33a55; --tor-2: #7e9bd0; --por: #f070c0; --hist: #6b7280;
+  --hot: #f0923a; --cold: #7e9bd0; --mid: #383835; --plate: #eef0f4;
+  --exp1: #2b3240; --exp2: #4a5568; --exp3: #8090aa; --exp4: #c3cddd;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 64px; display: grid; gap: 64px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.02; }
+h1 { font-size: clamp(3rem, 9vw, 6.2rem); font-weight: 800; letter-spacing: -0.01em; text-transform: uppercase; }
+h2 { font-size: clamp(1.9rem, 4.2vw, 2.7rem); font-weight: 700; text-transform: uppercase; }
+h3 { font-size: 1.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+p { margin: 0; max-width: 66ch; }
+.eyebrow { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.dek { font-size: 1.2rem; color: var(--ink-2); max-width: 60ch; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.section > header { display: grid; gap: 10px; border-top: 3px solid var(--tor); padding-top: 14px; }
+.section > header .eyebrow { color: var(--tor); }
+.lede { color: var(--ink-2); }
+.lede strong { color: var(--ink); font-weight: 600; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+.chip::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.chip.has-logo::before { display: none; }
+.logo { width: 22px; height: 22px; object-fit: contain; background: var(--plate); border-radius: 4px; padding: 1px; flex: none; }
+.logo.lg { width: 56px; height: 56px; padding: 4px; border-radius: 8px; }
 .card .head { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
-.card .team { font-family: var(--display); font-weight: 800; font-size: 1.2rem; line-height: 1.1; letter-spacing: -0.02em; }
-.card .yr { font-size: 0.8rem; color: var(--ink-3); }
-.card .rec { font-family: var(--display); font-weight: 800; font-size: 3rem; line-height: 0.9; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+
+/* hero */
+.hero h1 span { display: block; color: var(--tor); font-size: 0.34em; letter-spacing: 0.04em; margin-top: 10px; font-weight: 700; }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-top: 6px solid var(--c); padding: 16px 16px 12px; display: grid; gap: 8px; min-width: 0; }
+.card .team { font-family: var(--display); font-weight: 700; font-size: 1.35rem; text-transform: uppercase; line-height: 1; }
+.card .yr { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-3); }
+.card .rec { font-family: var(--display); font-weight: 800; font-size: 3rem; line-height: 0.9; }
 .card dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; font-size: 0.85rem; }
 .card dt { color: var(--ink-3); }
-.card dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.card dd { margin: 0; text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .card svg { width: 100%; height: 46px; display: block; }
-.byline { font-family: var(--ui); font-size: 0.82rem; color: var(--ink-3); }
+.byline { font-size: 0.85rem; color: var(--ink-3); }
+.byline a { color: var(--tor); }
 
+/* charts */
+.figure { background: var(--panel); border: 1px solid var(--rule); padding: 18px 18px 12px; min-width: 0; }
+.figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+.figure .cap { font-size: 0.82rem; color: var(--ink-3); margin-top: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.85rem; margin-bottom: 10px; color: var(--ink-2); }
+.legend .chip { font-size: 0.95rem; color: var(--ink); }
 .legend .hist::before { background: transparent; border: 2px dashed var(--hist); width: 14px; height: 0; border-radius: 0; }
+.axis text, .lbl { fill: var(--ink-3); font-family: var(--mono); font-size: 11px; }
+.lbl-ink { fill: var(--ink); font-family: var(--display); font-weight: 700; font-size: 14px; text-transform: uppercase; }
+.gridline { stroke: var(--grid); stroke-width: 1; }
+.zero { stroke: var(--ink-3); stroke-width: 1; }
 .two { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 
-/* Elo table */
-.elo-list { display: grid; gap: 3px; font-family: var(--ui); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+/* elo table */
+.elo-list { display: grid; gap: 3px; font-size: 0.85rem; }
 .elo-row { display: grid; grid-template-columns: 22px 20px 40px 1fr 44px; align-items: center; gap: 8px; }
-.elo-row .bar { height: 12px; background: var(--grid); position: relative; border-radius: 6px; overflow: hidden; }
-.elo-row .bar i { position: absolute; inset: 0 auto 0 0; background: var(--hist); }
+.elo-row .bar { height: 14px; background: var(--grid); position: relative; }
+.elo-row .bar i { position: absolute; inset: 0 auto 0 0; background: var(--hist); border-radius: 0 3px 3px 0; }
 .elo-row.hl .bar i { background: var(--c); }
-.elo-row.hl { font-weight: 700; }
-.elo-row .ab { font-weight: 700; }
+.elo-row.hl { font-weight: 600; }
+.elo-row .ab { font-family: var(--display); font-weight: 700; }
 
-/* shot maps */
+/* toggle */
+.toggle { display: inline-flex; border: 1px solid var(--tor); }
+.toggle button { font: 700 0.95rem var(--display); text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 14px; background: transparent; color: var(--ink); border: 0; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--tor); color: #fff; }
+.toggle button:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--tor); outline-offset: 2px; }
 .courts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .court h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
-.court h3 small { font-family: var(--ui); font-size: 0.75rem; color: var(--ink-3); font-weight: 500; letter-spacing: 0; }
+.court h3 small { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-3); font-weight: 400; text-transform: none; letter-spacing: 0; }
 .court .line { fill: none; stroke: var(--ink-3); stroke-width: 1.2; opacity: 0.7; }
-.court .reads { font-family: var(--ui); font-size: 0.82rem; color: var(--ink-2); display: grid; gap: 2px; margin-top: 6px; }
-.court .reads b { font-weight: 700; font-variant-numeric: tabular-nums; }
-.scale .ramp { width: 180px; }
+.court .reads { font-size: 0.82rem; color: var(--ink-2); display: grid; gap: 2px; margin-top: 6px; }
+.court .reads b { font-family: var(--mono); font-weight: 500; }
+.scale { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: var(--ink-3); flex-wrap: wrap; }
+.scale .ramp { width: 180px; height: 10px; background: linear-gradient(90deg, var(--cold), var(--mid), var(--hot)); }
 .hexkey { display: inline-flex; gap: 4px; align-items: end; }
 .hexkey svg { width: 60px; height: 18px; }
 
-/* roster tables */
-.rook { font: 700 0.62rem var(--ui); color: var(--ink-3); border: 1px solid var(--rule); border-radius: 3px; padding: 0 4px; margin-left: 6px; vertical-align: 2px; }
+/* tables */
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th { font: 600 0.72rem var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--ink); }
+th:first-child, td:first-child { text-align: left; }
+td { padding: 6px 8px; border-bottom: 1px solid var(--rule); text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+td:first-child { font-family: var(--body); }
+.rook { font: 600 0.62rem var(--mono); letter-spacing: 0.08em; color: var(--ink-3); border: 1px solid var(--rule); padding: 0 4px; margin-left: 6px; vertical-align: 2px; }
 .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .trio > div { min-width: 0; }
-.trio h3 { padding-bottom: 6px; margin-bottom: 4px; border-bottom: 1px solid var(--ink); }
+.trio h3 { border-bottom: 3px solid var(--c); padding-bottom: 4px; margin-bottom: 4px; }
 
-/* scoreboard rows */
-.board { display: grid; gap: 6px; font-family: var(--ui); }
-.game { display: grid; grid-template-columns: 64px 1fr auto 1fr; gap: 10px; align-items: center; background: var(--panel); padding: 8px 12px; }
-.game .d { font-size: 0.78rem; color: var(--ink-3); }
-.game .t { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.02rem; min-width: 0; }
+/* scoreboard */
+.board { display: grid; gap: 6px; }
+.game { display: grid; grid-template-columns: 64px 1fr auto 1fr; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--rule); padding: 8px 12px; }
+.game .d { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-3); }
+.game .t { display: flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 1.15rem; text-transform: uppercase; min-width: 0; }
 .game .t.r { justify-content: flex-end; }
-.game .t i { width: 4px; height: 24px; background: var(--c); display: inline-block; border-radius: 2px; }
-.game .s { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
-.game .s b { font-weight: 700; }
+.game .t i { width: 6px; height: 26px; background: var(--c); display: inline-block; }
+.game .s { font-family: var(--mono); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.game .s b { font-weight: 500; }
 .game .lose { color: var(--ink-3); }
-.series { display: flex; flex-wrap: wrap; gap: 10px; font-family: var(--ui); }
-.series div { background: var(--panel); padding: 10px 14px; display: grid; gap: 2px; }
-.series .big { font-family: var(--display); font-weight: 800; font-size: 1.8rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.series { display: flex; flex-wrap: wrap; gap: 10px; }
+.series div { background: var(--panel); border: 1px solid var(--rule); padding: 10px 14px; display: grid; gap: 2px; }
+.series .big { font-family: var(--display); font-weight: 800; font-size: 1.8rem; line-height: 1; }
 
-.takeaways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
-.takeaways div { display: grid; gap: 6px; align-content: start; }
-.takeaways b { font-family: var(--display); font-size: 1.15rem; line-height: 1.15; letter-spacing: -0.02em; }
-.takeaways p { font-size: 0.98rem; color: var(--ink-2); }
+.takeaways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; counter-reset: t; }
+.takeaways div { border-top: 2px solid var(--tor); padding-top: 10px; display: grid; gap: 6px; }
+.takeaways b { font-family: var(--display); font-size: 1.2rem; text-transform: uppercase; line-height: 1.1; }
+.takeaways p { font-size: 0.95rem; color: var(--ink-2); }
+
+details { font-size: 0.88rem; }
+summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.methods { font-size: 0.88rem; color: var(--ink-2); display: grid; gap: 8px; border-top: 1px solid var(--rule); padding-top: 16px; }
+.methods a { color: var(--ink); }
+
+#tip { position: fixed; pointer-events: none; z-index: 20; background: var(--ink); color: var(--bg); padding: 8px 10px; font-size: 0.8rem; line-height: 1.35; max-width: 240px; opacity: 0; transition: opacity 0.1s; }
+#tip b { font-family: var(--display); font-size: 1rem; text-transform: uppercase; letter-spacing: 0.02em; }
+#tip .num { font-size: 0.78rem; }
+.hit { fill: transparent; cursor: crosshair; }
 
 @media (max-width: 760px) {
   .cards, .courts, .trio, .takeaways, .two { grid-template-columns: minmax(0, 1fr); }
   .game { grid-template-columns: 52px 1fr auto 1fr; padding: 8px; gap: 6px; }
-  .game .t { font-size: 0.92rem; }
+  .game .t { font-size: 1rem; }
 }
+@media (prefers-reduced-motion: reduce) { #tip { transition: none; } }
 </style>
 
 <div class="wrap">
@@ -83,7 +174,7 @@
     <div class="byline">Data: sportsdataverse (ESPN play-by-play, box scores, WNBA Stats lineups). Inspired by <a href="https://riseofthevalkyries.substack.com/" target="_blank" rel="noopener">Rise of the Valkyries</a> and <a href="https://neilpaine.substack.com/t/basketball" target="_blank" rel="noopener">Neil Paine</a>.</div>
   </section>
 
-  <section class="section" id="elo">
+  <section class="section wide" id="elo">
     <header>
       <h2>Toronto's Elo fell all season and finished last</h2>
       <p class="lede" id="elo-lede"></p>
@@ -128,7 +219,7 @@
     </div>
   </section>
 
-  <section class="section" id="shots">
+  <section class="section wide" id="shots">
     <header>
       <h2>Toronto took the most shots at the rim and allowed the most</h2>
       <p class="lede" id="shot-lede"></p>
@@ -146,7 +237,7 @@
     <div class="cap" style="font-size:0.82rem;color:var(--ink-3)">Each hex is about 2.6 ft wide, and its size shows the share of the team's attempts taken there. Colour is points per shot in that zone compared with league average for the same season. On the "Opponents' shots" view, orange means opponents shot hot against this team. Hover a hex for the zone numbers.</div>
   </section>
 
-  <section class="section" id="roster">
+  <section class="section wide" id="roster">
     <header>
       <h2>Rookies played 42% of Toronto's minutes</h2>
       <p class="lede" id="roster-lede"></p>
@@ -172,20 +263,20 @@
     </div>
   </section>
 
-  <section class="section">
+  <section class="section wide">
     <header>
       <h2>What the Tempo need from year two</h2>
     </header>
     <div class="takeaways">
       <div><b>Defense first</b><p>The offense already ranks with this class. Opponents shot an eFG% of 54.7%, the worst in the league, and Toronto was 14th in defensive rebounding. Golden State's year-one formula was a top-3 defense with an average offense.</p></div>
       <div><b>Protect the paint</b><p>A third of opponent shots came at the rim. Toronto needs a rim deterrent, through the draft or free agency, more than another scorer.</p></div>
-      <div><b>Year two can flip fast</b><p>The Valkyries went from 1472 Elo and 8th to 1631 and 2nd in one offseason. Toronto starts 2027 near 1300 after the offseason regression, so the gap is large but not fixed.</p></div>
+      <div><b>Year two can flip fast</b><p id="flip"></p></div>
     </div>
   </section>
 
   <section class="methods">
     <h3>Method</h3>
-    <p>Elo uses every WNBA game from 2003 to 2026 in the style of FiveThirtyEight and Neil Paine: K = 20, 80-point home edge, a margin-of-victory multiplier, and 25% regression to 1500 between seasons. New franchises start at 1300. Possessions = FGA − ORB + TOV + 0.44·FTA. The Four Factors are ranked within each season. Shot zones come from ESPN play-by-play coordinates, and free throws are excluded. Roster experience counts prior WNBA seasons with minutes played since 2003. Close-game data comes from play-by-play. Code: <span class="num">01_expansion_class/build.py</span>.</p>
+    <p>Elo uses every WNBA game from 2003 to 2026 in the style of FiveThirtyEight and Neil Paine: K = 25, a 60-point home edge, a margin-of-victory multiplier and 40% regression to 1500 between seasons (settings tuned on 2004–2023 games and tested on 2024–2026). New franchises start at 1300. Possessions = FGA − ORB + TOV + 0.44·FTA. The Four Factors are ranked within each season. Shot zones come from ESPN play-by-play coordinates, and free throws are excluded. Roster experience counts prior WNBA seasons with minutes played since 2003. Close-game data comes from play-by-play. Code: <span class="num">01_expansion_class/build.py</span>.</p>
   </section>
 </div>
 <div id="tip" role="status" aria-live="polite"></div>
@@ -536,6 +627,14 @@ function legend(id, keys, withHist) {
       D.players[k].map(p => `<tr><td>${p.name}${p.exp === 0 ? '<span class="rook">ROOK</span>' : ""}</td><td>${p.mpg}</td><td>${p.ppg}</td><td>${(100 * p.ts).toFixed(1)}</td><td>${fmt(p.pm40)}</td></tr>`).join("") + "</table></div>";
     box.appendChild(d);
   }
+})();
+
+/* ---------- takeaway: year two (numbers come from the Elo data) ---------- */
+(function () {
+  const e = D.elo.end, rows = D.elo.table2026, gs = rows.findIndex(r => r.abbr === "GS");
+  // Toronto's 2027 starting point after the offseason pull back toward 1500
+  const start27 = Math.round(D.elo.params.carry * e.TOR.end + (1 - D.elo.params.carry) * 1500);
+  document.getElementById("flip").textContent = `The Valkyries went from ${e.GS.end} Elo and ${e.GS.rank}th in 2025 to ${rows[gs].elo} and ${gs + 1}${gs === 0 ? "st" : gs === 1 ? "nd" : gs === 2 ? "rd" : "th"} in 2026. After the offseason pull toward the league average, Toronto starts 2027 at about ${start27}, so the gap is large but not fixed.`;
 })();
 
 /* ---------- rivalry & clutch ---------- */

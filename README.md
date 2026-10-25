@@ -119,7 +119,7 @@ flowchart LR
 
 | Metric | How it's calculated |
 |---|---|
-| **Elo** | Every WNBA game since 2003: K = 20, 80-point home edge, margin-of-victory multiplier, 25% regression to 1500 between seasons, new teams start at 1300 ([`elo.py`](elo.py)) |
+| **Elo** | Every WNBA game since 2003: K = 25, 60-point home edge, margin-of-victory multiplier, 40% regression to 1500 between seasons, new teams start at 1300. Settings tuned on 2004–23 and tested on 2024–26 ([`elo.py`](elo.py)) |
 | **Possessions** | FGA − ORB + TOV + 0.44 × FTA |
 | **Expected pts/shot** | League points per shot for the zone each shot came from |
 | **Shot making** | Actual points per shot minus expected |
