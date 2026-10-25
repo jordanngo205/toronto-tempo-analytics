@@ -23,20 +23,7 @@
   --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
   --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0f1217; --panel: #171b22; --ink: #eef0f4; --ink-2: #b7bdc9; --ink-3: #8a91a0;
-    --rule: #2a303b; --grid: #222833; --gs: #a47dd1; --tor: #b33a55; --tor-2: #7e9bd0; --tor-soft: #2a1820; --por: #f070c0;
-    --hist: #6b7280; --good: #7e9bd0; --bad: #d0587c; --hot: #f0923a; --cold: #7e9bd0; --mid: #383835; --plate: #eef0f4;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0f1217; --panel: #171b22; --ink: #eef0f4; --ink-2: #b7bdc9; --ink-3: #8a91a0;
-  --rule: #2a303b; --grid: #222833; --gs: #a47dd1; --tor: #b33a55; --tor-2: #7e9bd0; --tor-soft: #2a1820; --por: #f070c0;
-  --hist: #6b7280; --good: #7e9bd0; --bad: #d0587c; --hot: #f0923a; --cold: #7e9bd0; --mid: #383835; --plate: #eef0f4;
-  color-scheme: dark;
+  color-scheme: light;  /* the site is always light, even when the computer is in dark mode */
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }

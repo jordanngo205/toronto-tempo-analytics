@@ -27,22 +27,6 @@
   --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0f1217; --panel: #171b22; --ink: #eef0f4; --ink-2: #b7bdc9; --ink-3: #8a91a0;
-    --rule: #2a303b; --grid: #222833; --gs: #a47dd1; --tor: #b33a55; --tor-2: #7e9bd0; --por: #f070c0; --hist: #6b7280;
-    --hot: #f0923a; --cold: #7e9bd0; --mid: #383835; --plate: #eef0f4;
-    --exp1: #2b3240; --exp2: #4a5568; --exp3: #8090aa; --exp4: #c3cddd;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0f1217; --panel: #171b22; --ink: #eef0f4; --ink-2: #b7bdc9; --ink-3: #8a91a0;
-  --rule: #2a303b; --grid: #222833; --gs: #a47dd1; --tor: #b33a55; --tor-2: #7e9bd0; --por: #f070c0; --hist: #6b7280;
-  --hot: #f0923a; --cold: #7e9bd0; --mid: #383835; --plate: #eef0f4;
-  --exp1: #2b3240; --exp2: #4a5568; --exp3: #8090aa; --exp4: #c3cddd;
-  color-scheme: dark;
-}
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
 .wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 64px; display: grid; gap: 64px; }
