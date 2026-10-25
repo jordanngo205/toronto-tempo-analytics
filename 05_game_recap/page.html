@@ -92,10 +92,9 @@ td.hl { font-weight: 600; color: var(--tor); }
 .potg-gs b { font-family: var(--display); font-weight: 800; font-size: 4rem; line-height: 0.9; color: var(--ring); }
 .potg-gs span { font-size: 0.75rem; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; }
 .aw-group + .aw-group { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--rule); }
-#awards + .caption { margin-top: 18px; }
-.aw-group h4 { font: 700 0.8rem var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; }
-.awards { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); row-gap: 18px; gap: 12px; overflow-x: auto; padding-bottom: 6px; }
-.award { display: grid; justify-items: center; text-align: center; gap: 4px; align-content: start; }
+.aw-group h4 { text-align: center; font: 700 0.8rem var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; }
+.awards { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 12px; padding-bottom: 6px; }
+.award { width: 116px; display: grid; justify-items: center; text-align: center; gap: 4px; align-content: start; }
 .award .aw-title { font: 800 0.95rem var(--display); min-height: 2.3em; display: grid; align-items: end; text-transform: uppercase; letter-spacing: 0.03em; }
 .award b { font-weight: 600; font-size: 0.9rem; line-height: 1.2; }
 .award small { font-size: 0.72rem; color: var(--ink-3); line-height: 1.3; }
@@ -113,8 +112,7 @@ td.hl { font-weight: 600; color: var(--tor); }
 <section class="section" style="gap:16px">
   <div class="board" id="board"></div>
   <div class="potg-card" id="potg-card"></div>
-  <div class="figure"><h3>Game awards</h3><div id="awards"></div>
-    <p class="caption">Both teams. Shooting score is the shooting part of Game Score (see below). Clutch = last 5 minutes of the 4th or overtime with the score within 5. Shot types and spots come from ESPN's play-by-play. Fast break = scored within 6 seconds of winning the ball (this matches ESPN's season fast-break total for Toronto within 5 points). The play-by-play has no shot clock, so Defuser uses an estimated one, started at each change of possession.</p></div>
+  <div class="figure"><h3>Game awards</h3><div id="awards"></div></div>
   <div class="recap-grid">
     <div class="figure"><h3>Line score</h3><div class="tbl-wrap"><table id="linescore"></table></div></div>
     <div class="figure" id="context"></div>
@@ -125,7 +123,6 @@ td.hl { font-weight: 600; color: var(--tor); }
 <section class="section wide">
   <header>
     <h2>Game Score, piece by piece</h2>
-    <p class="lede">Each bar is one player's Game Score split into where it came from. Pieces right of zero added to it; pieces left of zero took away. Starters first, then the bench. Hover any piece for the numbers.</p>
   </header>
   <div class="toggle" id="gs-team" role="group" aria-label="Which team">
     <button type="button" data-v="tor" aria-pressed="true">Tempo</button>
@@ -140,7 +137,6 @@ td.hl { font-weight: 600; color: var(--tor); }
 <section class="section">
   <header>
     <h2>The best games that night</h2>
-    <p class="lede" id="night-lede"></p>
   </header>
   <div class="figure"><div class="night-list" id="night-list"></div></div>
 </section>
@@ -306,7 +302,6 @@ function gsCard() {
 // the best Game Scores across the whole league on the same date; players from this game are highlighted
 function night() {
   const g = cur, N = g.night;
-  document.getElementById("night-lede").innerHTML = `${N.players} players appeared in ${N.games} WNBA game${N.games === 1 ? "" : "s"} on ${g.date}. These were the best Game Scores. Toronto's best player ranked <strong>${N.tor_best_rank}${["th", "st", "nd", "rd"][(N.tor_best_rank % 100 > 10 && N.tor_best_rank % 100 < 14) ? 0 : Math.min(N.tor_best_rank % 10, 4) % 4] || "th"}</strong> of ${N.players}.`;
   document.getElementById("night-list").innerHTML = N.top.map(([n, tm, op, gs, pts, reb, ast, won, here, img], i) => `
     <div class="night-row ${here ? "here" : ""}"><span class="rk num">${i + 1}</span>
       ${img ? `<img src="${img}" alt="" loading="lazy">` : '<span class="ph"></span>'}
@@ -340,6 +335,14 @@ function potgCard() {
     <div class="potg-gs" style="--ring:${best.c}"><b class="num">${gs.toFixed(1)}</b><span>Game Score</span></div>`;
 }
 
+// longer definitions, shown when you hover an award
+const TIPS = {
+  "Heater": "The shooting part of Game Score: points and makes minus misses",
+  "Off night": "The shooting part of Game Score: points and makes minus misses",
+  "Cold blooded": "Last 5 minutes of the 4th or overtime, with the score within 5",
+  "Speed demon": "Scored within 6 seconds of her team winning the ball",
+  "Defuser": "Under 5 seconds left on the shot clock. The play-by-play has no shot clock, so it is estimated from when each possession started",
+};
 // ESPN-style daily awards for this game (both teams). Each award: [title, what it means, score, how to show it, who can win]
 // score(x) gives the number to rank by (higher wins), so the "bad" awards rank by the negative.
 function awards() {
@@ -399,7 +402,7 @@ function awards() {
     list.map(([title, how, score, show, ok]) => {
       const w = pick(score, ok, gi === 2);
       if (!w) return `<div class="award none"><div class="aw-title">${title}</div><span class="hs"></span><b>Nobody</b><small>${how}</small></div>`;
-      return `<div class="award" title="${title}: ${how}"><div class="aw-title">${title}</div>${headshot(g, w.r[0], w.c)}<b>${w.r[0]}</b><span class="aw-val num">${show(score(w))}</span><small>${how}</small></div>`;
+      return `<div class="award" title="${title}: ${how}${TIPS[title] ? ". " + TIPS[title] : ""}"><div class="aw-title">${title}</div>${headshot(g, w.r[0], w.c)}<b>${w.r[0]}</b><span class="aw-val num">${show(score(w))}</span><small>${how}</small></div>`;
     }).join("") + `</div></div>`).join("");
 }
 
