@@ -34,6 +34,21 @@ for c in ["field_goals_made", "field_goals_attempted", "three_point_field_goals_
     tb[c] = pd.to_numeric(tb[c], errors="coerce").fillna(0)
 
 
+def court_colour(row):
+    """The opponent's colour for the shot chart. ESPN's main colour is sometimes too pale to see on a white
+    court (Las Vegas grey, New York mint), so fall back to the alternate colour when it's too light.
+    Portland and Golden State use their logo colours, which ESPN's feed doesn't have right."""
+    fixed = {"POR": "#e8379b", "GS": "#9b6fc6"}
+    if row.team_abbreviation in fixed:
+        return fixed[row.team_abbreviation]
+    def lum(h):
+        # relative brightness of a hex colour (0 = black, 1 = white)
+        r, g, b_ = (int(str(h)[i:i + 2], 16) / 255 for i in (0, 2, 4))
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b_
+    main, alt = str(row.team_color), str(row.team_alternate_color)
+    return "#" + (alt if lum(main) > 0.55 and alt not in ("nan", "None") else main)
+
+
 def team_line(t, o):
     """Team stats for one game. t = this team's box score row, o = the opponent's row."""
     poss = t.field_goals_attempted - t.offensive_rebounds + t.total_turnovers + 0.44 * t.free_throws_attempted
@@ -96,6 +111,7 @@ for g in meta.itertuples():
         "team": {"tor": team_line(t, o), "opp": team_line(o, t)},
         "box": {"tor": box(g.game_id, TOR), "opp": box(g.game_id, o.team_id)},
         "names": names, "shots": shots, "lead": int(t.largest_lead), "opp_lead": int(o.largest_lead),
+        "opp_color": court_colour(o),
     })
 
 # headline numbers for the home page, then write the page

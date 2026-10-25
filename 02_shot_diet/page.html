@@ -16,7 +16,7 @@
 .zlist { display: grid; gap: 5px; }
 .dot-key { display: inline-flex; gap: 12px; align-items: center; font-size: 0.8rem; color: var(--ink-3); }
 .dot-key svg { width: 14px; height: 14px; vertical-align: middle; }
-.ends { display: flex; justify-content: space-between; gap: 10px; background: #0d0b10; padding: 8px 10px; font-family: var(--display); font-weight: 700; font-size: 0.95rem; }
+.ends { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0 8px; font-family: var(--display); font-weight: 700; font-size: 0.95rem; }
 </style>
 
 <section class="hero">
@@ -38,7 +38,7 @@
     </div>
     <div class="scale" id="hex-key"><span>Colder</span><span class="ramp"></span><span>Hotter than league, by zone</span></div>
     <div class="dot-key" id="dot-key" hidden>
-      <span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="#ff6b95"/></svg> Made (glowing)</span>
+      <span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="var(--tor)"/></svg> Made (glowing, team colour)</span>
       <span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="2.5" fill="var(--ink-3)"/></svg> Missed</span>
     </div>
   </div>
@@ -153,11 +153,11 @@ function draw() {
     // "every shot" mode: full court on a dark background, Toronto attacking the right basket and
     // opponents the left. Made shots glow, misses are faint dots (same look as the README poster)
     const F = K.fullCourt(svg);
-    const COL = ["#ff6b95", "#9fb4e0"];
+    const COL = ["var(--tor)", "var(--tor-2)"];  // Tempo bordeaux; opponents (14 different teams) in navy
     // which shots to show: a player = only hers, "All Tempo" = Tempo + opponents, "Opponents" = only theirs
     const tor = current === "Opponents" || current === "League" ? [] : D.dots.filter(d => current === "Tempo" || D.players[d[4]] === current);
     const opp = current === "Tempo" || current === "Opponents" ? D.opp_dots : [];
-    const glow = el("g", { filter: "url(#glow)", opacity: 0.6 }, svg), cores = el("g", {}, svg);
+    const glow = el("g", { filter: "url(#glow)", opacity: 0.35 }, svg), cores = el("g", {}, svg);
     const big = tor.length + opp.length < 600;  // bigger dots when there are only a few hundred shots
     [[tor, 0], [opp, 1]].forEach(([list, side]) => {
       list.forEach(([x, y, made], i) => {
@@ -165,18 +165,19 @@ function draw() {
         // wiggle each shot a little so whole-foot locations don't form a grid
         const [cx, cy] = F.place(x + K.wiggle(i * 2 + side), y + K.wiggle(i * 2 + 1 + side * 7), side);
         if (made) {
-          el("circle", { cx, cy, r: big ? 8 : 4.2, fill: COL[side] }, glow);
-          el("circle", { cx, cy, r: big ? 3.2 : 1.5, fill: "#fff" }, cores);
+          // soft halo + solid dot in the team colour
+          el("circle", { cx, cy, r: big ? 10 : 5.5, fill: COL[side] }, glow);
+          el("circle", { cx, cy, r: big ? 3.8 : 1.9, fill: COL[side] }, cores);
         } else {
-          el("circle", { cx, cy, r: big ? 2.2 : 1.1, fill: "#fff", opacity: 0.28 }, cores);
+          el("circle", { cx, cy, r: big ? 2.4 : 1.2, fill: "var(--ink-3)", opacity: 0.4 }, cores);
         }
       });
     });
     // which end is which goes in a strip above the court (not on top of the dots)
     ends.hidden = false;
-    ends.innerHTML = `<span style="color:#9fb4e0">${opp.length ? "← Opponents · " + opp.length.toLocaleString() + " shots" : ""}</span><span style="color:#ff6b95">${tor.length ? (current === "Tempo" ? "Tempo" : current) + " · " + tor.length.toLocaleString() + " shots →" : ""}</span>`;
+    ends.innerHTML = `<span style="color:var(--tor-2)">${opp.length ? "← Opponents · " + opp.length.toLocaleString() + " shots" : ""}</span><span style="color:var(--tor)">${tor.length ? (current === "Tempo" ? "Tempo" : current) + " · " + tor.length.toLocaleString() + " shots →" : ""}</span>`;
     // every league shot isn't stored in the page (too big), so say so instead of showing an empty court
-    if (current === "League") txt(svg, F.W / 2, F.H / 2 - 70, "Pick the Tempo, a player or opponents to see every shot", "lbl", { "text-anchor": "middle", style: "fill:#eef0f4;font-size:15px" });
+    if (current === "League") txt(svg, F.W / 2, F.H / 2 - 70, "Pick the Tempo, a player or opponents to see every shot", "lbl", { "text-anchor": "middle", style: "fill:var(--ink);font-size:15px" });
   }
   profile(P);  // update the side panel too
 }

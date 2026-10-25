@@ -36,10 +36,9 @@ td.hl { font-weight: 600; color: var(--tor); }
   .court-pair { grid-template-columns: minmax(0, 1fr); }
   .bfly .row { grid-template-columns: 44px 1fr 70px 1fr 44px; }
 }
-.night { background: #0d0b10; padding: 14px 16px 12px; display: grid; gap: 10px; color: #eef0f4; }
+.night { background: var(--panel); border: 1px solid var(--rule); padding: 14px 16px 12px; display: grid; gap: 10px; color: var(--ink); }
 .night-head, .night-sum { display: flex; justify-content: space-between; gap: 12px; font-size: 0.9rem; }
 .night-head span { display: inline-flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 1.15rem; }
-.night .logo { background: #eef0f4; }
 .night svg { display: block; width: 100%; height: auto; }
 </style>
 
@@ -77,7 +76,7 @@ td.hl { font-weight: 600; color: var(--tor); }
       <button type="button" data-v="1" aria-pressed="false">1st half</button>
       <button type="button" data-v="2" aria-pressed="false">2nd half</button>
     </div>
-    <span class="cap" style="margin:0">glowing = made · faint dot = missed · hover any shot for the shooter and time</span>
+    <span class="cap" style="margin:0">glowing dot = made, in the team's colour · small grey dot = missed · hover any shot for the shooter and time</span>
   </div>
   <div id="courts"></div>
 </section>
@@ -228,16 +227,17 @@ function courts() {
     <div class="night-sum"><span id="cs1"></span><span id="cs0"></span></div></div>`;
   const s = document.getElementById("fc"), C = K.fullCourt(s);
   const shots = g.shots.filter(q => half === "all" || (half === "1" ? q[6] < 1200 : q[6] >= 1200));
-  const glow = K.el("g", { filter: "url(#glow)", opacity: 0.7 }, s), cores = K.el("g", {}, s), hits = K.el("g", {}, s);
-  const COL = ["#ff6b95", "#9fb4e0"];  // Tempo pink, opponent blue (same as the README poster)
+  const glow = K.el("g", { filter: "url(#glow)", opacity: 0.45 }, s), cores = K.el("g", {}, s), hits = K.el("g", {}, s);
+  const COL = ["var(--tor)", g.opp_color];  // Tempo bordeaux, the opponent's own colour
   for (const [x, y, made, three, side, who, t] of shots) {
     if (y > 44) continue;  // skip the odd heave from past half court
     const [cx, cy] = C.place(x, y, side);
     if (made) {
-      el("circle", { cx, cy, r: 9, fill: COL[side] }, glow);
-      el("circle", { cx, cy, r: 3.6, fill: "#fff" }, cores);
+      // a soft halo plus a solid dot, both in the team colour
+      el("circle", { cx, cy, r: 11, fill: COL[side] }, glow);
+      el("circle", { cx, cy, r: 4.5, fill: COL[side], stroke: "var(--panel)", "stroke-width": 1 }, cores);
     } else {
-      el("circle", { cx, cy, r: 2.6, fill: "#fff", opacity: 0.32 }, cores);
+      el("circle", { cx, cy, r: 2.8, fill: "var(--ink-3)", opacity: 0.45 }, cores);
     }
     const hitc = el("circle", { cx, cy, r: 10, class: "hit" }, hits);
     hover(hitc, `<b>${g.names[who] || ""}</b><div class="num">${made ? "Made" : "Missed"} ${three ? "3" : "2"} · ${mmss(t)}</div>`);

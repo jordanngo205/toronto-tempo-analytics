@@ -107,7 +107,7 @@
   // the same way every time the page loads
   K.wiggle = i => { const v = Math.sin(i * 12.9898) * 43758.5453; return (v - Math.floor(v) - 0.5) * 0.9; };
 
-  // full court on a dark background (the "every shot" look), 10 px per foot.
+  // full court on the page's panel colour (white in light mode), 10 px per foot.
   // Toronto attacks the RIGHT basket, opponents attack the LEFT one.
   // Returns place(x, y, side): turns a shot's ESPN location (x = 0-50 ft across, y = feet out from
   // the basket) into a point on this court. side 0 = Tempo, side 1 = opponent.
@@ -115,11 +115,11 @@
     const k = 10, W = 94 * k, H = 50 * k;
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     const defs = K.el("defs", {}, svg);
-    // soft glow for made shots
+    // soft glow for made shots (a blurred copy of the dot in the team colour)
     const f = K.el("filter", { id: "glow", x: "-50%", y: "-50%", width: "200%", height: "200%" }, defs);
-    K.el("feGaussianBlur", { stdDeviation: 4 }, f);
-    K.el("rect", { x: 0, y: 0, width: W, height: H, fill: "#0d0b10" }, svg);
-    const line = { fill: "none", stroke: "#ffffff", "stroke-opacity": 0.16, "stroke-width": 1.5 };
+    K.el("feGaussianBlur", { stdDeviation: 5 }, f);
+    K.el("rect", { x: 0, y: 0, width: W, height: H, fill: "var(--panel)" }, svg);
+    const line = { fill: "none", stroke: "var(--ink)", "stroke-opacity": 0.18, "stroke-width": 1.5 };
     K.el("rect", { x: 1, y: 1, width: W - 2, height: H - 2, ...line }, svg);
     K.el("line", { x1: W / 2, x2: W / 2, y1: 0, y2: H, ...line }, svg);
     K.el("circle", { cx: W / 2, cy: H / 2, r: 6 * k, ...line }, svg);
