@@ -83,7 +83,7 @@
   <div class="figure">
     <div class="legend" id="dist-legend"></div>
     <svg id="dist" viewBox="0 0 640 470" role="img" aria-label="Shot frequency and points per shot by distance"></svg>
-    <div class="cap">1-foot bins; 28+ ft grouped. Points per shot is hidden for bins with fewer than 25 attempts.</div>
+    <div class="cap">1-foot bins; 28+ ft grouped. Points per shot is smoothed: a distance with fewer than 50 attempts also counts the shots from the feet next to it until it reaches 50, but never across the 3-point line.</div>
   </div>
 </section>
 
@@ -337,10 +337,10 @@ draw();  // first draw when the page loads
     el("line", { x1: x(22.15), x2: x(22.15), y1: P.top, y2: P.top + P.h, stroke: "var(--ink-3)", "stroke-dasharray": "3 3" }, s);
     if (!P.key) txt(s, x(22.15) + 4, P.top + 10, "3-pt line", "lbl");
     for (const [k, c] of series) {
-      // turn each 1-ft bin into a point. Skip points per shot when the bin has under 25 shots (too noisy)
+      // turn each 1-ft bin into a point. The points-per-shot line uses the smoothed value (v[2]) so thin bins don't leave gaps
       const pts = Dd[k].map((v, i) => {
-        const val = v[P.key], n = Dd[k][i][0] * (k === "League" ? L.fga : k === "Tempo" ? T.fga : O.fga);
-        return val == null || (P.key && n < 25) ? null : [x(i), y(K.clamp(val, P.lo, P.hi))];
+        const val = P.key ? v[2] : v[0];
+        return val == null ? null : [x(i), y(K.clamp(val, P.lo, P.hi))];
       });
       // build the line path. "M" starts a new piece after a gap, "L" continues the line
       let d = "", pen = false;
@@ -355,7 +355,7 @@ draw();  // first draw when the page loads
   hit.addEventListener("pointermove", ev => {
     const p = K.svgPoint(s, ev), i = K.clamp(Math.round((p.x - m.l) / (W - m.l - m.r) * 28), 0, 28);
     cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("opacity", 0.6);
-    K.tip(`<b>${i === 28 ? "28+" : i + "–" + (i + 1)} ft</b>` + series.slice().reverse().map(([k, c, n]) => `<div><span style="color:${c}">■</span> ${n}: <span class="num">${pct(Dd[k][i][0])} · ${Dd[k][i][1] == null ? "–" : Dd[k][i][1].toFixed(2)} pts</span></div>`).join(""), ev);
+    K.tip(`<b>${i === 28 ? "28+" : i + "–" + (i + 1)} ft</b>` + series.slice().reverse().map(([k, c, n]) => `<div><span style="color:${c}">■</span> ${n}: <span class="num">${pct(Dd[k][i][0])} · ${Dd[k][i][2] == null ? "–" : Dd[k][i][2].toFixed(2)} pts</span> <span class="lbl">(${Dd[k][i][3]} shots)</span></div>`).join(""), ev);
   });
   hit.addEventListener("pointerleave", () => { cross.setAttribute("opacity", 0); K.hide(); });
 })();

@@ -128,8 +128,22 @@ def curve(s):
     b = s.assign(bin=np.minimum(s.dist.astype(int), 28)).groupby("bin").agg(n=("pts", "size"), pps=("pts", "mean"))
     b = b.reindex(range(29))  # make sure every bin 0-28 exists, even empty ones
     b["freq"] = b.n / b.n.sum()
-    # [share of shots, points per shot] per bin; empty bins become None for JSON
-    return [[None if np.isnan(v) else round(v, 4) for v in (r.freq, r.pps)] for r in b.itertuples()]
+    # smoothed points per shot for the line: a bin with few shots borrows shots from the feet next to it
+    # (1 ft each way, then 2, ...) until it has at least 50. It never borrows across the 3-point line (22 ft),
+    # so the jump in value at the line stays sharp.
+    n, pts = b.n.fillna(0).to_numpy(), (b.n * b.pps).fillna(0).to_numpy()
+    smooth = []
+    for i in range(29):
+        side = range(22, 29) if i >= 22 else range(0, 22)
+        w = 0
+        while n[[j for j in range(i - w, i + w + 1) if j in side]].sum() < 50 and w < 6:
+            w += 1
+        js = [j for j in range(i - w, i + w + 1) if j in side]
+        smooth.append(pts[js].sum() / n[js].sum() if n[js].sum() else np.nan)
+    b["smooth"] = smooth
+    # [share of shots, points per shot, smoothed points per shot, attempts] per bin; empty bins become None for JSON
+    return [[None if np.isnan(v) else round(float(v), 4) for v in (r.freq, r.pps, r.smooth)] + [int(r.n) if r.n == r.n else 0]
+            for r in b.itertuples()]
 
 
 dist = {"Tempo": curve(tor_shots), "Opponents": curve(opp_shots), "League": curve(lg)}
