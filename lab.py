@@ -14,9 +14,9 @@ PAGES = [  # slug, nav label
     ("game-center", "Game Center"),
     ("draft-lab", "Draft Lab"),
 ]
-# Google Fonts link: Barlow Condensed for headings, Barlow for text, IBM Plex Mono for numbers
-FONTS = ("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800"
-         "&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap")
+# Google Fonts link: Schibsted Grotesk for headlines, numbers and controls, Newsreader (a serif) for reading
+FONTS = ("https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900"
+         "&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap")
 
 
 def head(title, description, prefix="../"):
