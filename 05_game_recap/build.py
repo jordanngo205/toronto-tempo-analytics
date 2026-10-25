@@ -3,6 +3,7 @@
 Writes docs/game-center/index.html: season strip to pick a game, then scoreboard, line score,
 game flow with runs, both teams' shot charts, four-factor battles and full box scores.
 """
+import re
 import sys
 from pathlib import Path
 
@@ -82,6 +83,86 @@ def story(gp):
             "trail": round(float(secs[prev < 0].sum() / total), 3), "max": int(m.max()), "min": int(m.min())}
 
 
+def clutch_points(gp):
+    """Points each player scored in clutch time: the last 5 minutes of the 4th quarter or any overtime,
+    on plays that started with the score within 5."""
+    m_before = gp.m.shift(fill_value=0)  # margin before each play
+    late = ((gp.per == 4) & (gp.t >= 2100)) | (gp.per > 4)
+    sc = gp[late & (m_before.abs() <= 5) & gp.scoring_play.astype(bool) & (gp.score_value.astype(int) > 0)]
+    return {k: int(v) for k, v in sc.groupby("athlete_name_1").score_value.sum().items()}
+
+
+# order of the numbers in each player's "awards" list (the page reads them by position)
+AWARD_KEYS = ["rim", "mid", "corner3", "floater", "driving", "cutting", "fade", "putback", "bank", "fast", "late", "goahead", "blocked"]
+
+
+def award_counts(gp):
+    """Per-player numbers for the ESPN-style award strip, counted from one game's play-by-play.
+    Most are points from one kind of shot. 'fast' = points within 6 seconds of her team winning the ball (432 Tempo points on the season vs ESPN's 437),
+    'late' = points with under 5 seconds left on an estimated shot clock, 'goahead' = points that put her
+    team in front, 'blocked' = how many of her shots got blocked."""
+    out = {}
+    def add(name, key, v):
+        if isinstance(name, str) and v:
+            out.setdefault(name, [0] * len(AWARD_KEYS))[AWARD_KEYS.index(key)] += v
+    # the play-by-play doesn't have a shot clock, so I estimate it: I track which team has the ball and
+    # when that possession started (defensive rebound, turnover, made basket by the other team, new period).
+    # An offensive rebound resets the clock to 14 like the real rule.
+    teams = [x for x in gp.team_id.dropna().unique()]
+    other = lambda tm: next((x for x in teams if x != tm), None)
+    owner, start, clock, last_per = None, 0.0, 24, None
+    for r in gp.itertuples():
+        t, team, typ = float(r.t), r.team_id, str(r.type_text)
+        if r.per != last_per:  # new quarter: nobody has the ball yet
+            owner, start, clock, last_per = None, t, 24, r.per
+        made = bool(r.scoring_play) and int(r.score_value) > 0
+        is_ft = "Free Throw" in typ
+        if made:
+            pts = int(r.score_value)
+            # margin from the scoring team's point of view, before and after the basket
+            after = int(r.m) if team == TOR else -int(r.m)
+            if after - pts <= 0 < after:
+                add(r.athlete_name_1, "goahead", pts)
+            if not is_ft:
+                if owner == team and clock == 24 and t - start <= 6:
+                    add(r.athlete_name_1, "fast", pts)
+                if owner == team and t - start >= clock - 5:
+                    add(r.athlete_name_1, "late", pts)
+                # shot type from ESPN's description of the shot
+                for word, key in [("Float", "floater"), ("Driving", "driving"), ("Cutting", "cutting"), ("Fade", "fade"), ("Bank", "bank")]:
+                    if word in typ:
+                        add(r.athlete_name_1, key, pts)
+                if "Putback" in typ or "Tip" in typ:
+                    add(r.athlete_name_1, "putback", pts)
+                # shot location, same zones as Shot Lab (only when the spot is on the half court)
+                x, y = float(r.coordinate_x_raw), float(r.coordinate_y_raw)
+                if 0 <= x <= 50 and y <= 30:
+                    d = np.hypot(x - 25, y)
+                    three = r.points_attempted == 3
+                    if d < 4:
+                        add(r.athlete_name_1, "rim", pts)
+                    elif three and y <= 3:
+                        add(r.athlete_name_1, "corner3", pts)
+                    elif not three and d >= 10:
+                        add(r.athlete_name_1, "mid", pts)
+        if "blocks" in str(r.text):
+            add(r.athlete_name_1, "blocked", 1)
+        # who has the ball after this play
+        ft = re.search(r"(\d) of (\d)", typ)
+        last_ft = bool(ft) and ft.group(1) == ft.group(2)
+        if typ == "Defensive Rebound":
+            owner, start, clock = team, t, 24
+        elif typ == "Offensive Rebound":
+            owner, start, clock = team, t, 14
+        elif "Turnover" in typ or (made and (not is_ft or last_ft)):
+            owner, start, clock = other(team), t, 24
+        elif "Foul" in typ and "Shooting" not in typ and "Offensive" not in typ and team != owner:
+            # a defensive foul away from the shot: the shot clock goes back up to 14 if it was lower
+            if clock - (t - start) < 14:
+                start, clock = t, 14
+    return out
+
+
 def box(gid, team_id):
     """Box score rows for one team in one game (only players who played)."""
     b = pb[(pb.game_id == gid) & (pb.team_id == team_id) & (pb.minutes > 0)].copy()
@@ -153,6 +234,8 @@ for g in meta.itertuples():
         "opp_color": court_colour(o),
         "story": story(gp),
         "night": nightly(g.game_date.date(), g.game_id),
+        "clutch": clutch_points(gp),
+        "aw": award_counts(gp),
         # headshot link for every player who played (empty when ESPN has none)
         "heads": {r.athlete_display_name: r.athlete_headshot_href for r in
                   pb[(pb.game_id == g.game_id) & (pb.minutes > 0)].itertuples() if isinstance(r.athlete_headshot_href, str)},
@@ -160,6 +243,6 @@ for g in meta.itertuples():
 
 # headline numbers for the home page, then write the page
 lab.summary("game-center", {"games": len(games), "record": games[-1]["rec"]})
-data = {"games": games}
+data = {"games": games, "aw_keys": AWARD_KEYS}
 lab.write_page("game-center", "Game Center", "A full recap for every Toronto Tempo game of 2026: game flow, shot charts, key battles and box scores.",
                Path(__file__).parent / "page.html", data)
