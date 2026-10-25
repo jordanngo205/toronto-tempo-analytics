@@ -7,21 +7,21 @@
 .board { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; background: var(--panel); border: 1px solid var(--rule); border-top: 6px solid var(--tor); padding: 18px; }
 .board .side { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .board .side.r { justify-content: flex-end; text-align: right; }
-.board .tname { font-family: var(--display); font-weight: 700; font-size: 1.3rem; line-height: 1.05; }
+.board .tname { font-family: var(--display); font-weight: 700; font-size: 1.3rem; text-transform: uppercase; line-height: 1.05; }
 .board .pts { font-family: var(--display); font-weight: 800; font-size: 3.6rem; line-height: 0.9; }
 .board .pts.lose { color: var(--ink-3); }
 .board .mid { text-align: center; display: grid; gap: 4px; justify-items: center; }
-.pill { font: 700 0.78rem var(--display); letter-spacing: 0.06em; padding: 3px 10px; color: #fff; }
+.pill { font: 700 0.78rem var(--display); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; color: #fff; }
 .potg { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; align-items: center; }
-.potg .big { font-family: var(--display); font-weight: 800; font-size: 2rem; line-height: 1; }
-.potg .line { font-family: var(--ui); font-variant-numeric: tabular-nums; font-size: 0.85rem; color: var(--ink-2); }
+.potg .big { font-family: var(--display); font-weight: 800; font-size: 2rem; line-height: 1; text-transform: uppercase; }
+.potg .line { font-family: var(--mono); font-size: 0.85rem; color: var(--ink-2); }
 .bfly { display: grid; gap: 6px; }
 .bfly .row { display: grid; grid-template-columns: 52px 1fr 92px 1fr 52px; gap: 8px; align-items: center; font-size: 0.85rem; }
 .bfly .bar { height: 14px; background: var(--grid); position: relative; }
 .bfly .bar i { position: absolute; top: 0; bottom: 0; }
 .bfly .l i { right: 0; } .bfly .r i { left: 0; }
-.bfly .lab { text-align: center; font-family: var(--display); font-weight: 700; font-size: 0.85rem; }
-.bfly .v { font-family: var(--ui); font-variant-numeric: tabular-nums; }
+.bfly .lab { text-align: center; font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; }
+.bfly .v { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .bfly .v.r { text-align: right; }
 .bfly .win { font-weight: 600; color: var(--ink); }
 .bfly .lose { color: var(--ink-3); }
@@ -36,6 +36,11 @@ td.hl { font-weight: 600; color: var(--tor); }
   .court-pair { grid-template-columns: minmax(0, 1fr); }
   .bfly .row { grid-template-columns: 44px 1fr 70px 1fr 44px; }
 }
+.night { background: #0d0b10; padding: 14px 16px 12px; display: grid; gap: 10px; color: #eef0f4; }
+.night-head, .night-sum { display: flex; justify-content: space-between; gap: 12px; font-size: 0.9rem; }
+.night-head span { display: inline-flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 1.15rem; }
+.night .logo { background: #eef0f4; }
+.night svg { display: block; width: 100%; height: auto; }
 </style>
 
 <section class="hero">
@@ -62,7 +67,7 @@ td.hl { font-weight: 600; color: var(--tor); }
   </div>
 </section>
 
-<section class="section">
+<section class="section wide">
   <header>
     <h2>Shot charts for both teams</h2>
   </header>
@@ -72,9 +77,9 @@ td.hl { font-weight: 600; color: var(--tor); }
       <button type="button" data-v="1" aria-pressed="false">1st half</button>
       <button type="button" data-v="2" aria-pressed="false">2nd half</button>
     </div>
-    <span class="cap" style="margin:0">● make · ✕ miss · hover for the shooter</span>
+    <span class="cap" style="margin:0">glowing = made · faint dot = missed · hover any shot for the shooter and time</span>
   </div>
-  <div class="court-pair" id="courts"></div>
+  <div id="courts"></div>
 </section>
 
 <section class="section">
@@ -84,7 +89,7 @@ td.hl { font-weight: 600; color: var(--tor); }
   <div class="figure bfly" id="bfly"></div>
 </section>
 
-<section class="section">
+<section class="section wide">
   <header>
     <h2>Box score</h2>
   </header>
@@ -215,29 +220,35 @@ function flowChart() {
 
 // two shot charts side by side: Tempo on the left, opponent on the right
 function courts() {
+  // one full court on a dark background: Toronto shoots at the right basket, the opponent at the left.
+  // Made shots glow in the team colour, misses are small faint dots.
   const box = document.getElementById("courts"), g = cur;
-  box.innerHTML = ["TOR", g.opp].map((ab, i) => `<div class="figure"><h3>${K.logo(ab)}${ab === "TOR" ? "Tempo" : g.opp_name}</h3><svg id="ct${i}" role="img" aria-label="${ab} shot chart"></svg><div class="sum" id="cs${i}"></div></div>`).join("");
-  // side 0 = Tempo shots, side 1 = opponent shots. q[6] is the time, under 1200 s = first half
-  [0, 1].forEach(side => {
-    const s = document.getElementById("ct" + side), C = K.court(s);
-    const shots = g.shots.filter(q => q[4] === side && (half === "all" || (half === "1" ? q[6] < 1200 : q[6] >= 1200)));
-    const col = side === 0 ? "var(--tor)" : "var(--ink-2)";
-    // made = filled dot, missed = grey x. A bigger invisible circle on top makes it easier to hover
-    for (const [x, y, made, three, , who, t] of shots) {
-      if (y > 28.5) continue;
-      const name = g.names[who] || "";
-      const n = made ? el("circle", { cx: C.X(x), cy: C.Y(y), r: 6, fill: col, stroke: "var(--panel)", "stroke-width": 1.5 }, s)
-        : el("path", { d: `M${C.X(x) - 4.5} ${C.Y(y) - 4.5} L${C.X(x) + 4.5} ${C.Y(y) + 4.5} M${C.X(x) + 4.5} ${C.Y(y) - 4.5} L${C.X(x) - 4.5} ${C.Y(y) + 4.5}`, stroke: "var(--ink-3)", "stroke-width": 2 }, s);
-      const hitc = el("circle", { cx: C.X(x), cy: C.Y(y), r: 8, class: "hit" }, s);
-      hover(hitc, `<b>${name}</b><div class="num">${made ? "Made" : "Missed"} ${three ? "3" : "2"} · ${mmss(t)}</div>`);
+  box.innerHTML = `<div class="night"><div class="night-head"><span>${K.logo(g.opp)} ${g.opp_name}</span><span>Toronto Tempo ${K.logo("TOR")}</span></div>
+    <svg id="fc" role="img" aria-label="Every shot of the game on a full court"></svg>
+    <div class="night-sum"><span id="cs1"></span><span id="cs0"></span></div></div>`;
+  const s = document.getElementById("fc"), C = K.fullCourt(s);
+  const shots = g.shots.filter(q => half === "all" || (half === "1" ? q[6] < 1200 : q[6] >= 1200));
+  const glow = K.el("g", { filter: "url(#glow)", opacity: 0.7 }, s), cores = K.el("g", {}, s), hits = K.el("g", {}, s);
+  const COL = ["#ff6b95", "#9fb4e0"];  // Tempo pink, opponent blue (same as the README poster)
+  for (const [x, y, made, three, side, who, t] of shots) {
+    if (y > 44) continue;  // skip the odd heave from past half court
+    const [cx, cy] = C.place(x, y, side);
+    if (made) {
+      el("circle", { cx, cy, r: 9, fill: COL[side] }, glow);
+      el("circle", { cx, cy, r: 3.6, fill: "#fff" }, cores);
+    } else {
+      el("circle", { cx, cy, r: 2.6, fill: "#fff", opacity: 0.32 }, cores);
     }
-    // summary line under the court: FG, threes, and shots at the rim (within 4 ft)
-    const fgm = shots.filter(q => q[2]).length, fg3 = shots.filter(q => q[3]), rim = shots.filter(q => Math.hypot(q[0] - 25, q[1]) < 4);
-    document.getElementById("cs" + side).innerHTML = `<span class="num">FG ${fgm}/${shots.length} · 3P ${fg3.filter(q => q[2]).length}/${fg3.length} · rim ${rim.filter(q => q[2]).length}/${rim.length}</span>`;
+    const hitc = el("circle", { cx, cy, r: 10, class: "hit" }, hits);
+    hover(hitc, `<b>${g.names[who] || ""}</b><div class="num">${made ? "Made" : "Missed"} ${three ? "3" : "2"} · ${mmss(t)}</div>`);
+  }
+  // FG, 3P and rim (within 4 ft) for each side, under its own end of the court
+  [0, 1].forEach(side => {
+    const mine = shots.filter(q => q[4] === side), fg3 = mine.filter(q => q[3]), rim = mine.filter(q => Math.hypot(q[0] - 25, q[1]) < 4);
+    document.getElementById("cs" + side).innerHTML = `<span class="num" style="color:${COL[side]}">FG ${mine.filter(q => q[2]).length}/${mine.length} · 3P ${fg3.filter(q => q[2]).length}/${fg3.length} · rim ${rim.filter(q => q[2]).length}/${rim.length}</span>`;
   });
 }
 
-// key battles: mirrored bars, Toronto on the left and the opponent on the right
 function battles() {
   const T = cur.team.tor, O = cur.team.opp;
   // [label, stat name, multiply by (100 turns 0.52 into 52.0), is lower better?]
