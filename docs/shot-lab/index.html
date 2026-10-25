@@ -8,7 +8,7 @@
 <link rel="icon" href="../assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=085fd651">
+<link rel="stylesheet" href="../assets/site.css?v=ae30f730">
 <style>
 .picker { display: flex; gap: 6px; flex-wrap: wrap; }
 .picker button { font: 600 0.9rem var(--body); padding: 5px 10px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink-2); cursor: pointer; }
@@ -36,7 +36,7 @@
 
 
 <section class="hero">
-  <h1>Shot Lab<span class="sub">Toronto took better shots than the league average and made fewer of them.</span></h1>
+  <h1>Shot Lab<span class="sub">Toronto got good looks. The shots didn't fall.</span></h1>
   <p class="dek" id="dek"></p>
   <div class="stat-row" id="tiles"></div>
 </section>
@@ -66,7 +66,7 @@
 
 <section class="section">
   <header>
-    <h2>Most Tempo shooters made less than their shot locations predict</h2>
+    <h2>Good looks, cold hands</h2>
     <p class="lede" id="qm-lede"></p>
   </header>
   <div class="figure">
@@ -78,7 +78,7 @@
 
 <section class="section">
   <header>
-    <h2>Shot share and points per shot by distance</h2>
+    <h2>Where the shots come from, foot by foot</h2>
     <p class="lede">The top chart shows the share of attempts at each distance. The bottom chart shows points per shot at that distance. Toronto and its opponents both lean heavily toward the rim compared with the league.</p>
   </header>
   <div class="figure">
@@ -90,7 +90,7 @@
 
 <section class="section">
   <header>
-    <h2>Shot types compared with the league</h2>
+    <h2>How the Tempo shoot</h2>
     <p class="lede">ESPN tags every shot by type. The dot shows Toronto's share of attempts, the line runs to the league's share, and the number is Toronto's points per shot for that type.</p>
   </header>
   <div class="figure">
@@ -260,7 +260,7 @@ draw();  // first draw when the page loads
     .sort((a, b) => a.ly - b.ly);
   for (let i = 1; i < labs.length; i++) for (let j = 0; j < i; j++)
     if (Math.abs(labs[i].lx - labs[j].lx) < 70 && labs[i].ly - labs[j].ly < 13) labs[i].ly = labs[j].ly + 13;
-  for (const l of labs) txt(s, l.lx, l.ly, l.q.n.split(" ").slice(-1)[0], "lbl-ink", { style: "font-size:12px" });
+  for (const l of labs) txt(s, l.lx, l.ly, l.q.n.split(" ").slice(-1)[0], "lbl-ink halo", { style: "font-size:12px" });
   // count how many Tempo shooters are below the line for the paragraph above the chart
   const tq = Q.filter(q => q.t === "TOR"), below = tq.filter(q => q.pps < q.x).length;
   document.getElementById("qm-lede").innerHTML = `<strong>${below} of Toronto's ${tq.length}</strong> high-volume shooters made less than their shot locations predict. Marina Mabrey was the clear exception, and Nyara Sabally the only other one above the line. Harrison, Conde, Sykes and Nurse all had normal shot locations and finished well below expected.`;

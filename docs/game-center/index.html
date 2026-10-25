@@ -8,7 +8,7 @@
 <link rel="icon" href="../assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=085fd651">
+<link rel="stylesheet" href="../assets/site.css?v=ae30f730">
 <style>
 .strip { display: grid; grid-template-columns: repeat(22, minmax(0, 1fr)); gap: 4px; }
 .strip button { border: 1px solid var(--rule); background: var(--panel); padding: 4px 2px 0; cursor: pointer; display: grid; justify-items: center; gap: 2px; font: 500 0.6rem var(--mono); color: var(--ink-3); position: relative; }
@@ -59,7 +59,7 @@ td.hl { font-weight: 600; color: var(--tor); }
 
 
 <section class="hero">
-  <h1>Game Center<span class="sub">A full recap for each of Toronto's 44 games.</span></h1>
+  <h1>Game Center<span class="sub">Pick a game. Get the full recap.</span></h1>
   <div class="strip" id="strip" role="group" aria-label="Choose a game"></div>
   <div class="cap">The bar under each logo shows the result: navy for a win, bordeaux for a loss. Each game has its own link, such as #g12.</div>
 </section>
@@ -84,7 +84,7 @@ td.hl { font-weight: 600; color: var(--tor); }
 
 <section class="section wide">
   <header>
-    <h2>Shot charts for both teams</h2>
+    <h2>Where both teams shot from</h2>
   </header>
   <div class="controls">
     <div class="toggle" id="half" role="group" aria-label="Which shots">
@@ -99,14 +99,14 @@ td.hl { font-weight: 600; color: var(--tor); }
 
 <section class="section">
   <header>
-    <h2>Team stats side by side</h2>
+    <h2>Where it was won and lost</h2>
   </header>
   <div class="figure bfly" id="bfly"></div>
 </section>
 
 <section class="section wide">
   <header>
-    <h2>Box score</h2>
+    <h2>Every player</h2>
   </header>
   <div class="toggle" id="boxteam" role="group" aria-label="Team box score">
     <button type="button" data-v="tor" aria-pressed="true">Tempo</button>

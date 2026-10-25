@@ -49,7 +49,7 @@
 
 <section class="section">
   <header>
-    <h2>Toronto was last in four defensive categories</h2>
+    <h2>Last in almost every defensive category</h2>
     <p class="lede" id="needs-lede"></p>
   </header>
   <div class="figure">
@@ -60,7 +60,7 @@
 
 <section class="section wide">
   <header>
-    <h2>Defensive numbers predict WNBA minutes better than scoring does</h2>
+    <h2>College defense carries over. College scoring doesn't.</h2>
     <p class="lede" id="tr-lede"></p>
   </header>
   <div class="grid-2">
@@ -79,7 +79,7 @@
 
 <section class="section wide">
   <header>
-    <h2>The model, tested on draft classes it never saw</h2>
+    <h2>Tested on draft classes it never saw</h2>
     <p class="lede" id="acc-lede"></p>
   </header>
   <div class="stat-row" id="acc-tiles"></div>
@@ -104,7 +104,7 @@
 
 <section class="section wide">
   <header>
-    <h2>The 2027 board</h2>
+    <h2>Best player available, or best fit?</h2>
     <p class="lede">Talent blends my model, which projects WNBA minutes from college numbers, with sportsdataverse's draft projection. Fit measures how much a player helps where Toronto was worst: blocks, defensive rebounds, defensive BPM, height and steals. Both are standard scores within this senior class: 50 is average and every 10 points is one standard deviation, so a gap of 20 points is a big gap. Score blends the two using the slider. Click a player to see her full profile.</p>
   </header>
   <div class="controls">
@@ -124,7 +124,7 @@
 
 <section class="section">
   <header>
-    <h2>Talent against fit for the top 60</h2>
+    <h2>The sweet spot</h2>
     <p class="lede" id="sweet-lede"></p>
   </header>
   <div class="figure">
@@ -229,13 +229,13 @@ function ranked() {
 /* history scatter */
 (function () {
   const s = document.getElementById("hist"), H = D.hist;
-  const W = 420, Hh = 400, m = { l: 46, r: 12, t: 12, b: 40 };
+  const W = 420, Hh = 400, m = { l: 46, r: 12, t: 30, b: 40 };  // top margin leaves room for the axis label
   const x = scale(-2, 20, m.l, W - m.r), y = scale(0, Math.sqrt(2500), Hh - m.b, m.t);
   // y axis is square-root scaled so the many low-minute players aren't squashed at the bottom
   for (const v of [0, 100, 400, 900, 1600, 2500]) { el("line", { x1: m.l, x2: W - m.r, y1: y(Math.sqrt(v)), y2: y(Math.sqrt(v)), class: "gridline" }, s); txt(s, m.l - 6, y(Math.sqrt(v)) + 4, v, "lbl", { "text-anchor": "end" }); }
   for (const v of [0, 5, 10, 15, 20]) txt(s, x(v), Hh - m.b + 16, v, "lbl", { "text-anchor": "middle" });
   txt(s, (m.l + W - m.r) / 2, Hh - 4, "Last college season box plus-minus →", "lbl", { "text-anchor": "middle" });
-  txt(s, m.l + 4, m.t + 10, "WNBA minutes, first 2 seasons", "lbl");
+  txt(s, m.l - 40, 12, "WNBA minutes, first 2 seasons ↑", "lbl");  // above the plot, clear of the dots
   const col = p => p.rd === 1 ? "var(--tor)" : p.rd === 2 ? "var(--tor-2)" : "var(--hist)";
   // third round first so first-rounders draw on top
   for (const p of [...H].sort((a, b) => b.pick - a.pick)) {
@@ -276,7 +276,7 @@ function ranked() {
 
   // predicted vs actual scatter (square-root scale on both axes, like the history chart)
   const s2 = document.getElementById("pva");
-  const W2 = 420, H2 = 400, m2 = { l: 46, r: 12, t: 12, b: 40 }, max = Math.sqrt(2500);
+  const W2 = 420, H2 = 400, m2 = { l: 46, r: 12, t: 30, b: 40 }, max = Math.sqrt(2500);
   const x2 = scale(0, max, m2.l, W2 - m2.r), y2 = scale(0, max, H2 - m2.b, m2.t);
   for (const v of [0, 100, 400, 900, 1600, 2500]) {
     el("line", { x1: m2.l, x2: W2 - m2.r, y1: y2(Math.sqrt(v)), y2: y2(Math.sqrt(v)), class: "gridline" }, s2);
@@ -286,7 +286,7 @@ function ranked() {
   // dashed diagonal = perfect prediction
   el("line", { x1: x2(0), y1: y2(0), x2: x2(max), y2: y2(max), stroke: "var(--ink-3)", "stroke-dasharray": "4 3" }, s2);
   txt(s2, (m2.l + W2 - m2.r) / 2, H2 - 4, "Predicted WNBA minutes (first 2 seasons) →", "lbl", { "text-anchor": "middle" });
-  txt(s2, m2.l + 4, m2.t + 10, "Actual minutes ↑", "lbl");
+  txt(s2, m2.l - 40, 12, "Actual minutes ↑", "lbl");
   for (const [n, yr, pk, pr, ac] of V.pts) {
     const c = el("circle", { cx: x2(Math.sqrt(Math.min(pr, 2500))), cy: y2(Math.sqrt(Math.min(ac, 2500))), r: 4, fill: pk <= 12 ? "var(--tor)" : "var(--hist)", opacity: 0.75 }, s2);
     hover(c, `<b>${n}</b><div class="num">${yr} draft · pick ${pk}</div><div class="num">Predicted ${pr.toLocaleString()} · actual ${ac.toLocaleString()} min</div>`);
