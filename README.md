@@ -1,95 +1,85 @@
+<a href="https://jordanngo205.github.io/toronto-tempo-analytics/"><img src="readme_art/out/banner.png" alt="Tempo Lab: Toronto's first season, broken down with data" width="100%"></a>
+
 <div align="center">
 
-<a href="https://jordanngo205.github.io/toronto-tempo-analytics/"><img src="docs/assets/shots/home.png" alt="Tempo Lab" width="100%"></a>
-
-# Tempo Lab · Toronto Tempo Analytics
-
-**Toronto's first WNBA season, broken down with data. Five interactive pages and every chart built by hand.**
-
-[![Live site](https://img.shields.io/badge/LIVE%20SITE-Tempo%20Lab-8a1f42?style=for-the-badge)](https://jordanngo205.github.io/toronto-tempo-analytics/)
+[![Open the live site](https://img.shields.io/badge/OPEN%20THE%20LIVE%20SITE-%E2%86%92-8a1f42?style=for-the-badge)](https://jordanngo205.github.io/toronto-tempo-analytics/)
 [![Python](https://img.shields.io/badge/Python-3.14-33476d?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![sportsdataverse](https://img.shields.io/badge/data-sportsdataverse-33476d?style=for-the-badge)](https://py.sportsdataverse.org/)
-[![No chart libraries](https://img.shields.io/badge/charts-hand--built%20SVG-12161d?style=for-the-badge)](docs/assets/kit.js)
-
-[Expansion Class](https://jordanngo205.github.io/toronto-tempo-analytics/expansion-class/) ·
-[Shot Lab](https://jordanngo205.github.io/toronto-tempo-analytics/shot-lab/) ·
-[Rotation Lab](https://jordanngo205.github.io/toronto-tempo-analytics/rotation-lab/) ·
-[Game Flow](https://jordanngo205.github.io/toronto-tempo-analytics/game-flow/) ·
-[Game Center](https://jordanngo205.github.io/toronto-tempo-analytics/game-center/)
+[![Hand-built SVG](https://img.shields.io/badge/charts-hand--built%20SVG-12161d?style=for-the-badge)](docs/assets/kit.js)
 
 </div>
 
----
+The Toronto Tempo joined the WNBA in 2026 and went **11–33**. This repo pulls every game, shot and lineup from that season and turns them into five interactive pages. The goal is to explain why the season went the way it did, and what year two needs.
 
-## The 2026 season in five numbers
-
-| **11–33** | **1234** | **1.056 → 1.013** | **35–74** | **24** |
-|:---:|:---:|:---:|:---:|:---:|
-| Toronto's record in its expansion year | Final Elo, last in the WNBA and below the 2006 Sky and 2008 Dream | Expected vs actual points per shot. Good looks that didn't fall | Scoring runs of 8+ points, for vs against | Different starting lineups across 44 games |
+<img src="readme_art/out/by-the-numbers.png" alt="Tempo by the numbers" width="100%">
 
 ---
 
-## 01 · [The Expansion Class](https://jordanngo205.github.io/toronto-tempo-analytics/expansion-class/)
+## Every shot of the season
 
-> Golden State made year one look easy. Toronto found out how hard it is.
+<img src="readme_art/out/constellation.png" alt="Every shot of 2026 on a full court, made shots glowing" width="100%">
 
-This page compares the three newest franchises: Valkyries '25, Tempo '26 and Fire '26. The 2006 Sky and 2008 Dream are included for history. Elo ratings are built from every WNBA game since 2003, in the style of [Neil Paine](https://neilpaine.substack.com/t/basketball).
+Each dot is one field-goal attempt from a Tempo game, and the glowing dots are makes. Toronto attacks the right basket and its opponents attack the left. Both ends are crowded around the rim, and the opponent end is brighter: opponents made more of their shots than Toronto did.
 
-<img src="docs/assets/readme/elo.png" alt="Elo through year one" width="100%">
+---
 
-<table>
-<tr>
-<td width="50%"><img src="docs/assets/readme/fingerprint.png" alt="Team fingerprint"><br><sub><b>Same offense, very different defense.</b> Toronto's offense ranked about the same as Golden State's in year one. Its defense ranked last.</sub></td>
-<td width="50%"><img src="docs/assets/readme/hexmaps.png" alt="Hex shot maps"><br><sub><b>Toronto lived at the rim and died there.</b> Hex size is shot share and colour is efficiency vs league. A toggle switches to opponents' shots.</sub></td>
-</tr>
-</table>
+## The expansion race
 
-## 02 · [Shot Lab](https://jordanngo205.github.io/toronto-tempo-analytics/shot-lab/)
+The Tempo, the 2026 Portland Fire and the 2025 Golden State Valkyries all started at the same Elo rating, 1300. Golden State went 23–21 and made the playoffs in year one. Toronto finished last in the league.
 
-> Toronto got good looks. The shots didn't fall.
+<div align="center"><img src="readme_art/out/elo-race.gif" alt="Animated Elo race between the three expansion teams" width="90%"></div>
+
+## The season in a circle
 
 <table>
 <tr>
-<td width="50%"><img src="docs/assets/readme/shot-chart.png" alt="Shot chart"><br><sub><b>Pick a shooter.</b> Hex maps or every make and miss for each Tempo player, opponents, or the whole league.</sub></td>
-<td width="50%"><img src="docs/assets/readme/quality.png" alt="Shot quality vs shot making"><br><sub><b>Shot quality vs shot making</b> for every WNBA player with 150+ attempts. Most of Toronto's high-volume shooters fall below the line.</sub></td>
+<td width="55%"><img src="readme_art/out/season-ring.png" alt="Every Tempo game arranged in a circle"></td>
+<td width="45%">
+
+**44 games, one picture.** Each bar is one game, and the length of the bar is the final margin.
+
+- **9 of the 11 wins** came in May and June (top right).
+- After beating New York on July 12, Toronto won only once more: **82–79 over Portland** on August 21.
+- The biggest win was **125–97** over LA on June 25. The worst loss was **69–106** at home to New York on September 20.
+
+</td>
 </tr>
 </table>
 
-## 03 · [Rotation Lab](https://jordanngo205.github.io/toronto-tempo-analytics/rotation-lab/)
-
-> Who played, who played together, and how it went.
-
-<img src="docs/assets/readme/rotation-grid.png" alt="Rotation grid" width="100%">
-<sub>Every player in every game: minutes, starts, injuries and coach's decisions, with each final margin across the top.</sub>
+## Unknown Pressures
 
 <table>
 <tr>
-<td width="50%"><img src="docs/assets/readme/network.png" alt="Chemistry network"><br><sub><b>Chemistry network.</b> Edge width is minutes together and colour is plus-minus per 40.</sub></td>
-<td width="50%"><sub><b>Also on the page:</b><br>• Usage vs true shooting for the whole league, with any team overlaid on Toronto<br>• Every five-player lineup with 25+ minutes, ranked by net rating<br>• The best unit (+31.3) played only 36 minutes together</sub></td>
+<td width="50%"><img src="readme_art/out/ridgeline.png" alt="All 44 games as stacked margin lines, Joy Division style"></td>
+<td width="50%"><img src="readme_art/out/rotation-ring.png" alt="Rotation ring: minutes for every player in every game"></td>
 </tr>
-</table>
-
-## 04 · [Game Flow](https://jordanngo205.github.io/toronto-tempo-analytics/game-flow/)
-
-> Toronto spent most of 2026 chasing. It led for just 28% of game time.
-
-<img src="docs/assets/readme/game-grid.png" alt="The game grid" width="100%">
-<sub><b>The game grid.</b> Every minute of every game: navy when Toronto led and bordeaux when it trailed. Sort by date, final margin or pregame odds, and click a row to see that game's margin chart.</sub>
-
-<table>
 <tr>
-<td width="50%"><img src="docs/assets/readme/runs.png" alt="Scoring runs"><br><sub><b>The 8–0 problem.</b> Opponents had 74 runs of 8+ unanswered points. Toronto had 35.</sub></td>
-<td width="50%"><img src="docs/assets/readme/upsets.png" alt="Upsets and heartbreaks"><br><sub><b>Upsets and heartbreaks.</b> Pregame Elo odds vs final margin, with each game marked by the opponent's logo. Elo expected 13.4 wins, and Toronto got 11.</sub></td>
+<td><sub><b>Unknown Pressures.</b> Every game's score margin from tip-off to the final buzzer, stacked like the Joy Division album cover. Peaks mean Toronto was leading, and the 11 pink lines are wins. Most of the pink is near the top, in May and June.</sub></td>
+<td><sub><b>The rotation ring.</b> Each ring is a player and each slice is a game. Laura Juskaite, the innermost ring, played all 44 games. Brittney Sykes played only 17, and the ✕ marks show how much of the roster spent the season injured.</sub></td>
 </tr>
 </table>
 
-## 05 · [Game Center](https://jordanngo205.github.io/toronto-tempo-analytics/game-center/)
+## The card set
 
-> Pick a game. Get the full recap.
+<img src="readme_art/out/player-cards.png" alt="Trading cards for four Tempo players with mini shot charts" width="100%">
 
-<div align="center"><img src="docs/assets/readme/game-center.gif" alt="Game Center flipping through games" width="80%"></div>
+Each card's mini shot chart comes from that player's own 2026 shots: hex size shows where she shoots, and darker means more makes.
 
-Each of the 44 games has a scoreboard, line score, player of the game, game flow with scoring runs marked, both teams' shot charts (with first-half and second-half filters), key battles and full box scores. Each game has its own link, for example [`#g12`](https://jordanngo205.github.io/toronto-tempo-analytics/game-center/#g12).
+<img src="readme_art/out/shot-fans.png" alt="Shot fans: direction and distance of every shot for eight Tempo players" width="100%">
+
+**Shot fans** open from the basket. Each petal is a direction, its length is the share of a player's shots taken that way, and the colour shows the distance. Kia Nurse's fan is mostly blue, because 72% of her shots were threes. Nyara Sabally took nearly half of her shots at the rim.
+
+---
+
+## What's on the site
+
+| | Page | What you can do there |
+|:---:|---|---|
+| **01** | [**The Expansion Class**](https://jordanngo205.github.io/toronto-tempo-analytics/expansion-class/) | Compare the Tempo, Fire and Valkyries with Elo, the Four Factors, hex shot maps and roster experience. The 2006 Sky and 2008 Dream are included as history. |
+| **02** | [**Shot Lab**](https://jordanngo205.github.io/toronto-tempo-analytics/shot-lab/) | Pick any Tempo shooter and see every make and miss. Compare expected vs actual points per shot for every player in the league. |
+| **03** | [**Rotation Lab**](https://jordanngo205.github.io/toronto-tempo-analytics/rotation-lab/) | See who played in every game, a network of which pairs worked together, and lineup results. |
+| **04** | [**Game Flow**](https://jordanngo205.github.io/toronto-tempo-analytics/game-flow/) | See every minute of every game, every 8–0 run, and upsets measured against pregame odds. |
+| **05** | [**Game Center**](https://jordanngo205.github.io/toronto-tempo-analytics/game-center/) | Pick any of the 44 games for a full recap: game flow, shot charts and box scores. |
 
 ---
 
@@ -97,34 +87,34 @@ Each of the 44 games has a scoreboard, line score, player of the game, game flow
 
 ```mermaid
 flowchart LR
-    A[sportsdataverse<br/>ESPN pbp · box scores<br/>WNBA Stats lineups] -->|data/pull.py| B[(data/raw<br/>parquet)]
+    A[sportsdataverse<br/>ESPN play-by-play<br/>box scores · lineups] -->|data/pull.py| B[(data/raw<br/>parquet files)]
     B --> C1[01 build.py<br/>Elo · Four Factors]
-    B --> C2[02 build.py<br/>shot zones · xPPS]
-    B --> C3[03 build.py<br/>rotations · lineups]
+    B --> C2[02 build.py<br/>shot zones]
+    B --> C3[03 build.py<br/>rotations]
     B --> C4[04 build.py<br/>runs · game grid]
-    B --> C5[05 build.py<br/>per-game recaps]
+    B --> C5[05 build.py<br/>game recaps]
     E[elo.py · flow.py<br/>common.py] -.-> C1 & C4 & C5
-    C1 & C2 & C3 & C4 & C5 -->|lab.py| D[docs/<br/>static HTML + inline JSON]
-    K[assets/kit.js<br/>SVG chart kit] -.-> D
-    D -->|GitHub Pages| W((Live site))
+    C1 & C2 & C3 & C4 & C5 -->|lab.py| D[docs/<br/>HTML pages]
+    K[docs/assets/kit.js<br/>my SVG chart helpers] -.-> D
+    D -->|GitHub Pages| W((live site))
+    B --> R[readme_art/make_art.py] --> P[README graphics]
 ```
 
-- **No chart libraries.** Every chart is SVG drawn by a small shared kit ([`docs/assets/kit.js`](docs/assets/kit.js)) that covers scales, hex courts, tooltips and label placement.
-- **Data inside each page.** Each build script writes its data as JSON inside the page, so the site needs no server and the pages also work when opened from a local folder.
-- **Official team colours and logos.** The palette is Tempo bordeaux and navy, Valkyries violet and Fire pink. It was checked for colour-blind separation, with lighter versions for dark mode.
-- **Light and dark themes**, and layouts that work on phones.
+- **Python** pulls the data, does all the math, and saves the results as JSON inside each page.
+- **JavaScript** draws every chart as SVG by hand, without a chart library. The shared helpers are in [`docs/assets/kit.js`](docs/assets/kit.js).
+- **The README graphics** are built from the same data by [`readme_art/make_art.py`](readme_art/make_art.py): the banner, by-the-numbers poster, Elo race GIF, shot constellation, season ring, Unknown Pressures ridgeline, rotation ring, card set and shot fans. Each one is a small HTML poster screenshotted with headless Chrome, except the GIF, which matplotlib renders.
+- Everything uses the official team colours: Tempo bordeaux and navy, Valkyries violet and Fire pink.
 
 ## Methods
 
 | Metric | How it's calculated |
 |---|---|
-| **Elo** | Every WNBA game since 2003: K = 20, 80-point home edge, margin-of-victory multiplier, 25% regression to 1500 between seasons, new franchises start at 1300 ([`elo.py`](elo.py)) |
-| **Possessions** | FGA − ORB + TOV + 0.44·FTA |
-| **Expected pts/shot** | League points per shot in the zone of each attempt: rim, short paint, three midrange zones, corner 3s and three above-the-break zones |
+| **Elo** | Every WNBA game since 2003: K = 20, 80-point home edge, margin-of-victory multiplier, 25% regression to 1500 between seasons, new teams start at 1300 ([`elo.py`](elo.py)) |
+| **Possessions** | FGA − ORB + TOV + 0.44 × FTA |
+| **Expected pts/shot** | League points per shot for the zone each shot came from |
 | **Shot making** | Actual points per shot minus expected |
-| **Usage** | (FGA + 0.44·FTA + TOV) ÷ team plays while the player was on the court |
-| **Runs** | Consecutive points by one team with no opposing points between them, free throws included |
-| **Clutch** | Within 5 points at any point in the last 5 minutes |
+| **Usage** | (FGA + 0.44 × FTA + TOV) ÷ team plays while the player was on the court |
+| **Runs** | Points in a row by one team with no opposing points between them |
 
 ## Run it yourself
 
@@ -132,9 +122,9 @@ flowchart LR
 git clone https://github.com/jordanngo205/toronto-tempo-analytics.git
 cd toronto-tempo-analytics
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python data/pull.py              # 2025–26 data + 2003–24 history → data/raw/*.parquet
+.venv/bin/python data/pull.py              # download 2025–26 data + 2003–24 history
 .venv/bin/python build_site.py             # rebuild every page in docs/
-.venv/bin/python build_site.py --shots     # also refresh screenshots (needs Google Chrome)
+.venv/bin/python readme_art/make_art.py    # rebuild the README graphics (needs Google Chrome)
 open docs/index.html
 ```
 
@@ -142,41 +132,25 @@ open docs/index.html
 <summary><b>Repo layout</b></summary>
 
 ```
-├── 01_expansion_class/   build.py · page.html       → docs/expansion-class/
-├── 02_shot_diet/         build.py · page.html       → docs/shot-lab/        (+ analysis.py static charts)
-├── 03_player_impact/     build.py · page.html       → docs/rotation-lab/    (+ analysis.py static charts)
-├── 04_close_games/       build.py · page.html       → docs/game-flow/       (+ analysis.py static charts)
-├── 05_game_recap/        build.py · page.html       → docs/game-center/     (+ recap.py PNG cards)
-├── data/pull.py          sportsdataverse → data/raw/ (gitignored)
+├── 01_expansion_class/   build.py · page.html  → docs/expansion-class/
+├── 02_shot_diet/         build.py · page.html  → docs/shot-lab/      (+ analysis.py: static PNG charts)
+├── 03_player_impact/     build.py · page.html  → docs/rotation-lab/  (+ analysis.py)
+├── 04_close_games/       build.py · page.html  → docs/game-flow/     (+ analysis.py)
+├── 05_game_recap/        build.py · page.html  → docs/game-center/   (+ recap.py: PNG recap cards)
+├── readme_art/           make_art.py → out/ (the graphics in this README)
+├── data/pull.py          sportsdataverse → data/raw/ (not committed)
 ├── common.py · elo.py · flow.py · lab.py · build_site.py · home.html
-├── assets/logos/         team logos
+├── assets/               team logos and player headshots
 └── docs/                 the GitHub Pages site
 ```
-</details>
-
-<details>
-<summary><b>Static chart gallery (matplotlib)</b></summary>
-
-Each project folder also has an `analysis.py` that renders static PNGs for slides or social posts.
-
-<table>
-<tr>
-<td><img src="02_shot_diet/player_shot_mix.png" alt="Player shot mix"></td>
-<td><img src="03_player_impact/usage_vs_ts.png" alt="Usage vs TS"></td>
-</tr>
-<tr>
-<td><img src="03_player_impact/pair_chemistry.png" alt="Pair chemistry"></td>
-<td><img src="04_close_games/margin_worms.png" alt="Margin worms"></td>
-</tr>
-</table>
 </details>
 
 ---
 
 <div align="center">
 
-Built by **Jordan Ngo**. Data from [sportsdataverse](https://py.sportsdataverse.org/). Inspired by [Rise of the Valkyries](https://riseofthevalkyries.substack.com/) and [Neil Paine](https://neilpaine.substack.com/t/basketball).
+Built by **Jordan Ngo** · data from [sportsdataverse](https://py.sportsdataverse.org/) · inspired by [Rise of the Valkyries](https://riseofthevalkyries.substack.com/) and [Neil Paine](https://neilpaine.substack.com/t/basketball)
 
-<sub>Unofficial fan project. Team names and logos belong to their owners.</sub>
+<sub>Unofficial fan project. Team names, logos and player photos belong to their owners.</sub>
 
 </div>

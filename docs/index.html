@@ -58,10 +58,15 @@
 <footer class="footer"><span>Built by Jordan Ngo with sportsdataverse (ESPN play-by-play, box scores, WNBA Stats).</span><a href="https://github.com/jordanngo205/toronto-tempo-analytics">Code on GitHub</a><span>Inspired by Rise of the Valkyries and Neil Paine.</span></footer>
 <script id="data" type="application/json">{"expansion-class":{"tor_elo":1234,"por_elo":1369,"gs_elo":1472,"tor_def_rank":15},"shot-lab":{"xpps":1.056,"pps":1.013,"lg_xpps":1.035,"rim":0.303,"opp_rim":0.336},"rotation-lab":{"players":20,"lineups":24,"best":31.3},"game-flow":{"lead":0.28395454545454546,"runs_for":35,"runs_against":74,"xwins":13.399,"wins":11},"game-center":{"games":44,"record":"11-33"}}</script>
 <script>
+// headline numbers that each page's build.py saved (docs/assets/summary.json)
 const S = JSON.parse(document.getElementById("data").textContent);
+// one short name per page
 const e = S["expansion-class"], sh = S["shot-lab"], r = S["rotation-lab"], f = S["game-flow"], g = S["game-center"];
+// 0.28 -> "28%"
 const pct = v => Math.round(v * 100) + "%";
+// intro sentence under the title
 document.getElementById("dek").innerHTML = `The Tempo went <strong>${g.record}</strong> in their expansion season. Five interactive pages show why: Elo ratings, shot charts, rotations, game flow and a recap for every game.`;
+// one tile per page: link, small label, title, description, big number and caption. "wide" = full-width tile
 const tiles = [
   { slug: "expansion-class", k: "01 · Elo & Four Factors", t: "The Expansion Class", wide: true,
     p: "Valkyries '25, Tempo '26 and Fire '26 compared, with the 2006 Sky and 2008 Dream for history. Elo tracks, team fingerprints, hex shot maps and roster-building.",
@@ -75,6 +80,7 @@ const tiles = [
   { slug: "game-center", k: "05 · Recaps", t: "Game Center", p: "Pick any of the 44 games for the scoreboard, game flow, both shot charts, key battles and full box scores.",
     v: g.games, l: "Games with a full recap" },
 ];
+// build the tiles. Each one is a link with a screenshot of the page on top
 document.getElementById("tiles").innerHTML = tiles.map(x => `<a class="tile ${x.wide ? "wide" : ""}" href="${x.slug}/">
   <div class="thumb"><img src="assets/shots/${x.slug}.png" alt="${x.t} preview" loading="lazy"></div>
   <div class="body"><span class="k">${x.k}</span><h2>${x.t}</h2><p>${x.p}</p>

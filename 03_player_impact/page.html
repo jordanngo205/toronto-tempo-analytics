@@ -76,20 +76,28 @@
 <script id="data" type="application/json">/*DATA*/</script>
 <script src="../assets/kit.js"></script>
 <script>
+// read the data that build.py put into the page
 const D = JSON.parse(document.getElementById("data").textContent);
+// shortcuts to the helpers in kit.js
 const { el, txt, scale, fmt, pct, hover } = K;
+// G = the 44 games, R = player names (most minutes first), P = each player's season numbers
 const G = D.games, R = D.roster, P = D.players;
+// "Marina Mabrey" -> "Mabrey"
 const last = n => n.split(" ").slice(-1)[0];
 
 /* hero */
 (function () {
+  // count different starting fives: a Set only keeps unique values
   const starts = new Set(), injured = { n: 0 };
   G.forEach((g, i) => {
+    // the players who started game i, sorted and joined into one string like "A|B|C|D|E"
     const five = R.filter(p => D.grid[p][i] && D.grid[p][i][0] !== "dnp" && D.grid[p][i][1] === 1).sort().join("|");
     starts.add(five);
   });
+  // count games missed for anything other than a coach's decision
   R.forEach(p => D.grid[p].forEach(c => { if (c && c[0] === "dnp" && !/coach/i.test(c[1])) injured.n++; }));
   const wins = G.filter(g => g.pf > g.pa).length;
+  // intro sentence and the four stat boxes
   document.getElementById("dek").innerHTML = `Toronto used <strong>${R.length} players</strong> and <strong>${starts.size} different starting lineups</strong> in 44 games. Players missed ${injured.n} games through injury, illness or personal reasons.`;
   document.getElementById("tiles").innerHTML = [[R.length, "Players used"], [starts.size, "Starting lineups"], [injured.n, "Games missed (not coach\u2019s call)"], [`${wins}–${G.length - wins}`, "Record"]]
     .map(([v, k]) => `<div class="stat"><span class="v">${v}</span><span class="k">${k}</span></div>`).join("");
@@ -98,24 +106,32 @@ const last = n => n.split(" ").slice(-1)[0];
 /* 01 heatmap */
 (function () {
   const s = document.getElementById("heat");
+  // layout: names on the left, then one 19px-wide column per game and one 22px-tall row per player
   const left = 150, cw = 19, ch = 22, top = 70, W = left + G.length * cw + 70;
   s.setAttribute("viewBox", `0 0 ${W} ${top + R.length * ch + 30}`);
   // margin bars
+  // bar height scale for the margin bars across the top (30-point margin = full height)
   const ym = scale(0, 30, 0, 26), base = 40;
   el("line", { x1: left, x2: left + G.length * cw, y1: base, y2: base, class: "gridline" }, s);
   txt(s, left - 8, base + 4, "Margin", "lbl", { "text-anchor": "end" });
   G.forEach((g, i) => {
+    // final margin; every bar is at least 1.5px tall so close games still show up
     const m = g.pf - g.pa, h = Math.max(1.5, ym(Math.min(30, Math.abs(m))));
     const r = el("rect", { x: left + i * cw + 2, y: m > 0 ? base - h : base, width: cw - 4, height: h, rx: 1.5, fill: m > 0 ? "var(--good)" : "var(--bad)", opacity: m > 0 ? 1 : 0.55 }, s);
     hover(r, `<b>Game ${g.n} · ${g.date}</b><div>${g.home ? "vs" : "at"} ${g.opp}</div><div class="num">${g.pf}–${g.pa} (${m > 0 ? "W" : "L"} ${fmt(m, 0)})</div>`);
+    // game number labels on games 1, 5, 10, 15...
     if (g.n % 5 === 0 || g.n === 1) txt(s, left + i * cw + cw / 2, top - 4, g.n, "lbl", { "text-anchor": "middle", style: "font-size:9px" });
   });
+  // one row per player
   R.forEach((p, r) => {
     const y = top + r * ch, st = P[p];
     txt(s, left - 8, y + ch / 2 + 4, p, "lbl-body", { "text-anchor": "end", style: "font-size:12px" });
+    // one cell per game. c is null (not on the team yet), ["dnp", reason], or [minutes, started, points, +/-]
     D.grid[p].forEach((c, i) => {
       const x = left + i * cw;
+      // not on the roster: empty outlined box
       if (!c) { el("rect", { x: x + 1, y: y + 1, width: cw - 2, height: ch - 2, fill: "none", stroke: "var(--grid)" }, s); return; }
+      // did not play: a small dot for a coach's decision, a red X for injury/illness/personal
       if (c[0] === "dnp") {
         const coach = /coach/i.test(c[1]);
         const n = coach ? el("circle", { cx: x + cw / 2, cy: y + ch / 2, r: 1.8, fill: "var(--ink-3)" }, s)
@@ -124,11 +140,14 @@ const last = n => n.split(" ").slice(-1)[0];
         hover(hit, `<b>${p}</b><div>Game ${G[i].n} · ${G[i].date} ${G[i].home ? "vs" : "at"} ${G[i].opp}</div><div>Did not play: ${c[1] || "—"}</div>`);
         return;
       }
+      // played: darker cell = more minutes (36+ minutes is the darkest)
       const [min, start, pts, pm] = c;
       const r2 = el("rect", { x: x + 1, y: y + 1, width: cw - 2, height: ch - 2, rx: 2, fill: K.seq(min / 36) }, s);
+      // navy strip across the top of the cell = started the game
       if (start) el("rect", { x: x + 1, y: y + 1, width: cw - 2, height: 3, fill: "var(--tor-2)" }, s);
       hover(r2, `<b>${p}</b><div>Game ${G[i].n} · ${G[i].date} ${G[i].home ? "vs" : "at"} ${G[i].opp} (${G[i].pf > G[i].pa ? "W" : "L"})</div><div class="num">${min} min${start ? " · started" : ""} · ${pts} pts · ${fmt(pm, 0)}</div>`);
     });
+    // minutes per game at the end of each row
     if (st) txt(s, left + G.length * cw + 8, y + ch / 2 + 4, `${st.mpg} mpg`, "lbl", { style: "font-size:10px" });
   });
 })();
@@ -136,46 +155,58 @@ const last = n => n.split(" ").slice(-1)[0];
 /* 02 network */
 (function () {
   const s = document.getElementById("net");
+  // players with 300+ total minutes become circles (max 11)
   const nodes = R.filter(p => P[p] && P[p].gp * P[p].mpg >= 300).slice(0, 11);
+  // place the players evenly around a circle, starting at the top
   const cx = 280, cy = 255, rad = 190;
   const pos = {};
   nodes.forEach((p, i) => { const a = -Math.PI / 2 + i / nodes.length * 2 * Math.PI; pos[p] = [cx + rad * Math.cos(a), cy + rad * Math.sin(a), a]; });
+  // only keep pairs where both players are on the circle
   const pairs = D.pairs.filter(e => pos[e.a] && pos[e.b]);
   const maxMin = Math.max(...pairs.map(e => e.min));
   const edgeG = el("g", {}, s), nodeG = el("g", {}, s);
+  // draw a curved line for every pair
   const edgeEls = pairs.map(e => {
     const [x1, y1] = pos[e.a], [x2, y2] = pos[e.b];
+    // Q makes a curve that bends slightly toward the middle. Width = minutes together, colour = +/- per 40
     const path = el("path", { d: `M${x1} ${y1} Q${cx + (x1 + x2 - 2 * cx) * 0.15} ${cy + (y1 + y2 - 2 * cy) * 0.15} ${x2} ${y2}`, fill: "none",
       stroke: K.div(e.pm40 / 20, "var(--bad)", "var(--good)"), "stroke-width": 1 + 9 * Math.sqrt(e.min / maxMin), "stroke-linecap": "round", opacity: 0.85 }, edgeG);
     hover(path, `<b>${last(e.a)} + ${last(e.b)}</b><div class="num">${Math.round(e.min)} min together · ${fmt(e.pm40)} per 40</div>`);
     return { e, path };
   });
   const side = document.getElementById("net-side");
+  // who shows up in the most pairs that outscored opponents
   const posLeader = () => {
     const c = {};
     pairs.filter(e => e.pm40 > 0).forEach(e => { c[e.a] = (c[e.a] || 0) + 1; c[e.b] = (c[e.b] || 0) + 1; });
     const top = Object.entries(c).sort((a, b) => b[1] - a[1])[0];
     return top ? `<strong>${top[0]}</strong> (${top[1]})` : "nobody";
   };
+  // when a player is picked, fade every line that doesn't involve her and list her partners
   function focus(p) {
     edgeEls.forEach(({ e, path }) => path.setAttribute("opacity", !p || e.a === p || e.b === p ? 0.9 : 0.08));
     if (!p) { side.innerHTML = `<div class="eyebrow">Tap a player</div><div class="who">The network</div><p class="lede" style="font-size:.9rem">${pairs.length} pairs with 20+ minutes together, and only ${pairs.filter(e => e.pm40 > 0).length} outscored opponents. The player in the most positive pairs is ${posLeader()}.</p>`; return; }
+    // her pairs, best +/- first. "o" is the other player in the pair
     const mine = pairs.filter(e => e.a === p || e.b === p).map(e => ({ o: e.a === p ? e.b : e.a, ...e })).sort((a, b) => b.pm40 - a.pm40);
     const st = P[p];
     side.innerHTML = `<div class="eyebrow">${st.gp} games · ${st.mpg} mpg · ${fmt(st.pm40)} per 40 overall</div><div class="who">${p}</div>
       <div class="eyebrow" style="margin-top:6px">Partners, best to worst (per 40 together)</div>
       ${mine.map(m => `<div class="partner"><span>${m.o}</span><span class="num">${Math.round(m.min)} min</span><b class="num" style="color:${m.pm40 >= 0 ? "var(--good)" : "var(--bad)"}">${fmt(m.pm40)}</b></div>`).join("")}`;
   }
+  // draw each player: bigger circle = more minutes per game, name outside the circle
   nodes.forEach(p => {
     const [x, y, a] = pos[p], st = P[p];
     const g = el("g", { tabindex: 0, role: "button", "aria-label": p, style: "cursor:pointer" }, nodeG);
     el("circle", { cx: x, cy: y, r: 7 + st.mpg / 3, fill: "var(--tor)", stroke: "var(--panel)", "stroke-width": 3 }, g);
+    // push the label outward from the centre, and line it up left/right depending on which side it's on
     const lx = x + Math.cos(a) * (20 + st.mpg / 3), ly = y + Math.sin(a) * (20 + st.mpg / 3) + 4;
     txt(g, lx, ly, last(p), "lbl-ink", { "text-anchor": Math.cos(a) > 0.3 ? "start" : Math.cos(a) < -0.3 ? "end" : "middle", style: "font-size:13px" });
+    // hover, keyboard focus or tap all pick the player
     g.addEventListener("pointerenter", () => focus(p));
     g.addEventListener("focus", () => focus(p));
     g.addEventListener("click", () => focus(p));
   });
+  // mouse leaves the chart: go back to showing everything
   s.addEventListener("pointerleave", () => focus(null));
   focus(null);
 })();
@@ -183,30 +214,38 @@ const last = n => n.split(" ").slice(-1)[0];
 /* 03 usage vs TS */
 (function () {
   const s = document.getElementById("usg"), Lg = D.league, sel = document.getElementById("team-pick");
+  // dropdown of every other team (Portland picked to start)
   const teams = [...new Set(Lg.map(p => p.t))].filter(t => t !== "TOR").sort();
   sel.innerHTML = `<option value="">Nobody (Tempo only)</option>` + teams.map(t => `<option value="${t}"${t === "POR" ? " selected" : ""}>${t}</option>`).join("");
+  // axes: usage 5%-36% across, true shooting 38%-70% up
   const W = 640, H = 420, m = { l: 48, r: 16, t: 14, b: 40 };
   const x = scale(0.05, 0.36, m.l, W - m.r), y = scale(0.38, 0.70, H - m.b, m.t);
   for (let v = 0.40; v <= 0.701; v += 0.05) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: "gridline" }, s); txt(s, m.l - 6, y(v) + 4, pct(v, 0), "lbl", { "text-anchor": "end" }); }
   for (let v = 0.05; v <= 0.351; v += 0.05) txt(s, x(v), H - m.b + 16, pct(v, 0), "lbl", { "text-anchor": "middle" });
   txt(s, (m.l + W - m.r) / 2, H - 4, "Usage rate →", "lbl", { "text-anchor": "middle" });
+  // dashed line at league average true shooting
   el("line", { x1: m.l, x2: W - m.r, y1: y(D.lg_ts), y2: y(D.lg_ts), stroke: "var(--ink-3)", "stroke-dasharray": "4 3" }, s);
   txt(s, W - m.r, y(D.lg_ts) - 5, "league TS%", "lbl", { "text-anchor": "end" });
   txt(s, W - m.r - 4, m.t + 10, "High usage, efficient", "lbl", { "text-anchor": "end" });
   const layer = el("g", {}, s);
+  // Portland and Golden State get their team colours, other teams use dark grey
   const color = { POR: "var(--por)", GS: "var(--gs)" };
+  // redraw all the dots whenever the dropdown changes
   function draw() {
     layer.replaceChildren();
     const cmp = sel.value;
     const labs = [];
+    // draw order: everyone else first, then the picked team, then Toronto on top
     const ord = [...Lg].sort((a, b) => (a.t === "TOR") * 2 + (a.t === cmp) - ((b.t === "TOR") * 2 + (b.t === cmp)));
     for (const p of ord) {
       const tor = p.t === "TOR", on = p.t === cmp;
+      // bigger dot = more minutes
       const r = 3 + Math.sqrt(p.min) / 6;
       const c = el("circle", { cx: x(K.clamp(p.usg, 0.05, 0.36)), cy: y(K.clamp(p.ts, 0.38, 0.70)), r, fill: tor ? "var(--tor)" : on ? (color[cmp] || "var(--ink-2)") : "var(--hist)", opacity: tor || on ? 0.95 : 0.25, stroke: tor || on ? "var(--panel)" : "none", "stroke-width": 1.5 }, layer);
       hover(c, `<b>${p.n}</b><div>${p.t} · ${p.min} min · ${p.ppg} ppg</div><div class="num">Usage ${pct(p.usg)} · TS ${pct(p.ts)}</div>`);
       if (tor || on) labs.push({ x: x(K.clamp(p.usg, 0.05, 0.36)) + r + 3, y: y(K.clamp(p.ts, 0.38, 0.70)) + 4, w: 70, s: last(p.n), c: tor ? "var(--ink)" : (color[cmp] || "var(--ink-2)") });
     }
+    // spread the labels out so they don't overlap, then draw them
     for (const l of K.declutter(labs)) txt(layer, l.x, l.y, l.s, "lbl-ink", { style: `font-size:11px;fill:${l.c}` });
   }
   sel.addEventListener("change", draw);
@@ -216,19 +255,24 @@ const last = n => n.split(" ").slice(-1)[0];
 /* 04 lineups */
 (function () {
   const box = document.getElementById("lineups"), LU = D.lineups;
+  // same scale both sides of zero so good and bad bars compare fairly
   const lim = Math.max(...LU.map(l => Math.abs(l.net)));
   const x = scale(-lim, lim, 10, 250);
+  // one row per lineup: player names on the left, a little SVG bar chart on the right
   box.innerHTML = `<div class="eyebrow" style="margin-bottom:6px">Lineups with 25+ minutes · net rating = points per 100 possessions minus points allowed per 100</div>` + LU.map((l, i) => `
     <div class="lu"><div><div class="names">${l.p.map(n => `<span>${last(n)}</span>`).join("")}</div>
       <div class="meta">${l.min} min · ${l.gp} games · ORtg ${l.ortg.toFixed(1)} · DRtg ${l.drtg.toFixed(1)}</div></div>
       <svg viewBox="0 0 260 30" id="lu${i}"></svg></div>`).join("");
+  // draw each lineup's net rating bar from the zero line (navy = good, bordeaux = bad)
   LU.forEach((l, i) => {
     const s = document.getElementById("lu" + i);
     el("line", { x1: x(0), x2: x(0), y1: 2, y2: 28, stroke: "var(--ink-3)" }, s);
     el("rect", { x: Math.min(x(0), x(l.net)), y: 8, width: Math.abs(x(l.net) - x(0)), height: 14, rx: 3, fill: l.net >= 0 ? "var(--good)" : "var(--bad)" }, s);
     txt(s, l.net >= 0 ? x(l.net) + 4 : x(l.net) - 4, 19, fmt(l.net), "lbl", { "text-anchor": l.net >= 0 ? "start" : "end", style: "fill:var(--ink)" });
   });
+  // lineups are sorted best to worst already. "most" = the lineup that played the most minutes
   const best = LU[0], worst = LU[LU.length - 1], most = [...LU].sort((a, b) => b.min - a.min)[0];
+  // the paragraph also mentions which players from the best lineup missed lots of games
   document.getElementById("lu-lede").innerHTML = `The most-used unit (${most.p.map(last).join(", ")}) played just ${Math.round(most.min)} minutes all season and was outscored by ${Math.abs(most.net).toFixed(1)} per 100. The best one, ${best.p.map(last).join(", ")}, finished <strong>${fmt(best.net)}</strong> in ${Math.round(best.min)} minutes. ${best.p.filter(n => P[n] && P[n].gp < 25).map(n => `${last(n)} played only ${P[n].gp} games`).join(" and ") || "It was used sparingly"}, so the group rarely got a chance.`;
 })();
 </script>

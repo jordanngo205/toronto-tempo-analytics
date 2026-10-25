@@ -104,69 +104,93 @@ td.hl { font-weight: 600; color: var(--tor); }
 <script id="data" type="application/json">/*DATA*/</script>
 <script src="../assets/kit.js"></script>
 <script>
+// read the data that build.py put into the page
 const D = JSON.parse(document.getElementById("data").textContent);
+// shortcuts to the helpers in kit.js
 const { el, txt, scale, fmt, pct, hover } = K;
 const G = D.games;
+// cur = the game being shown, half = which shots to show, boxSide = whose box score is showing
 let cur = G[G.length - 1], half = "all", boxSide = "tor";
+// true if Toronto won
 const win = g => g.pf > g.pa;
+// turn "seconds since tip-off" into a game clock like "Q3 4:12" (overtime periods are 5 minutes)
 const mmss = t => { const p = Math.floor(t / 600) + 1; const s = t >= 2400 ? 300 - (t - 2400) % 300 : 600 - t % 600; return (t >= 2400 ? "OT " : "Q" + Math.min(4, p) + " ") + Math.floor(s / 60) + ":" + String(Math.round(s % 60)).padStart(2, "0"); };
 
 /* strip */
+// the row of 44 buttons at the top: opponent logo, "@" for away games, coloured bar for W/L
 const strip = document.getElementById("strip");
 strip.innerHTML = G.map(g => `<button type="button" data-n="${g.n}" aria-pressed="false" title="${g.short} ${g.home ? "vs" : "at"} ${g.opp}: ${win(g) ? "W" : "L"} ${g.pf}-${g.pa}"><img src="${K.LOGO(g.opp)}" alt="${g.opp}">${g.home ? "" : "@"}${g.opp}<i style="background:${win(g) ? "var(--good)" : "var(--bad)"};opacity:${win(g) ? 1 : 0.6}"></i></button>`).join("");
+// clicking a game button loads that game. +b.dataset.n turns the text "12" into the number 12
 strip.addEventListener("click", e => { const b = e.target.closest("button"); if (b) select(+b.dataset.n, true); });
+// full game / 1st half / 2nd half buttons only redraw the shot charts
 K.toggle(document.getElementById("half"), v => { half = v; courts(); });
 K.toggle(document.getElementById("boxteam"), v => { boxSide = v; boxScore(); });
 
+// load a game: highlight its button, update the link (#g12), and redraw every section
 function select(n, push) {
   cur = G.find(g => g.n === n) || cur;
   [...strip.children].forEach(b => b.setAttribute("aria-pressed", +b.dataset.n === cur.n));
+  // replaceState changes the link without reloading. try/catch because some viewers block it
   if (push) try { history.replaceState(null, "", "#g" + cur.n); } catch (e) {}
   board(); lineScore(); potg(); flowChart(); courts(); battles(); boxScore();
 }
 
+// the scoreboard. The home team goes on the right, like a TV scoreboard
 function board() {
   const g = cur, w = win(g);
   const tor = `<div class="side">${K.logo("TOR", "logo lg")}<div><div class="tname">Toronto Tempo</div><div class="muted num" style="font-size:.8rem">${g.rec} after this game</div></div><span class="pts ${w ? "" : "lose"} num">${g.pf}</span></div>`;
   const opp = `<div class="side r"><span class="pts ${w ? "lose" : ""} num">${g.pa}</span><div><div class="tname">${g.opp_name}</div><div class="muted" style="font-size:.8rem">${g.home ? "at Toronto" : "home"}</div></div>${K.logo(g.opp, "logo lg")}</div>`;
   const mid = `<div class="mid"><span class="pill" style="background:${w ? "var(--good)" : "var(--bad)"}">${w ? "Win" : "Loss"}${g.ot ? " · OT" : ""}</span><span class="eyebrow">${g.date}</span><span class="muted" style="font-size:.78rem">Pregame odds ${pct(g.p, 0)}</span></div>`;
+  // if Toronto was home, swap the two sides around
   document.getElementById("board").innerHTML = g.home ? opp.replace('class="side r"', 'class="side"') + mid + tor.replace('class="side"', 'class="side r"') : tor + mid + opp;
   document.getElementById("opp-btn").textContent = g.opp;
 }
 
+// line score table: points per quarter. The team that won each quarter is highlighted
 function lineScore() {
   const g = cur, L = g.line, n = L.tor.length;
+  // column headings: Q1-Q4, then OT (or OT1, OT2 if there was more than one)
   const hd = Array.from({ length: n }, (_, i) => i < 4 ? "Q" + (i + 1) : "OT" + (n > 5 ? i - 3 : ""));
   const row = (ab, arr, tot, other) => `<tr><td>${K.logo(ab)} ${ab}</td>${arr.map((v, i) => `<td class="${v > other[i] ? "hl" : ""}">${v}</td>`).join("")}<td><b>${tot}</b></td></tr>`;
   document.getElementById("linescore").innerHTML = `<tr><th>Team</th>${hd.map(h => `<th>${h}</th>`).join("")}<th>Final</th></tr>` +
     row("TOR", L.tor, g.pf, L.opp) + row(g.opp, L.opp, g.pa, L.tor);
 }
 
+// player of the game = highest Game Score from either team (r[16] is the game score)
 function potg() {
   const all = [...cur.box.tor.map(r => [...r, "TOR"]), ...cur.box.opp.map(r => [...r, cur.opp])].sort((a, b) => b[16] - a[16]);
+  // also find the best Tempo player, to show if the overall best was on the other team
   const best = all[0], bestT = cur.box.tor.slice().sort((a, b) => b[16] - a[16])[0];
+  // stat line from the box score row (see build.py for what each position means)
   const line = r => `${r[3]} pts · ${r[4]} reb · ${r[5]} ast · ${r[9]}/${r[10]} FG · ${r[11]}/${r[12]} 3P · ${fmt(r[15], 0)}`;
   document.getElementById("potg").innerHTML = `<div class="eyebrow" style="grid-column:1/-1">Player of the game (Game Score)</div>
     ${K.logo(best[17], "logo lg")}<div><div class="big">${best[0]}</div><div class="line">${line(best)} · GmSc ${best[16]}</div></div>
     ${best[17] !== "TOR" ? `<div class="eyebrow" style="grid-column:1/-1;margin-top:6px">Top Tempo</div>${K.logo("TOR")}<div><b>${bestT[0]}</b><div class="line">${line(bestT)} · GmSc ${bestT[16]}</div></div>` : ""}`;
 }
 
+// game flow: Toronto's margin through the game, with scoring runs shaded
 function flowChart() {
   const s = document.getElementById("flow"), g = cur;
   s.replaceChildren();
   const W = 640, H = 280, m = { l: 34, r: 10, t: 12, b: 26 };
   const end = Math.max(2400, g.steps[g.steps.length - 1][0]);
+  // y axis goes a little past the biggest lead/deficit, rounded to 5
   const mx = Math.max(...g.steps.map(p => Math.abs(p[1])), 10), lim = Math.ceil(mx / 5) * 5 + 2;
   const x = scale(0, end, m.l, W - m.r), y = scale(-lim, lim, H - m.b, m.t);
+  // grid lines every 5 points
   for (let v = -lim + (lim % 5); v <= lim; v += 5) if (v % 5 === 0) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v ? "gridline" : "zero" }, s); txt(s, m.l - 6, y(v) + 4, v > 0 ? "+" + v : v, "lbl", { "text-anchor": "end" }); }
+  // quarter lines (plus OT if needed)
   const marks = [["Tip", 0], ["Q2", 600], ["Half", 1200], ["Q4", 1800], ["End", 2400]]; if (end > 2400) marks.push(["OT", 2700]);
   marks.forEach(([l, t]) => { el("line", { x1: x(t), x2: x(t), y1: m.t, y2: H - m.b, class: "gridline" }, s); txt(s, x(t), H - 8, l, "lbl", { "text-anchor": "middle" }); });
+  // shade each run of 8+ points and write the run (e.g. "10-0") at the top or bottom
   for (const r of g.runs) {
     const rect = el("rect", { x: x(r.t0), y: m.t, width: Math.max(3, x(r.t1) - x(r.t0)), height: H - m.t - m.b, fill: r.team === "TOR" ? "var(--good)" : "var(--bad)", opacity: 0.13 }, s);
     txt(s, (x(r.t0) + x(r.t1)) / 2, r.team === "TOR" ? m.t + 12 : H - m.b - 6, `${r.pts}-0`, "lbl", { "text-anchor": "middle", style: `fill:${r.team === "TOR" ? "var(--good)" : "var(--bad)"};font-weight:500` });
     hover(rect, `<b>${r.pts}–0 ${r.team === "TOR" ? "Tempo" : g.opp} run</b><div class="num">${mmss(r.t0)} → ${mmss(r.t1)}</div>`);
   }
+  // staircase line of the margin (the score only changes on scoring plays)
   const path = g.steps.map((p, i) => (i ? `H${x(p[0]).toFixed(1)}V${y(p[1]).toFixed(1)}` : `M${x(p[0])} ${y(p[1])}`)).join("");
+  // fill above zero navy and below zero bordeaux: draw the same area twice and clip it to the top / bottom half
   const id = "clip" + g.n;
   const defs = el("defs", {}, s);
   const cpUp = el("clipPath", { id: id + "u" }, defs); el("rect", { x: 0, y: 0, width: W, height: y(0) }, cpUp);
@@ -175,15 +199,18 @@ function flowChart() {
   el("path", { d: area, fill: "var(--good)", opacity: 0.35, "clip-path": `url(#${id}u)` }, s);
   el("path", { d: area, fill: "var(--bad)", opacity: 0.35, "clip-path": `url(#${id}d)` }, s);
   el("path", { d: path, fill: "none", stroke: "var(--ink)", "stroke-width": 1.6 }, s);
+  // hover: a dot follows the line and the tooltip shows the margin at that moment
   const dot = el("circle", { r: 4, fill: "var(--ink)", opacity: 0 }, s);
   const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, class: "hit" }, s);
   hit.addEventListener("pointermove", ev => {
     const p = K.svgPoint(s, ev), t = (p.x - m.l) / (W - m.l - m.r) * end;
+    // find the last score change before the mouse position
     let c = g.steps[0]; for (const st of g.steps) { if (st[0] <= t) c = st; else break; }
     dot.setAttribute("cx", x(t)); dot.setAttribute("cy", y(c[1])); dot.setAttribute("opacity", 1);
     K.tip(`<b>${mmss(t)}</b><div class="num">Tempo ${c[1] > 0 ? "up " + c[1] : c[1] < 0 ? "down " + -c[1] : "tied"}</div>`, ev);
   });
   hit.addEventListener("pointerleave", () => { dot.setAttribute("opacity", 0); K.hide(); });
+  // headline above the chart, e.g. "Lost by 14, after leading by 9 · biggest run 11-0 CON"
   const big = [...g.runs].sort((a, b) => b.pts - a.pts)[0], mg = Math.abs(g.pf - g.pa);
   const lead = Math.max(...g.steps.map(p => p[1])), deficit = -Math.min(...g.steps.map(p => p[1]));
   document.getElementById("flow-h").textContent = `${win(g) ? "Won" : "Lost"} by ${mg}` +
@@ -191,13 +218,16 @@ function flowChart() {
     (big ? ` · biggest run ${big.pts}–0 ${big.team === "TOR" ? "Tempo" : g.opp}` : "");
 }
 
+// two shot charts side by side: Tempo on the left, opponent on the right
 function courts() {
   const box = document.getElementById("courts"), g = cur;
   box.innerHTML = ["TOR", g.opp].map((ab, i) => `<div class="figure"><h3>${K.logo(ab)}${ab === "TOR" ? "Tempo" : g.opp_name}</h3><svg id="ct${i}" role="img" aria-label="${ab} shot chart"></svg><div class="sum" id="cs${i}"></div></div>`).join("");
+  // side 0 = Tempo shots, side 1 = opponent shots. q[6] is the time, under 1200 s = first half
   [0, 1].forEach(side => {
     const s = document.getElementById("ct" + side), C = K.court(s);
     const shots = g.shots.filter(q => q[4] === side && (half === "all" || (half === "1" ? q[6] < 1200 : q[6] >= 1200)));
     const col = side === 0 ? "var(--tor)" : "var(--ink-2)";
+    // made = filled dot, missed = grey x. A bigger invisible circle on top makes it easier to hover
     for (const [x, y, made, three, , who, t] of shots) {
       if (y > 28.5) continue;
       const name = g.names[who] || "";
@@ -206,16 +236,20 @@ function courts() {
       const hitc = el("circle", { cx: C.X(x), cy: C.Y(y), r: 8, class: "hit" }, s);
       hover(hitc, `<b>${name}</b><div class="num">${made ? "Made" : "Missed"} ${three ? "3" : "2"} · ${mmss(t)}</div>`);
     }
+    // summary line under the court: FG, threes, and shots at the rim (within 4 ft)
     const fgm = shots.filter(q => q[2]).length, fg3 = shots.filter(q => q[3]), rim = shots.filter(q => Math.hypot(q[0] - 25, q[1]) < 4);
     document.getElementById("cs" + side).innerHTML = `<span class="num">FG ${fgm}/${shots.length} · 3P ${fg3.filter(q => q[2]).length}/${fg3.length} · rim ${rim.filter(q => q[2]).length}/${rim.length}</span>`;
   });
 }
 
+// key battles: mirrored bars, Toronto on the left and the opponent on the right
 function battles() {
   const T = cur.team.tor, O = cur.team.opp;
+  // [label, stat name, multiply by (100 turns 0.52 into 52.0), is lower better?]
   const rows = [["Off. rating", "ortg", 1, false], ["eFG%", "efg", 100, false], ["Turnover %", "tov", 100, true], ["Off. reb %", "orb", 100, false], ["FT rate", "ftr", 100, false],
     ["Paint pts", "paint", 1, false], ["Fast break", "fast", 1, false], ["Pts off TO", "tovpts", 1, false], ["Assists", "ast", 1, false], ["Rebounds", "reb", 1, false]];
   document.getElementById("bfly").innerHTML = `<div class="row"><span class="v">${K.logo("TOR")}</span><span></span><span class="lab muted">TOR · ${cur.opp}</span><span></span><span class="v r">${K.logo(cur.opp)}</span></div>` + rows.map(([lab, k, mul, low]) => {
+    // tw = Toronto won this battle. The winner's bar is coloured, the loser's is grey
     const a = T[k] * mul, b = O[k] * mul, max = Math.max(a, b) || 1, tw = low ? a < b : a > b, tie = a === b;
     return `<div class="row"><span class="v ${tw || tie ? "win" : "lose"}">${a.toFixed(mul === 100 || k === "ortg" ? 1 : 0)}</span>
       <span class="bar l"><i style="width:${a / max * 100}%;background:${tw ? "var(--tor)" : "var(--hist)"}"></i></span>
@@ -225,6 +259,7 @@ function battles() {
   }).join("");
 }
 
+// box score table. Highlight the team leader in points, rebounds, assists and game score
 function boxScore() {
   const B = cur.box[boxSide];
   const cols = ["Player", "MIN", "PTS", "REB", "AST", "STL", "BLK", "TO", "FG", "3P", "FT", "+/-", "GmSc"];
@@ -237,7 +272,9 @@ function boxScore() {
     <td style="color:${r[15] > 0 ? "var(--good)" : r[15] < 0 ? "var(--bad)" : "inherit"}">${fmt(r[15], 0)}</td><td class="${r[16] === bG ? "hl" : ""}">${r[16]}</td></tr>`).join("");
 }
 
+// if the link ends in #g12, open game 12. Otherwise open the last game of the season
 const h = (location.hash.match(/^#g(\d+)$/) || [])[1];
 select(h ? +h : G[G.length - 1].n, false);
+// also react if the #g number in the link changes
 window.addEventListener("hashchange", () => { const m = location.hash.match(/^#g(\d+)$/); if (m) select(+m[1], false); });
 </script>

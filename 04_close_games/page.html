@@ -83,18 +83,27 @@
 <script id="data" type="application/json">/*DATA*/</script>
 <script src="../assets/kit.js"></script>
 <script>
+// read the data that build.py put into the page
 const D = JSON.parse(document.getElementById("data").textContent);
+// shortcuts to the helpers in kit.js
 const { el, txt, scale, fmt, pct, hover } = K;
+// G = the 44 games, RUNS = every scoring run of 8+ points
 const G = D.games, RUNS = D.runs;
+// turn "seconds since tip-off" into a game clock like "Q3 4:12" (overtime periods are 5 minutes)
 const mmss = t => { const p = Math.min(4, Math.floor(t / 600) + 1); const s = t >= 2400 ? 300 - (t - 2400) % 300 : 600 - t % 600; return (t >= 2400 ? "OT " : "Q" + p + " ") + Math.floor(s / 60) + ":" + String(Math.round(s % 60)).padStart(2, "0"); };
+// "W" or "L"
 const res = g => g.pf > g.pa ? "W" : "L";
+// colour for a margin: navy when Toronto leads, bordeaux when it trails, full colour at 20 points
 const mcol = m => K.div(m / 20, "var(--bad)", "var(--good)");
 
 /* hero */
 (function () {
+  // averages over all games: share of time leading/trailing
   const lead = G.reduce((a, g) => a + g.lead, 0) / G.length, trail = G.reduce((a, g) => a + g.trail, 0) / G.length;
   const rf = RUNS.filter(r => r.team === "TOR").length, ra = RUNS.length - rf;
+  // expected wins = add up the pregame win chances (e.g. 0.3 + 0.5 + ... )
   const exp = G.reduce((a, g) => a + g.p, 0), w = G.filter(g => g.pf > g.pa).length;
+  // losses where Toronto was up by 10+ at some point
   const blown = G.filter(g => g.max >= 10 && g.pf < g.pa).length;
   document.getElementById("dek").innerHTML = `Toronto led for <strong>${pct(lead, 0)}</strong> of its playing time and trailed for <strong>${pct(trail, 0)}</strong>. Opponents went on ${ra} runs of 8+ unanswered points, and the Tempo managed ${rf}. Elo expected about ${exp.toFixed(1)} wins, and Toronto won ${w}.`;
   document.getElementById("tiles").innerHTML = [[pct(lead, 0), "Of game time leading"], [`${rf}–${ra}`, "8+ point runs, for–against"], [`${w} / ${exp.toFixed(1)}`, "Wins / Elo-expected wins"], [blown, "Losses after leading by 10+"]]
@@ -102,16 +111,21 @@ const mcol = m => K.div(m / 20, "var(--bad)", "var(--good)");
 })();
 
 /* 01 game grid */
+// the game shown in the detail chart (starts on the last game of the season)
 let selected = G[G.length - 1].n;
 const gridSvg = document.getElementById("grid");
+// the big grid: one row per game, colour = margin, left to right = tip-off to the buzzer
 function drawGrid(order) {
   gridSvg.replaceChildren();
   const left = 120, right = 84, rowH = 12, top = 22, W = 774, cols = G[0].s.length;
+  // width of one 20-second slice
   const cw = (W - left - right) / cols;
   gridSvg.setAttribute("viewBox", `0 0 ${W} ${top + G.length * rowH + 8}`);
+  // quarter labels across the top
   [["Tip", 0], ["Q2", 600], ["Half", 1200], ["Q4", 1800], ["End", 2400]].forEach(([l, t]) => {
     txt(gridSvg, left + t / D.grid_step * cw, top - 8, l, "lbl", { "text-anchor": "middle" });
   });
+  // sort the rows (by date, margin or odds depending on the button)
   const games = [...G].sort(order);
   games.forEach((g, r) => {
     const y = top + r * rowH;
@@ -125,72 +139,95 @@ function drawGrid(order) {
         start = i;
       }
     }
+    // thin white lines between quarters
     for (const t of [600, 1200, 1800]) el("line", { x1: left + t / D.grid_step * cw, x2: left + t / D.grid_step * cw, y1: y, y2: y + rowH, stroke: "var(--panel)", "stroke-width": 1 }, row);
+    // opponent logo and date on the left, final score on the right
     el("image", { href: K.LOGO(g.opp), x: left - 18, y: y, width: 12, height: 12 }, row);
     txt(row, left - 22, y + rowH - 3, `${g.date} ${g.home ? "vs" : "@"}`, "lbl", { "text-anchor": "end", style: "font-size:9px" });
     txt(row, W - right + 6, y + rowH - 3, `${res(g)} ${g.pf}-${g.pa}${g.ot ? " OT" : ""}`, "lbl", { style: `font-size:9.5px;fill:${g.pf > g.pa ? "var(--good)" : "var(--ink-3)"}` });
+    // outline the selected game
     if (g.n === selected) el("rect", { x: left - 1, y, width: W - left - right + 2, height: rowH, fill: "none", stroke: "var(--ink)", "stroke-width": 1.5 }, row);
+    // invisible rectangle over the whole row to catch the mouse
     const hit = el("rect", { x: 0, y, width: W, height: rowH, class: "hit", style: "cursor:pointer" }, row);
     hit.addEventListener("pointermove", ev => {
+      // which 20-second slice the mouse is over
       const p = K.svgPoint(gridSvg, ev), i = K.clamp(Math.floor((p.x - left) / cw), 0, cols - 1);
       K.tip(`<b>${g.date} ${g.home ? "vs" : "at"} ${g.opp}</b><div class="num">${res(g)} ${g.pf}–${g.pa}${g.ot ? " (OT)" : ""} · pregame ${pct(g.p, 0)}</div>${p.x > left ? `<div class="num">${mmss(i * D.grid_step)}: ${g.s[i] > 0 ? "up" : g.s[i] < 0 ? "down" : "tied"} ${Math.abs(g.s[i]) || ""}</div>` : ""}`, ev);
     });
     hit.addEventListener("pointerleave", K.hide);
+    // click a row: show that game in the detail chart
     hit.addEventListener("click", () => { selected = g.n; drawGrid(order); drawWorm(); });
   });
 }
+// the three ways to sort the rows
 const orders = { date: (a, b) => a.n - b.n, margin: (a, b) => (b.pf - b.pa) - (a.pf - a.pa), odds: (a, b) => b.p - a.p };
 let curOrder = orders.date;
 K.toggle(document.getElementById("sort"), v => { curOrder = orders[v]; drawGrid(curOrder); });
 
 /* worm */
+// detail chart for the selected game: its margin line on top of every other game
 function drawWorm() {
   const s = document.getElementById("worm"), g = G.find(x => x.n === selected);
   s.replaceChildren();
   const W = 640, H = 260, m = { l: 34, r: 10, t: 10, b: 24 };
+  // 2400 seconds = 40 minutes. Longer if the game went to overtime
   const end = Math.max(2400, g.steps[g.steps.length - 1][0]);
+  // make the y axis big enough for this game's biggest lead or deficit
   const x = scale(0, end, m.l, W - m.r), lim = Math.max(25, Math.abs(g.max), Math.abs(g.min)), y = scale(-lim, lim, H - m.b, m.t);
+  // grid lines every 10 points
   for (let v = -20; v <= 20; v += 10) if (Math.abs(v) <= lim) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v ? "gridline" : "zero" }, s); txt(s, m.l - 6, y(v) + 4, v > 0 ? "+" + v : v, "lbl", { "text-anchor": "end" }); }
   [["Tip", 0], ["Q2", 600], ["Half", 1200], ["Q4", 1800], ["End", 2400]].forEach(([l, t]) => { el("line", { x1: x(t), x2: x(t), y1: m.t, y2: H - m.b, class: "gridline" }, s); txt(s, x(t), H - 6, l, "lbl", { "text-anchor": "middle" }); });
   // interquartile band of all games
+  // for each 20-second slice, find the 25th and 75th percentile margin across all games (the grey band)
   const n = G[0].s.length, lo = [], hi = [];
   for (let i = 0; i < n; i++) { const v = G.map(q => q.s[i]).sort((a, b) => a - b); lo.push(v[Math.floor(v.length * 0.25)]); hi.push(v[Math.floor(v.length * 0.75)]); }
   el("path", { d: "M" + hi.map((v, i) => `${x(i * D.grid_step)} ${y(K.clamp(v, -lim, lim))}`).join("L") + "L" + lo.map((v, i) => [x(i * D.grid_step), y(K.clamp(v, -lim, lim))]).reverse().map(p => p.join(" ")).join("L") + "Z", fill: "var(--grid)", opacity: 0.9 }, s);
+  // every other game as a faint line
   for (const o of G) if (o.n !== g.n) el("polyline", { points: o.s.map((v, i) => `${x(i * D.grid_step)},${y(K.clamp(v, -lim, lim))}`).join(" "), fill: "none", stroke: "var(--hist)", "stroke-width": 0.6, opacity: 0.35 }, s);
+  // shade this game's scoring runs
   for (const r of RUNS.filter(r => r.g === g.n)) el("rect", { x: x(r.t0), y: m.t, width: Math.max(2, x(r.t1) - x(r.t0)), height: H - m.t - m.b, fill: r.team === "TOR" ? "var(--good)" : "var(--bad)", opacity: 0.12 }, s);
+  // the selected game's line. H then V makes a "staircase" because the score jumps on each basket
   const d = g.steps.map((p, i) => (i ? `H${x(p[0]).toFixed(1)}V${y(p[1]).toFixed(1)}` : `M${x(p[0])} ${y(p[1])}`)).join("");
   el("path", { d, fill: "none", stroke: "var(--ink)", "stroke-width": 2 }, s);
+  // hover: a dot follows the line and the tooltip shows the margin at that moment
   const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, class: "hit" }, s);
   const dot = el("circle", { r: 4, fill: "var(--ink)", opacity: 0 }, s);
   hit.addEventListener("pointermove", ev => {
     const p = K.svgPoint(s, ev), t = (p.x - m.l) / (W - m.l - m.r) * end;
+    // find the last score change before the mouse position
     let cur = g.steps[0]; for (const st of g.steps) { if (st[0] <= t) cur = st; else break; }
     dot.setAttribute("cx", x(t)); dot.setAttribute("cy", y(cur[1])); dot.setAttribute("opacity", 1);
     K.tip(`<b>${mmss(t)}</b><div class="num">Tempo ${cur[1] > 0 ? "up " + cur[1] : cur[1] < 0 ? "down " + -cur[1] : "tied"}</div>`, ev);
   });
   hit.addEventListener("pointerleave", () => { dot.setAttribute("opacity", 0); K.hide(); });
+  // the card above the chart: score, logos, quarter margins and a link to the full recap
   const runsHere = RUNS.filter(r => r.g === g.n);
   document.getElementById("sel-card").innerHTML = `${K.logo("TOR", "logo lg")}<div><div class="score">${g.pf}–${g.pa}</div><div class="meta">${g.date} · ${g.home ? "vs" : "at"} ${g.opp}${g.ot ? " · OT" : ""}</div></div>${K.logo(g.opp, "logo lg")}
     <span class="pill" style="background:${g.pf > g.pa ? "var(--good)" : "var(--bad)"}">${g.pf > g.pa ? "Win" : "Loss"}</span>
     <div class="qbox">${g.q.map((v, i) => `<span title="Quarter margin">${i < 4 ? "Q" + (i + 1) : "OT"} ${fmt(v, 0)}</span>`).join("")}</div>
     <div class="meta">Pregame odds ${pct(g.p, 0)} · biggest lead ${Math.max(0, g.max)} · biggest deficit ${Math.max(0, -g.min)} · runs ${runsHere.filter(r => r.team === "TOR").length}–${runsHere.filter(r => r.team === "OPP").length} · <a href="../game-center/#g${g.n}">Open in Game Center →</a></div>`;
 }
+// first draw when the page loads
 drawGrid(curOrder); drawWorm();
 
 /* 02 runs */
 (function () {
   const s = document.getElementById("runs");
+  // runs chart: time across, Tempo runs above the middle line and opponent runs below
   const W = 640, H = 330, m = { l: 20, r: 150, t: 20, b: 30 }, mid = (m.t + H - m.b) / 2;
   const x = scale(0, 2700, m.l, W - m.r);
   el("line", { x1: m.l, x2: W - m.r, y1: mid, y2: mid, class: "zero" }, s);
   [["Tip", 0], ["Q2", 600], ["Half", 1200], ["Q4", 1800], ["End", 2400], ["OT", 2700]].forEach(([l, t]) => { el("line", { x1: x(t), x2: x(t), y1: m.t, y2: H - m.b, class: "gridline" }, s); txt(s, x(t), H - 8, l, "lbl", { "text-anchor": "middle" }); });
   txt(s, m.l, m.t - 6, "Tempo runs ↑", "lbl"); txt(s, m.l, H - m.b + 2, "", "lbl");
   // simple beeswarm: stack dots that would overlap
+  // biggest runs first so they get the spots closest to the line
   const placed = { TOR: [], OPP: [] };
   const sorted = [...RUNS].sort((a, b) => b.pts - a.pts);
   for (const r of sorted) {
+    // bigger run = bigger dot. dir is -1 (up) for Tempo runs and +1 (down) for opponent runs
     const rr = 3 + (r.pts - 8) * 0.9, cx = x(Math.min(r.t0, 2690)), dir = r.team === "TOR" ? -1 : 1;
     let cy = mid + dir * (rr + 3);
+    // keep moving the dot away from the line until it doesn't overlap a dot that's already placed
     while (placed[r.team].some(p => Math.hypot(p.x - cx, p.y - cy) < p.r + rr + 1)) cy += dir * 2;
     placed[r.team].push({ x: cx, y: cy, r: rr });
     const g = G.find(q => q.n === r.g);
@@ -198,8 +235,10 @@ drawGrid(curOrder); drawWorm();
     hover(c, `<b>${r.pts}–0 ${r.team === "TOR" ? "Tempo" : g.opp} run</b><div>${g.date} ${g.home ? "vs" : "at"} ${g.opp} (${res(g)} ${g.pf}–${g.pa})</div><div class="num">${mmss(r.t0)} → ${mmss(r.t1)}</div>`);
   }
   // by-quarter bars
+  // little bar chart on the right: number of runs in each quarter
   const bx = W - m.r + 30, bw = 100;
   txt(s, bx, m.t - 6, "Runs by quarter", "lbl-ink", { style: "font-size:12px" });
+  // [Tempo runs, opponent runs] in quarter q (any overtime counts as 5)
   const per = q => [RUNS.filter(r => r.team === "TOR" && Math.min(r.per, 5) === q).length, RUNS.filter(r => r.team === "OPP" && Math.min(r.per, 5) === q).length];
   const maxc = Math.max(...[1, 2, 3, 4, 5].flatMap(per));
   [1, 2, 3, 4, 5].forEach((q, i) => {
@@ -208,6 +247,7 @@ drawGrid(curOrder); drawWorm();
     el("rect", { x: bx + 24, y: yy, width: f / maxc * bw, height: 12, rx: 2, fill: "var(--good)" }, s); txt(s, bx + 28 + f / maxc * bw, yy + 10, f, "lbl");
     el("rect", { x: bx + 24, y: yy + 15, width: a / maxc * bw, height: 12, rx: 2, fill: "var(--bad)" }, s); txt(s, bx + 28 + a / maxc * bw, yy + 25, a, "lbl");
   });
+  // numbers for the paragraph above the chart
   const rf = RUNS.filter(r => r.team === "TOR"), ra = RUNS.filter(r => r.team === "OPP");
   const big = [...ra].sort((a, b) => b.pts - a.pts)[0], bg = G.find(q => q.n === big.g);
   const q2 = ra.filter(r => r.per === 2).length + ra.filter(r => r.per === 3).length;
@@ -218,7 +258,9 @@ drawGrid(curOrder); drawWorm();
 (function () {
   const s = document.getElementById("odds");
   const W = 640, H = 420, m = { l: 46, r: 16, t: 14, b: 40 };
+  // odds chart: pregame win chance across, final margin up
   const x = scale(0, 0.8, m.l, W - m.r), lim = 40, y = scale(-lim, lim, H - m.b, m.t);
+  // light shading for the two interesting corners
   el("rect", { x: m.l, y: m.t, width: x(0.5) - m.l, height: y(0) - m.t, fill: "var(--good)", opacity: 0.06 }, s);
   el("rect", { x: x(0.5), y: y(0), width: W - m.r - x(0.5), height: H - m.b - y(0), fill: "var(--bad)", opacity: 0.06 }, s);
   for (let v = -40; v <= 40; v += 10) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v ? "gridline" : "zero" }, s); txt(s, m.l - 6, y(v) + 4, v > 0 ? "+" + v : v, "lbl", { "text-anchor": "end" }); }
@@ -227,14 +269,17 @@ drawGrid(curOrder); drawWorm();
   txt(s, (m.l + W - m.r) / 2, H - 4, "Pregame Elo win probability →", "lbl", { "text-anchor": "middle" });
   txt(s, m.l + 6, m.t + 14, "UPSET WINS", "lbl-ink", { style: "font-size:12px;fill:var(--good)" });
   txt(s, W - m.r - 6, H - m.b - 8, "HEARTBREAKS", "lbl-ink", { "text-anchor": "end", style: "font-size:12px;fill:var(--bad)" });
+  // one logo per game, with a navy ring for a win and a bordeaux ring for a loss
   for (const g of G) {
     const mg = g.pf - g.pa, cx = x(g.p), cy = y(K.clamp(mg, -lim, lim));
     const ring = el("circle", { cx, cy, r: 11, fill: "var(--panel)", stroke: mg > 0 ? "var(--good)" : "var(--bad)", "stroke-width": 2 }, s);
     el("image", { href: K.LOGO(g.opp), x: cx - 8, y: cy - 8, width: 16, height: 16, style: "pointer-events:none" }, s);
     hover(ring, `<b>${g.date} ${g.home ? "vs" : "at"} ${g.opp}</b><div class="num">${res(g)} ${g.pf}–${g.pa} · pregame ${pct(g.p, 0)}</div><div class="num">Tempo Elo ${g.elo}</div>`);
     ring.style.cursor = "pointer";
+    // clicking a logo loads that game in the detail chart and scrolls up to it
     ring.addEventListener("click", () => { selected = g.n; drawGrid(curOrder); drawWorm(); document.getElementById("sel-card").scrollIntoView({ behavior: "smooth", block: "center" }); });
   }
+  // upsets = wins with under a 35% chance. favs = games Toronto was expected to win
   const ups = G.filter(g => g.p < 0.35 && g.pf > g.pa).sort((a, b) => a.p - b.p), favs = G.filter(g => g.p > 0.5);
   const u = ups[0];
   document.getElementById("odds-lede").innerHTML = `Toronto was favoured in only <strong>${favs.length}</strong> of 44 games and won ${favs.filter(g => g.pf > g.pa).length}. It also won <strong>${ups.length}</strong> games it had less than a 35% chance to win. The biggest upset was ${u.date} ${u.home ? "vs" : "at"} ${u.opp}, at ${pct(u.p, 0)} pregame. Click a logo to load that game above.`;
@@ -243,14 +288,17 @@ drawGrid(curOrder); drawWorm();
 /* 04 quarter grid */
 (function () {
   const s = document.getElementById("qgrid");
+  // quarter grid: one column per game, one row per quarter, colour = margin in that quarter
   const cols = G.length, cw = 16, left = 46, top = 26, rh = 22, W = left + cols * cw + 60;
   s.setAttribute("viewBox", `0 0 ${W} ${top + 4 * rh + 40}`);
   ["Q1", "Q2", "Q3", "Q4"].forEach((q, r) => {
     txt(s, left - 8, top + r * rh + rh / 2 + 4, q, "lbl-ink", { "text-anchor": "end", style: "font-size:12px" });
+    // average margin in this quarter over the season, written at the end of the row
     const avg = G.reduce((a, g) => a + g.q[r], 0) / G.length;
     txt(s, left + cols * cw + 8, top + r * rh + rh / 2 + 4, fmt(avg), "lbl", { style: `fill:${avg >= 0 ? "var(--good)" : "var(--bad)"}` });
   });
   txt(s, left + cols * cw + 8, top - 8, "avg", "lbl");
+  // logo above each column, four quarter cells, and a small win/loss bar at the bottom
   G.forEach((g, i) => {
     el("image", { href: K.LOGO(g.opp), x: left + i * cw + 2, y: 4, width: cw - 4, height: cw - 4 }, s);
     for (let r = 0; r < 4; r++) {
