@@ -91,11 +91,34 @@ def box(gid, team_id):
                + 0.7 * b.blocks - 0.4 * b.fouls - b.turnovers)
     b = b.sort_values(["starter", "minutes"], ascending=False)  # starters first, then by minutes
     # each row is a plain list to keep the page small. The page reads them by position:
-    # [name, starter, min, pts, reb, ast, stl, blk, tov, fgm, fga, 3pm, 3pa, ftm, fta, +/-, game score]
+    # [name, starter, min, pts, reb, ast, stl, blk, tov, fgm, fga, 3pm, 3pa, ftm, fta, +/-, game score, oreb, fouls]
     return [[r.athlete_display_name, int(bool(r.starter)), int(r.minutes), int(r.points), int(r.rebounds), int(r.assists),
              int(r.steals), int(r.blocks), int(r.turnovers), int(r.field_goals_made), int(r.field_goals_attempted),
              int(r.three_point_field_goals_made), int(r.three_point_field_goals_attempted), int(r.free_throws_made),
-             int(r.free_throws_attempted), int(r.plus_minus), round(r.gs, 1)] for r in b.itertuples()]
+             int(r.free_throws_attempted), int(r.plus_minus), round(r.gs, 1),
+             int(r.offensive_rebounds), int(r.fouls)] for r in b.itertuples()]  # [17] offensive rebounds, [18] fouls (for the Game Score breakdown)
+
+
+# --- best games around the league each night (Game Score for every WNBA player, every game) ---------------
+lg = pb[pb.minutes > 0].copy()
+lg["gs"] = (lg.points + 0.4 * lg.field_goals_made - 0.7 * lg.field_goals_attempted - 0.4 * (lg.free_throws_attempted - lg.free_throws_made)
+            + 0.7 * lg.offensive_rebounds + 0.3 * (lg.rebounds - lg.offensive_rebounds) + lg.steals + 0.7 * lg.assists
+            + 0.7 * lg.blocks - 0.4 * lg.fouls - lg.turnovers)
+lg["date"] = pd.to_datetime(lg.game_date).dt.date
+lg["won"] = pd.to_numeric(lg.team_score, errors="coerce") > pd.to_numeric(lg.opponent_team_score, errors="coerce")
+
+
+def nightly(date, gid, n=8):
+    """Top Game Scores across the WNBA on one date: [name, team, opponent, gs, pts, reb, ast, won, in_this_game, headshot]."""
+    d = lg[lg.date == date].sort_values("gs", ascending=False)
+    top = d.head(n)
+    out = [[r.athlete_display_name, r.team_abbreviation, r.opponent_team_abbreviation, round(r.gs, 1), int(r.points),
+            int(r.rebounds), int(r.assists), bool(r.won), int(r.game_id) == int(gid),
+            r.athlete_headshot_href if isinstance(r.athlete_headshot_href, str) else ""] for r in top.itertuples()]
+    # where the best Tempo player that night ranked among everyone who played
+    tor = d[d.team_id == TOR]
+    best_rank = int((d.gs > tor.gs.max()).sum() + 1) if len(tor) else None
+    return {"top": out, "players": int(len(d)), "games": int(d.game_id.nunique()), "tor_best_rank": best_rank}
 
 
 games = []
@@ -129,6 +152,7 @@ for g in meta.itertuples():
         "names": names, "shots": shots, "lead": int(t.largest_lead), "opp_lead": int(o.largest_lead),
         "opp_color": court_colour(o),
         "story": story(gp),
+        "night": nightly(g.game_date.date(), g.game_id),
         # headshot link for every player who played (empty when ESPN has none)
         "heads": {r.athlete_display_name: r.athlete_headshot_href for r in
                   pb[(pb.game_id == g.game_id) & (pb.minutes > 0)].itertuples() if isinstance(r.athlete_headshot_href, str)},

@@ -40,11 +40,6 @@ td.hl { font-weight: 600; color: var(--tor); }
 .night-head, .night-sum { display: flex; justify-content: space-between; gap: 12px; font-size: 0.9rem; }
 .night-head span { display: inline-flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 1.15rem; }
 .night svg { display: block; width: 100%; height: auto; }
-.story { display: grid; gap: 10px; }
-.story-text { font-size: 1.05rem; max-width: 80ch; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chips span { display: grid; background: var(--panel); border: 1px solid var(--rule); padding: 6px 12px; font-size: 0.78rem; color: var(--ink-3); }
-.chips b { font-family: var(--display); font-size: 1.4rem; line-height: 1.1; color: var(--ink); }
 .recap-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 #linescore .mrow td { border-top: 1px solid var(--ink); font-weight: 600; }
 #linescore td.key { outline: 2px solid currentColor; outline-offset: -3px; }
@@ -68,6 +63,19 @@ td.hl { font-weight: 600; color: var(--tor); }
 .lead-row .big { font-family: var(--display); font-weight: 800; font-size: 2rem; }
 .potg-tag { display: inline-block; margin-left: 8px; font: 700 0.65rem var(--display); letter-spacing: 0.05em; text-transform: uppercase; background: var(--tor); color: #fff; padding: 1px 6px; vertical-align: 2px; }
 @media (max-width: 760px) { .recap-grid, .leaders { grid-template-columns: minmax(0, 1fr); } .season-strip { grid-template-columns: repeat(22, minmax(0, 1fr)); } }
+.gs-legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 16px; margin-top: 10px; font-size: 0.8rem; color: var(--ink-3); }
+.gs-legend i { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; }
+.gs-legend b { color: var(--ink); font-weight: 600; }
+.night-list { display: grid; }
+.night-row { display: grid; grid-template-columns: 26px 40px minmax(0, 1fr) auto 64px; gap: 12px; align-items: center; padding: 7px 4px; border-bottom: 1px solid var(--rule); }
+.night-row.here { background: var(--tor-soft); }
+.night-row img, .night-row .ph { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; object-position: top; background: var(--grid); display: block; }
+.night-row .rk { color: var(--ink-3); }
+.night-row .who { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.night-row .who small { display: block; color: var(--ink-3); font-size: 0.75rem; }
+.night-row .line { font-size: 0.82rem; color: var(--ink-2); }
+.night-row .gs { font-family: var(--display); font-weight: 800; font-size: 1.6rem; text-align: right; }
+@media (max-width: 760px) { .gs-legend { grid-template-columns: minmax(0, 1fr); } .night-row { grid-template-columns: 22px 34px minmax(0, 1fr) 52px; } .night-row .line { display: none; } }
 </style>
 
 <section class="hero">
@@ -78,12 +86,34 @@ td.hl { font-weight: 600; color: var(--tor); }
 
 <section class="section" style="gap:16px">
   <div class="board" id="board"></div>
-  <div class="story" id="story"></div>
   <div class="recap-grid">
     <div class="figure"><h3>Line score</h3><div class="tbl-wrap"><table id="linescore"></table></div></div>
     <div class="figure" id="context"></div>
   </div>
   <div class="figure"><h3>Game leaders</h3><div class="leaders" id="leaders"></div></div>
+</section>
+
+<section class="section wide">
+  <header>
+    <h2>Game Score, piece by piece</h2>
+    <p class="lede">Each bar is one player's Game Score split into where it came from. Pieces right of zero added to it; pieces left of zero took away. Starters first, then the bench. Hover any piece for the numbers.</p>
+  </header>
+  <div class="toggle" id="gs-team" role="group" aria-label="Which team">
+    <button type="button" data-v="tor" aria-pressed="true">Tempo</button>
+    <button type="button" data-v="opp" aria-pressed="false" id="gs-opp-btn">Opponent</button>
+  </div>
+  <div class="figure">
+    <svg id="gs-card" role="img" aria-label="Game Score breakdown by player"></svg>
+    <div class="gs-legend" id="gs-legend"></div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <h2>The best games that night</h2>
+    <p class="lede" id="night-lede"></p>
+  </header>
+  <div class="figure"><div class="night-list" id="night-list"></div></div>
 </section>
 
 <section class="section">
@@ -161,7 +191,7 @@ function select(n, push) {
   [...strip.children].forEach(b => b.setAttribute("aria-pressed", +b.dataset.n === cur.n));
   // replaceState changes the link without reloading. try/catch because some viewers block it
   if (push) try { history.replaceState(null, "", "#g" + cur.n); } catch (e) {}
-  board(); story(); lineScore(); context(); leaders(); flowChart(); courts(); battles(); boxScore();
+  board(); lineScore(); context(); leaders(); gsCard(); night(); flowChart(); courts(); battles(); boxScore();
 }
 
 // the scoreboard. The home team goes on the right, like a TV scoreboard
@@ -188,25 +218,71 @@ function lineScore() {
     row("TOR", L.tor, g.pf, L.opp) + row(g.opp, L.opp, g.pa, L.tor) + mrow;
 }
 
-// one or two sentences about how the game went, built from the play-by-play numbers, plus stat chips
-function story() {
-  const g = cur, S = g.story, w = win(g), mg = Math.abs(g.pf - g.pa);
-    const L = g.line, qm = L.tor.map((v, i) => v - L.opp[i]);
-  const k = qm.indexOf(w ? Math.max(...qm) : Math.min(...qm));
-  const qName = k < 4 ? `the ${["first", "second", "third", "fourth"][k]} quarter` : "overtime";
-  const sA = w ? L.tor[k] : L.opp[k], sB = w ? L.opp[k] : L.tor[k];
-  let shape = "";
-  if (!w && S.max >= 8) shape = `Toronto led by as many as ${S.max} before it got away.`;
-  else if (!w && S.max <= 0) shape = "Toronto never led.";
-  else if (w && S.min <= -8) shape = `Toronto came back from ${-S.min} down.`;
-  else if (w && S.min >= 0) shape = "Toronto never trailed.";
-  else if (S.lc >= 6) shape = `It went back and forth, with ${S.lc} lead changes.`;
-  let expect = "";
-  if (w && g.p < 0.35) expect = ` Elo gave Toronto a ${pct(g.p, 0)} chance before tip-off, so this was an upset.`;
-  else if (!w && g.p > 0.5) expect = ` Toronto was favoured (${pct(g.p, 0)} before tip-off).`;
-  document.getElementById("story").innerHTML = `<p class="story-text">Toronto ${w ? "beat" : "lost to"} the ${g.opp_name} ${g.pf}–${g.pa}${g.home ? " at home" : " on the road"}${g.ot ? " in overtime" : ""}, a ${mg}-point ${w ? "win" : "loss"}.${shape ? " " + shape : ""} ${w ? "Toronto" : "The " + g.opp_name} took ${qName} ${sA}–${sB}, the biggest swing of the game.${expect}</p>
-    <div class="chips">${[["Lead changes", S.lc], ["Times tied", S.ties], ["Toronto led", pct(S.lead, 0) + " of the game"], ["Toronto's biggest lead", Math.max(0, S.max)], [`${g.opp}'s biggest lead`, Math.max(0, -S.min)]]
-      .map(([k2, v]) => `<span><b class="num">${v}</b>${k2}</span>`).join("")}</div>`;
+// Game Score split into pieces (HockeyStatCards-style card). Hollinger's formula, grouped:
+//   shooting   = PTS + 0.4·FGM − 0.7·FGA − 0.4·missed FT   (can be negative)
+//   rebounding = 0.7·OREB + 0.3·DREB      playmaking = 0.7·AST      defense = STL + 0.7·BLK
+//   turnovers  = −TOV                     fouls = −0.4·PF
+const PIECES = [
+  ["Shooting", "var(--tor-2)", "Points, minus missed shots and free throws"],
+  ["Rebounding", "color-mix(in oklab, var(--tor-2) 55%, var(--panel))", "0.7 per offensive, 0.3 per defensive rebound"],
+  ["Playmaking", "color-mix(in oklab, var(--tor-2) 28%, var(--panel))", "0.7 per assist"],
+  ["Defense", "var(--tor)", "1 per steal, 0.7 per block"],
+  ["Turnovers", "var(--hot)", "−1 per turnover"],
+  ["Fouls", "color-mix(in oklab, var(--hot) 45%, var(--panel))", "−0.4 per personal foul"],
+];
+let gsSide = "tor";
+K.toggle(document.getElementById("gs-team"), v => { gsSide = v; gsCard(); });
+function pieces(r) {
+  const [, , , pts, reb, ast, stl, blk, tov, fgm, fga, , , ftm, fta, , gs, oreb, pf] = r;
+  return [pts + 0.4 * fgm - 0.7 * fga - 0.4 * (fta - ftm), 0.7 * oreb + 0.3 * (reb - oreb), 0.7 * ast, stl + 0.7 * blk, -tov, -0.4 * pf];
+}
+function gsCard() {
+  const g = cur, B = g.box[gsSide], s = document.getElementById("gs-card");
+  document.getElementById("gs-opp-btn").textContent = g.opp;
+  s.replaceChildren();
+  // starters then bench, each sorted by Game Score
+  const st = B.filter(r => r[1]).sort((a, b) => b[16] - a[16]), bn = B.filter(r => !r[1]).sort((a, b) => b[16] - a[16]);
+  const rows = [...st, null, ...bn];
+  const parts = B.map(pieces);
+  const lo = Math.floor(Math.min(-2, ...parts.map(p => p.filter(v => v < 0).reduce((a, v) => a + v, 0))) / 2) * 2;
+  const hi = Math.ceil(Math.max(4, ...parts.map(p => p.filter(v => v > 0).reduce((a, v) => a + v, 0))) / 2) * 2;
+  const W = 760, L = 210, R = 20, rowH = 26, top = 8;
+  const x = scale(lo, hi, L, W - R);
+  const H = top + rows.length * rowH + 30;
+  s.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  for (let v = lo; v <= hi; v += 2) {
+    el("line", { x1: x(v), x2: x(v), y1: top, y2: H - 26, class: v === 0 ? "zero" : "gridline" }, s);
+    txt(s, x(v), H - 10, v, "lbl", { "text-anchor": "middle" });
+  }
+  rows.forEach((r, i) => {
+    if (!r) return;
+    const cy = top + i * rowH + rowH / 2, p = pieces(r);
+    txt(s, L - 56, cy + 4, r[0], "lbl-ink", { "text-anchor": "end", style: "font-size:12px" });
+    txt(s, L - 12, cy + 4, r[16].toFixed(1), "lbl", { "text-anchor": "end", style: `fill:${r[16] >= 0 ? "var(--ink)" : "var(--bad)"};font-weight:600` });
+    // positive pieces stack to the right of zero, negative pieces to the left
+    let pos = 0, neg = 0;
+    p.forEach((v, k) => {
+      if (Math.abs(v) < 0.05) return;
+      const a = v > 0 ? pos : neg + v, b2 = v > 0 ? pos + v : neg;
+      if (v > 0) pos += v; else neg += v;
+      const rect = el("rect", { x: x(a), y: cy - 8, width: Math.max(1, x(b2) - x(a)), height: 16, fill: PIECES[k][1], stroke: "var(--panel)", "stroke-width": 1 }, s);
+      hover(rect, `<b>${r[0]}</b><div>${PIECES[k][0]}: <span class="num">${fmt(v, 1)}</span></div><div class="num" style="opacity:.8">${PIECES[k][2]}</div><div class="num">Game Score ${r[16]} · ${r[3]} pts, ${r[4]} reb, ${r[5]} ast, ${r[2]} min</div>`);
+    });
+  });
+  if (st.length) txt(s, 6, top + 10, "STARTERS", "lbl", { style: "font-size:9px" });
+  if (bn.length) txt(s, 6, top + (st.length + 1) * rowH + 10, "BENCH", "lbl", { style: "font-size:9px" });
+  document.getElementById("gs-legend").innerHTML = PIECES.map(([n, c, d]) => `<span><i style="background:${c}"></i><b>${n}</b> ${d}</span>`).join("");
+}
+
+// the best Game Scores across the whole league on the same date; players from this game are highlighted
+function night() {
+  const g = cur, N = g.night;
+  document.getElementById("night-lede").innerHTML = `${N.players} players appeared in ${N.games} WNBA game${N.games === 1 ? "" : "s"} on ${g.date}. These were the best Game Scores. Toronto's best player ranked <strong>${N.tor_best_rank}${["th", "st", "nd", "rd"][(N.tor_best_rank % 100 > 10 && N.tor_best_rank % 100 < 14) ? 0 : Math.min(N.tor_best_rank % 10, 4) % 4] || "th"}</strong> of ${N.players}.`;
+  document.getElementById("night-list").innerHTML = N.top.map(([n, tm, op, gs, pts, reb, ast, won, here, img], i) => `
+    <div class="night-row ${here ? "here" : ""}"><span class="rk num">${i + 1}</span>
+      ${img ? `<img src="${img}" alt="" loading="lazy">` : '<span class="ph"></span>'}
+      <div class="who">${K.logo(tm)}<div><b>${n}</b><small>${tm} ${won ? "beat" : "lost to"} ${op}${here ? " · this game" : ""}</small></div></div>
+      <span class="line num">${pts} pts · ${reb} reb · ${ast} ast</span><span class="gs num">${gs.toFixed(1)}</span></div>`).join("");
 }
 
 // season context: series against this opponent, the record, and the whole season as a strip
@@ -239,7 +315,7 @@ function leaders() {
     }).join("")}</div>`;
   };
   const extra = cats.some(([, i]) => [g.box.tor, g.box.opp].some(B => B.reduce((b, x) => x[i] > b[i] ? x : b, B[0])[0] === potg[0]))
-    ? "" : `<div class="cap">Player of the game: <b>${potg[0]}</b> (${potg[17]}), Game Score ${potg[16]}: ${potg[3]} pts, ${potg[4]} reb, ${potg[5]} ast.</div>`;
+    ? "" : `<div class="cap">Player of the game: <b>${potg[0]}</b> (${potg.at(-1)}), Game Score ${potg[16]}: ${potg[3]} pts, ${potg[4]} reb, ${potg[5]} ast.</div>`;
   document.getElementById("leaders").innerHTML = col("tor", "TOR", "Toronto Tempo") + col("opp", g.opp, g.opp_name) + extra;
 }
 
