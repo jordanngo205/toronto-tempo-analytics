@@ -105,7 +105,7 @@
 <section class="section wide">
   <header>
     <h2>The 2027 board</h2>
-    <p class="lede">Talent blends my model, which projects WNBA minutes from college numbers, with sportsdataverse's draft projection. Fit measures how much a player helps where Toronto was worst: blocks, defensive rebounds, defensive BPM, height and steals. Both scores are percentiles within this senior class. Click a player to see her full profile.</p>
+    <p class="lede">Talent blends my model, which projects WNBA minutes from college numbers, with sportsdataverse's draft projection. Fit measures how much a player helps where Toronto was worst: blocks, defensive rebounds, defensive BPM, height and steals. Both are standard scores within this senior class: 50 is average and every 10 points is one standard deviation, so a gap of 20 points is a big gap. Score blends the two using the slider. Click a player to see her full profile.</p>
   </header>
   <div class="controls">
     <label class="slider" for="w"><span>Best player available</span><input id="w" type="range" min="0" max="100" value="40" aria-label="Weight on talent vs fit"><span>Fill Toronto's needs</span></label>
@@ -139,8 +139,8 @@
     <dt>BPM (box plus-minus)</dt><dd>An estimate of how many points per 100 possessions a player adds compared with an average player, worked out from box-score stats only (points, rebounds, assists, steals, blocks, turnovers, shooting). 0 is average for her league; positive is better. College BPMs run higher than WNBA ones because the gap between the best and worst teams is bigger. The values here come from sportsdataverse's college player value file.</dd>
     <dt>Defensive BPM</dt><dd>The defensive part of BPM, driven mostly by steals, blocks and defensive rebounds. Box scores see little of the rest of defense, so treat it as a rough guide.</dd>
     <dt>TS% (true shooting)</dt><dd>Points per shooting attempt, counting threes and free throws: points ÷ (2 × (FGA + 0.44 × FTA)).</dd>
-    <dt>Talent</dt><dd>The average of two percentile ranks within the senior class: my model's projected WNBA minutes, and sportsdataverse's chance of being drafted. Players with no 2025-26 season use the model's rank alone.</dd>
-    <dt>Fit</dt><dd>How well a player's college numbers match Toronto's 2026 weak spots: blocks and defensive rebounds per 40, defensive BPM, height, and (at half weight) steals per 40. Shown as a percentile within the class.</dd>
+    <dt>Talent</dt><dd>Half my model's projected WNBA minutes and half sportsdataverse's chance of being drafted (on the log-odds scale, which evens out how skewed those chances are), as a standard score: 50 is the class average and every 10 points is one standard deviation. Players with no 2025-26 season have no draft projection, so their score is estimated from the model part.</dd>
+    <dt>Fit</dt><dd>How well a player's college numbers match Toronto's 2026 weak spots: blocks and defensive rebounds per 40, defensive BPM, height, and (at half weight) steals per 40. Same standard-score scale as talent.</dd>
   </dl>
   <h3>Method</h3>
   <p><b>Who's eligible:</b> college players whose first season was 2023-24, which makes 2026-27 their senior year, with 400+ minutes in 2025-26. Anyone drafted in 2026 is removed. International prospects and early entrants aren't included, and the 2027 draft order hasn't been set yet.</p>
@@ -314,8 +314,8 @@ function drawBoard() {
     R.map((p, i) => `<tr data-id="${p.id}" class="${p.id === selected ? "sel" : ""}"><td>${i + 1}</td>
       <td><div class="who">${face(p, "face sm")}<div><b>${p.name}</b><small>${p.school} · ${p.pos}${p.season === 2025 ? " · 2024-25 stats" : ""}</small></div></div></td>
       <td>${ft(p.ht)}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.blk}</td><td>${(100 * p.ts).toFixed(1)}</td><td>${p.bpm}</td>
-      <td><span class="mini"><i style="width:${p.talent}%;background:var(--tor-2)"></i></span></td>
-      <td><span class="mini"><i style="width:${p.fit}%;background:var(--tor)"></i></span></td>
+      <td class="num" title="Talent score">${p.talent.toFixed(0)}</td>
+      <td class="num" title="Fit score">${p.fit.toFixed(0)}</td>
       <td><b>${p.score.toFixed(0)}</b></td></tr>`).join("");
   drawCard();
   drawTF(R.slice(0, 10).map(p => p.id));

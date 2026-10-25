@@ -243,22 +243,34 @@ pool = pool.merge(proj[["player_id", "draft_prob", "projected_pick"]], left_on="
 # sportsdataverse only projects players from their 2025-26 numbers, so anyone using a 2024-25 season has no projection
 pool.loc[pool.season != 2026, ["draft_prob", "projected_pick"]] = np.nan
 
-# talent = my model's projected WNBA minutes, mixed 50/50 with sportsdataverse's draft probability
 Xp = np.c_[np.ones(len(pool)), (pool[MODEL_F] - mu) / sd]
 pool["proj_min"] = np.clip(Xp @ beta, 0, None) ** 2   # undo the square root -> minutes in first two seasons
-# talent = half my model, half sportsdataverse's draft probability, each as a percentile rank (0 to 1).
-# Ranks, not z-scores: draft probabilities are very skewed (most near 0%, a few above 70%), and a z-score
-# of a skewed number lets one input swamp the other. Players without a projection use my model's rank only.
-model_rank = np.sqrt(pool.proj_min).rank(pct=True)
+
+# TALENT = half my model, half sportsdataverse's draft probability, kept on their real scales so a big
+# talent gap stays big (percentiles squash the top of the class together and hid that).
+#   - model part: z-score of sqrt(projected minutes)
+#   - draft part: z-score of the draft probability's log-odds. Probabilities are very skewed (most near 0%,
+#     a few above 70%); log-odds spread them out evenly so neither part can swamp the other
+model_z = z(np.sqrt(pool.proj_min))
 has_dp = pool.draft_prob.notna()
-dp_rank = pool.draft_prob.rank(pct=True)  # NaN for players without a projection
-pool["talent"] = np.where(has_dp, 0.5 * model_rank + 0.5 * dp_rank, model_rank)
-# fit = fixes Toronto's weak spots: rim protection, defensive rebounding, defense in general, size, steals
-pool["dreb40"] = pool.dreb40
-pool["fit"] = (z(pool.blk40) + z(pool.dreb40) + z(pool.box_dbpm) + z(pool.height) + 0.5 * z(pool.stl40)) / 4.5
-# scores on a 0-100 scale (percentile among all eligible seniors) so they're easy to read
-pool["talent_pct"] = pool.talent.rank(pct=True) * 100
-pool["fit_pct"] = pool.fit.rank(pct=True) * 100
+p_ = pool.draft_prob.clip(1e-4, 1 - 1e-4)
+logodds = np.log(p_ / (1 - p_))
+dp_z = (logodds - logodds[has_dp].mean()) / logodds[has_dp].std()
+blend = 0.5 * model_z + 0.5 * dp_z
+# players without a projection (no 2025-26 season): estimate the blend from the model part,
+# using a straight line fitted on the players who have both
+slope, icpt = np.polyfit(model_z[has_dp], blend[has_dp], 1)
+talent_z = np.where(has_dp, blend, icpt + slope * model_z)
+talent_z = (talent_z - talent_z.mean()) / talent_z.std()
+
+# FIT = fixes Toronto's weak spots: rim protection, defensive rebounding, defense in general, size, steals
+fit_z = (z(pool.blk40) + z(pool.dreb40) + z(pool.box_dbpm) + z(pool.height) + 0.5 * z(pool.stl40)) / 4.5
+fit_z = (fit_z - fit_z.mean()) / fit_z.std()
+
+# both on the same "standard score" scale: 50 = class average, every 10 points = one standard deviation.
+# Same scale means the slider trades them off fairly.
+pool["talent"] = 50 + 10 * talent_z
+pool["fit"] = 50 + 10 * fit_z
 # rank within the class (1 = best) for the talent-vs-fit chart, which uses a log scale so the top spreads out
 pool["talent_rank"] = pool.talent.rank(ascending=False, method="min").astype(int)
 pool["fit_rank"] = pool.fit.rank(ascending=False, method="min").astype(int)
@@ -280,7 +292,7 @@ prospects = [{
     "dbpm": round(r.box_dbpm, 1), "three": round(r.three_rate, 3),
     "dp": None if pd.isna(r.draft_prob) else round(float(r.draft_prob), 3), "pick": None if pd.isna(r.projected_pick) else round(float(r.projected_pick), 1),
     "season": int(r.season), "tr": int(r.talent_rank), "fr": int(r.fit_rank),  # which college season the numbers come from (2026 = 2025-26)
-    "pmin": round(float(r.proj_min)), "talent": round(float(r.talent_pct), 1), "fit": round(float(r.fit_pct), 1),
+    "pmin": round(float(r.proj_min)), "talent": round(float(r.talent), 1), "fit": round(float(r.fit), 1),
     "pct": [round(float(r[col + "_pct"])) for col in PCT],
 } for _, r in board.iterrows()]
 
@@ -305,4 +317,4 @@ print(pd.DataFrame(translate).sort_values("r_resid", ascending=False).to_string(
 print("history n", len(hist), "model n", len(train), "model r", round(model_r, 3))
 print("pool", len(pool))
 print("validation", {k: v for k, v in validation.items() if k != "pts"})
-print(board[["name", "school", "pos", "height", "box_bpm", "blk40", "dreb40", "draft_prob", "proj_min", "talent_pct", "fit_pct"]].head(25).round(2).to_string(index=False))
+print(board[["name", "school", "pos", "height", "box_bpm", "blk40", "dreb40", "draft_prob", "proj_min", "talent", "fit"]].head(25).round(2).to_string(index=False))
