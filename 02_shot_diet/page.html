@@ -48,6 +48,21 @@
   </div>
 </section>
 
+<section class="section wide">
+  <header>
+    <h2>Toronto gave up the expensive shots</h2>
+    <p class="lede" id="oc-lede"></p>
+  </header>
+  <div class="toggle" id="oc-side" role="group" aria-label="Defense or offense">
+    <button type="button" data-v="def" aria-pressed="true">How each defense was attacked</button>
+    <button type="button" data-v="off" aria-pressed="false">How each offense attacked</button>
+  </div>
+  <div class="figure">
+    <svg id="oc" role="img" aria-label="Share of plays ending in each outcome, by team"></svg>
+    <div class="cap">Every play of the 2026 regular season that ended in a shooting-foul trip, a field-goal attempt or a turnover. Outcomes run from the most valuable (orange) to the least (navy), using league-wide points per play, shown along the bottom. And-one free throws are counted with the basket. Teams are sorted by points per play, best at the top.</div>
+  </div>
+</section>
+
 <section class="section">
   <header>
     <h2>Good looks, cold hands</h2>
@@ -209,6 +224,58 @@ function profile(P) {
     }).join("")}</div>`;
 }
 draw();  // first draw when the page loads
+
+/* how plays ended, every team (Sportradar-style 100% bars) */
+(function () {
+  const O = D.outcomes, n = O.order.length;
+  const lgppp = O.value.reduce((a, v, i) => a + v * O.league[i], 0);
+  // one clear colour step per outcome, most valuable (dark orange) to least (dark navy); outcomes are
+  // already sorted by value, so the step is just the outcome's position
+  const STEPS = [1, 0.7, 0.45, 0.22, -0.3, -0.55, -1];
+  const col = v => K.div(STEPS[O.value.indexOf(v)] ?? 0);
+  const s = document.getElementById("oc");
+  function draw(side) {
+    s.replaceChildren();
+    // best at the top: lowest points allowed for defenses, highest scored for offenses
+    const rows = [...O[side]].sort((a, b) => side === "def" ? a.ppp - b.ppp : b.ppp - a.ppp);
+    const W = 760, L = 90, R = 64, rowH = 24, top = 8, H = top + rows.length * rowH + 92;
+    const x = scale(0, 1, L, W - R);
+    s.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    txt(s, W - R + 8, top - 0, "pts/play", "lbl", { style: "font-size:9px" });
+    rows.forEach((r, i) => {
+      const y = top + i * rowH + 4, tor = r.t === "TOR";
+      el("image", { href: K.LOGO(r.t), x: 2, y: y, width: 16, height: 16 }, s);
+      txt(s, 24, y + 13, r.t, tor ? "lbl-ink" : "lbl", { style: tor ? "font-size:13px" : "font-size:12px" });
+      let acc = 0;
+      r.share.forEach((v, k) => {
+        const rect = el("rect", { x: x(acc), y, width: Math.max(0, x(acc + v) - x(acc) - 1), height: rowH - 4, fill: col(O.value[k]) }, s);
+        hover(rect, `<b>${r.t} · ${O.order[k]}</b><div class="num">${pct(v)} of ${side === "def" ? "opponent plays" : "plays"} (league ${pct(O.league[k])})</div><div class="num">worth ${O.value[k].toFixed(2)} points per play league-wide</div>`);
+        acc += v;
+      });
+      if (tor) el("rect", { x: L - 2, y: y - 2, width: W - R - L + 3, height: rowH, fill: "none", stroke: "var(--ink)", "stroke-width": 2 }, s);
+      txt(s, W - R + 8, y + 13, r.ppp.toFixed(3), tor ? "lbl-ink" : "lbl", { style: "font-size:12px" });
+    });
+    // outcome labels under the league-average position of each outcome
+    let acc = 0;
+    const by = top + rows.length * rowH + 8;
+    O.order.forEach((k, j) => {
+      const mid = acc + O.league[j] / 2; acc += O.league[j];
+      // narrow outcomes (under 6% of plays) put their label on a second row with a short tick, so labels don't collide
+      const drop = O.league[j] < 0.06 ? 30 : 0;
+      el("line", { x1: x(acc), x2: x(acc), y1: by, y2: by + 44, class: "gridline" }, s);
+      if (drop) el("line", { x1: x(mid), x2: x(mid), y1: by, y2: by + drop + 2, stroke: "var(--ink-3)" }, s);
+      txt(s, x(mid), by + 16 + drop, O.value[j].toFixed(2), "lbl", { "text-anchor": "middle", style: `font-size:13px;font-weight:700;fill:${O.value[j] >= lgppp ? "var(--hot)" : "var(--cold)"}` });
+      k.split(" ").reduce((rowsTxt, w) => { const last = rowsTxt[rowsTxt.length - 1]; if (last && (last + " " + w).length <= 9) rowsTxt[rowsTxt.length - 1] = last + " " + w; else rowsTxt.push(w); return rowsTxt; }, [])
+        .forEach((line, li) => txt(s, x(mid), by + 30 + drop + li * 12, line, "lbl", { "text-anchor": "middle", style: "font-size:10px" }));
+    });
+  }
+  K.toggle(document.getElementById("oc-side"), draw);
+  draw("def");
+  // paragraph from the numbers: Toronto's allowed shares vs league on the most and least valuable outcomes
+  const tor = O.def.find(r => r.t === "TOR"), rank = [...O.def].sort((a, b) => b.ppp - a.ppp).findIndex(r => r.t === "TOR") + 1;
+  const d = k => tor.share[O.order.indexOf(k)] - O.league[O.order.indexOf(k)];
+  document.getElementById("oc-lede").innerHTML = `Opponents scored <strong>${tor.ppp.toFixed(3)}</strong> points per play against Toronto, ${rank === 1 ? "the most in the league" : "rank " + rank}. The problem was the mix: ${pct(tor.share[O.order.indexOf("Rim")], 0)} of opponent plays ended at the rim (league ${pct(O.league[O.order.indexOf("Rim")], 0)}), the second-most valuable outcome. It also got fewer of the cheap outcomes than an average defense: ${Math.abs(100 * d("Short paint")).toFixed(1)} percentage points fewer short-paint shots, ${Math.abs(100 * d("Midrange")).toFixed(1)} fewer midrange shots and ${Math.abs(100 * d("Turnover")).toFixed(1)} fewer turnovers.`;
+})();
 
 /* 02 quality vs making */
 // each chart is wrapped in (function () { ... })() so its variables don't clash with other charts

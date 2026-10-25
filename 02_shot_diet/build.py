@@ -134,8 +134,50 @@ def curve(s):
 
 dist = {"Tempo": curve(tor_shots), "Opponents": curve(opp_shots), "League": curve(lg)}
 
+# --- how every team's plays ended (Sportradar "defending pick actions" style, for all plays) -------------
+# A "play" ends in one of: a shooting-foul trip to the line, a field-goal attempt from a zone, or a turnover.
+# And-one free throws ("1 of 1") are left out because the made basket already counted as the play.
+allp = p.sort_values(["game_id", "game_play_number"]).copy()
+allp["off"] = allp.team_id
+allp["kind"] = None
+fga = allp.shooting_play.astype(bool) & ~allp.type_text.str.contains("Free Throw")
+allp.loc[fga, "kind"] = shots["zone"].reindex(allp.index[fga]).map(
+    lambda z: "Rim" if z == "Rim" else "Short paint" if z == "Short" else "Midrange" if str(z).startswith("Mid")
+    else "Corner 3" if str(z).startswith("Corner3") else "Above-break 3")
+trip_start = allp.type_text.isin(["Free Throw - 1 of 2", "Free Throw - 1 of 3"])
+allp.loc[trip_start, "kind"] = "Shooting foul"
+tov = allp.type_text.str.contains("Turnover") | allp.type_text.isin(["Traveling", "Kicked Ball"])
+allp.loc[tov, "kind"] = "Turnover"
+# points from each free-throw trip = made free throws in that trip (the next 1-2 free throws by the same team)
+ft = allp[allp.type_text.str.startswith("Free Throw - ") & ~allp.type_text.str.contains("Technical")].copy()
+ft["trip"] = (ft.type_text.str.contains("1 of")).cumsum()
+trip_pts = ft.groupby("trip").scoring_play.apply(lambda v: int(v.astype(bool).sum()))
+ft_first = ft[ft.type_text.isin(["Free Throw - 1 of 2", "Free Throw - 1 of 3"])]
+allp["pts_play"] = np.nan
+allp.loc[ft_first.index, "pts_play"] = ft_first.trip.map(trip_pts).values
+allp.loc[fga, "pts_play"] = np.where(allp.loc[fga].scoring_play.astype(bool), allp.loc[fga].points_attempted, 0)
+allp.loc[tov, "pts_play"] = 0
+plays = allp[allp.kind.notna() & allp.off.notna()].copy()
+plays = plays[plays.index.isin(shots.index) | ~fga[plays.index]]  # field goals: only the half-court shots kept above
+plays["def"] = np.where(plays.off == plays.home_team_id, plays.away_team_id, plays.home_team_id)
+OUTCOMES = plays.groupby("kind").pts_play.mean().sort_values(ascending=False)  # value of each outcome, best first
+abbr2 = load("team_box", 2026).drop_duplicates("team_id")
+real_teams = abbr2.groupby("team_id").size().index
+team_ab = abbr2.set_index("team_id").team_abbreviation
+outcomes = {"order": list(OUTCOMES.index), "value": [round(float(v), 3) for v in OUTCOMES.values],
+            "league": [round(float(v), 4) for v in plays.kind.value_counts(normalize=True).reindex(OUTCOMES.index).values]}
+for side in ("def", "off"):
+    rows = []
+    for tid, d in plays.groupby(side):
+        ab = team_ab.get(tid)
+        if ab is None or len(d) < 1000:   # skip All-Star teams
+            continue
+        share = d.kind.value_counts(normalize=True).reindex(OUTCOMES.index).fillna(0)
+        rows.append({"t": ab, "share": [round(float(v), 4) for v in share.values], "ppp": round(float(d.pts_play.mean()), 3), "n": int(len(d))})
+    outcomes[side] = rows
+
 # everything the page needs
-data = {"views": views, "players": names, "dots": dots, "opp_dots": opp_dots, "quality": quality,
+data = {"outcomes": outcomes, "views": views, "players": names, "dots": dots, "opp_dots": opp_dots, "quality": quality,
         "dist": dist, "hex_r": R, "families": [f for f, _ in FAMILIES]}
 # headline numbers for the home page
 lab.summary("shot-lab", {"xpps": views["Tempo"]["xpps"], "pps": views["Tempo"]["pps"], "lg_xpps": views["League"]["xpps"],
@@ -146,6 +188,8 @@ lab.write_page("shot-lab", "Shot Lab", "Every Toronto Tempo shot of 2026: player
 t, o, L = views["Tempo"], views["Opponents"], views["League"]
 print({k: (t[k], o[k], L[k]) for k in ["pps", "xpps", "fg", "rim", "three", "ast"]})
 print(names)
+print("outcome values", outcomes["order"], outcomes["value"])
+print("defenses by pts/play", sorted([(r["t"], r["ppp"]) for r in outcomes["def"]], key=lambda x: x[1]))
 q = pd.DataFrame(quality); q["make"] = q.pps - q.x
 print(q[q.t == "TOR"].sort_values("fga", ascending=False).round(3).to_string())
 print(q.make.describe().round(3).to_string())
