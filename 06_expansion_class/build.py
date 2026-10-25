@@ -8,6 +8,7 @@ historical bar. Pieces:
   * hex shot maps (size = shot frequency, colour = zone efficiency vs league)
   * roster experience, head-to-heads, clutch, top players
 """
+import base64
 import json
 import sys
 from pathlib import Path
@@ -248,7 +249,11 @@ for key, tid, season, _ in MODERN:  # box history starts 2003, too short for 200
                          "ts": round(r.pts / (2 * (r.fga + 0.44 * r.fta)), 3), "pm40": round(40 * r.pm / r.mins, 1),
                          "exp": int(exp_map.get(n, 0))} for n, r in agg.iterrows()]
 
+logos = {k: "data:image/png;base64," + base64.b64encode((OUT.parent / "assets" / "logos" / f"{k.lower()}_sm.png").read_bytes()).decode()
+         for k, *_ in CLASS}
+
 data = {
+    "logos": logos,
     "class": [{"key": k, "season": s, "name": n} for k, _, s, n in CLASS],
     "elo": {"paths": elo_paths, "table2026": elo_2026, "end": first_season_bar,
             "params": {"K": K, "hca": HCA, "new_team": NEW_TEAM, "carry": CARRY}},

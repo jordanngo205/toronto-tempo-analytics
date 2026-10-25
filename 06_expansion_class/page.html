@@ -12,13 +12,16 @@
   --ink-3: #7a8191;
   --rule: #dfe2e8;
   --grid: #eceef2;
-  --tor: #2a78d6;
-  --por: #eb6834;
-  --gs: #1baf7a;
+  /* official team colours (from logos), stepped for chart legibility */
+  --gs: #9b6fc6;
+  --tor: #8a1f42;
+  --tor-2: #33476d;
+  --por: #e8379b;
   --hist: #9aa1ad;
-  --hot: #d03b3b;
-  --cold: #2a78d6;
+  --hot: #e07b1f;
+  --cold: #33476d;
   --mid: #eceae6;
+  --plate: transparent;
   --exp1: #d6dbe4; --exp2: #a7b1c2; --exp3: #6c7a92; --exp4: #34405a;
   --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
   --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
@@ -27,16 +30,16 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f1217; --panel: #171b22; --ink: #eef0f4; --ink-2: #b7bdc9; --ink-3: #8a91a0;
-    --rule: #2a303b; --grid: #222833; --tor: #3987e5; --por: #d95926; --gs: #199e70; --hist: #6b7280;
-    --hot: #e0524f; --cold: #3987e5; --mid: #383835;
+    --rule: #2a303b; --grid: #222833; --gs: #a47dd1; --tor: #b33a55; --tor-2: #7e9bd0; --por: #f070c0; --hist: #6b7280;
+    --hot: #f0923a; --cold: #7e9bd0; --mid: #383835; --plate: #eef0f4;
     --exp1: #2b3240; --exp2: #4a5568; --exp3: #8090aa; --exp4: #c3cddd;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0f1217; --panel: #171b22; --ink: #eef0f4; --ink-2: #b7bdc9; --ink-3: #8a91a0;
-  --rule: #2a303b; --grid: #222833; --tor: #3987e5; --por: #d95926; --gs: #199e70; --hist: #6b7280;
-  --hot: #e0524f; --cold: #3987e5; --mid: #383835;
+  --rule: #2a303b; --grid: #222833; --gs: #a47dd1; --tor: #b33a55; --tor-2: #7e9bd0; --por: #f070c0; --hist: #6b7280;
+  --hot: #f0923a; --cold: #7e9bd0; --mid: #383835; --plate: #eef0f4;
   --exp1: #2b3240; --exp2: #4a5568; --exp3: #8090aa; --exp4: #c3cddd;
   color-scheme: dark;
 }
@@ -52,15 +55,20 @@ p { margin: 0; max-width: 66ch; }
 .dek { font-size: 1.2rem; color: var(--ink-2); max-width: 60ch; }
 .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .section { display: grid; gap: 20px; }
-.section > header { display: grid; gap: 10px; border-top: 3px solid var(--ink); padding-top: 14px; }
+.section > header { display: grid; gap: 10px; border-top: 3px solid var(--tor); padding-top: 14px; }
+.section > header .eyebrow { color: var(--tor); }
 .lede { color: var(--ink-2); }
 .lede strong { color: var(--ink); font-weight: 600; }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
 .chip::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.chip.has-logo::before { display: none; }
+.logo { width: 22px; height: 22px; object-fit: contain; background: var(--plate); border-radius: 4px; padding: 1px; flex: none; }
+.logo.lg { width: 56px; height: 56px; padding: 4px; border-radius: 8px; }
+.card .head { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
 
 /* hero */
 .hero { display: grid; gap: 22px; }
-.hero h1 span { display: block; color: var(--ink-3); font-size: 0.34em; letter-spacing: 0.04em; margin-top: 10px; font-weight: 700; }
+.hero h1 span { display: block; color: var(--tor); font-size: 0.34em; letter-spacing: 0.04em; margin-top: 10px; font-weight: 700; }
 .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .card { background: var(--panel); border: 1px solid var(--rule); border-top: 6px solid var(--c); padding: 16px 16px 12px; display: grid; gap: 8px; min-width: 0; }
 .card .team { font-family: var(--display); font-weight: 700; font-size: 1.35rem; text-transform: uppercase; line-height: 1; }
@@ -71,7 +79,7 @@ p { margin: 0; max-width: 66ch; }
 .card dd { margin: 0; text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .card svg { width: 100%; height: 46px; display: block; }
 .byline { font-size: 0.85rem; color: var(--ink-3); }
-.byline a { color: var(--ink-2); }
+.byline a { color: var(--tor); }
 
 /* charts */
 .figure { background: var(--panel); border: 1px solid var(--rule); padding: 18px 18px 12px; min-width: 0; }
@@ -88,7 +96,7 @@ p { margin: 0; max-width: 66ch; }
 
 /* elo table */
 .elo-list { display: grid; gap: 3px; font-size: 0.85rem; }
-.elo-row { display: grid; grid-template-columns: 22px 44px 1fr 44px; align-items: center; gap: 8px; }
+.elo-row { display: grid; grid-template-columns: 22px 20px 40px 1fr 44px; align-items: center; gap: 8px; }
 .elo-row .bar { height: 14px; background: var(--grid); position: relative; }
 .elo-row .bar i { position: absolute; inset: 0 auto 0 0; background: var(--hist); border-radius: 0 3px 3px 0; }
 .elo-row.hl .bar i { background: var(--c); }
@@ -96,9 +104,9 @@ p { margin: 0; max-width: 66ch; }
 .elo-row .ab { font-family: var(--display); font-weight: 700; }
 
 /* toggle */
-.toggle { display: inline-flex; border: 1px solid var(--ink); }
+.toggle { display: inline-flex; border: 1px solid var(--tor); }
 .toggle button { font: 700 0.95rem var(--display); text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 14px; background: transparent; color: var(--ink); border: 0; cursor: pointer; }
-.toggle button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.toggle button[aria-pressed="true"] { background: var(--tor); color: #fff; }
 .toggle button:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--tor); outline-offset: 2px; }
 .courts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .court h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
@@ -129,7 +137,7 @@ td:first-child { font-family: var(--body); }
 .game .d { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-3); }
 .game .t { display: flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 1.15rem; text-transform: uppercase; min-width: 0; }
 .game .t.r { justify-content: flex-end; }
-.game .t i { width: 8px; height: 22px; background: var(--c); display: inline-block; }
+.game .t i { width: 6px; height: 26px; background: var(--c); display: inline-block; }
 .game .s { font-family: var(--mono); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
 .game .s b { font-weight: 500; }
 .game .lose { color: var(--ink-3); }
@@ -138,7 +146,7 @@ td:first-child { font-family: var(--body); }
 .series .big { font-family: var(--display); font-weight: 800; font-size: 1.8rem; line-height: 1; }
 
 .takeaways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; counter-reset: t; }
-.takeaways div { border-top: 2px solid var(--ink); padding-top: 10px; display: grid; gap: 6px; }
+.takeaways div { border-top: 2px solid var(--tor); padding-top: 10px; display: grid; gap: 6px; }
 .takeaways b { font-family: var(--display); font-size: 1.2rem; text-transform: uppercase; line-height: 1.1; }
 .takeaways p { font-size: 0.95rem; color: var(--ink-2); }
 
@@ -233,7 +241,7 @@ summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-s
       </div>
     </header>
     <div class="courts" id="courts"></div>
-    <div class="cap" style="font-size:0.82rem;color:var(--ink-3)">Each hex is about 2.6 ft wide, and its size shows the share of the team's attempts taken there. Colour is points per shot in that zone compared with league average for the same season. On the "Opponents' shots" view, red means opponents shot hot against this team. Hover a hex for the zone numbers.</div>
+    <div class="cap" style="font-size:0.82rem;color:var(--ink-3)">Each hex is about 2.6 ft wide, and its size shows the share of the team's attempts taken there. Colour is points per shot in that zone compared with league average for the same season. On the "Opponents' shots" view, orange means opponents shot hot against this team. Hover a hex for the zone numbers.</div>
   </section>
 
   <section class="section" id="roster">
@@ -292,6 +300,8 @@ const TEAMS = { GS: { name: "Valkyries", full: "Golden State Valkyries", yr: 202
                 POR: { name: "Fire", full: "Portland Fire", yr: 2026, c: "var(--por)" } };
 const HIST = { CHI: { name: "Sky '06", yr: 2006 }, ATL: { name: "Dream '08", yr: 2008 } };
 const ORDER = ["GS", "TOR", "POR"];
+const logo = (k, cls = "logo") => `<img class="${cls}" src="${D.logos[k]}" alt="${(TEAMS[k] || HIST[k]).name} logo">`;
+const chip = (k, label) => `<span class="chip has-logo" style="--c:${TEAMS[k].c}">${logo(k)}${label}</span>`;
 const fmt = (v, d = 1) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
 const pct = (v, d = 1) => (100 * v).toFixed(d) + "%";
 
@@ -315,7 +325,7 @@ const hideTip = () => { tip.style.opacity = 0; };
 
 function legend(id, keys, withHist) {
   const L = document.getElementById(id);
-  L.innerHTML = keys.map(k => `<span class="chip" style="--c:${TEAMS[k].c}">${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}</span>`).join("")
+  L.innerHTML = keys.map(k => chip(k, `<span style="border-bottom:3px solid ${TEAMS[k].c}">${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}</span>`)).join("")
     + (withHist ? `<span class="chip hist" style="color:var(--ink-3)">Sky '06 · Dream '08</span>` : "");
 }
 
@@ -326,7 +336,7 @@ function legend(id, keys, withHist) {
     const f = D.fingerprint[k], e = D.elo.end[k], path = D.elo.paths[k];
     const div = document.createElement("div");
     div.className = "card"; div.style.setProperty("--c", TEAMS[k].c);
-    div.innerHTML = `<div><div class="team">${TEAMS[k].full}</div><div class="yr">Year one · ${TEAMS[k].yr}</div></div>
+    div.innerHTML = `<div class="head"><div><div class="team">${TEAMS[k].full}</div><div class="yr">Year one · ${TEAMS[k].yr}</div></div>${logo(k, "logo lg")}</div>
       <div class="rec">${f.w}–${f.l}</div>
       <dl><dt>Net rating</dt><dd>${fmt(f.net.v)} <span style="color:var(--ink-3)">(${f.net.rank}/${f.teams})</span></dd>
       <dt>Final Elo</dt><dd>${e.end} <span style="color:var(--ink-3)">(${e.rank}/${e.of})</span></dd>
@@ -344,7 +354,7 @@ function legend(id, keys, withHist) {
 /* ---------- Elo chart ---------- */
 (function eloChart() {
   const P = D.elo.paths, s = document.getElementById("elo-chart");
-  const W = 640, H = 360, m = { l: 44, r: 82, t: 12, b: 30 };
+  const W = 640, H = 360, m = { l: 44, r: 112, t: 12, b: 30 };
   const all = Object.values(P).flat();
   const lo = Math.floor(Math.min(...all) / 50) * 50, hi = Math.ceil(Math.max(...all) / 50) * 50;
   const x = scale(0, 44, m.l, W - m.r), y = scale(lo, hi, H - m.b, m.t);
@@ -364,7 +374,8 @@ function legend(id, keys, withHist) {
   ends.sort((a, b) => y(a.v) - y(b.v));
   let prev = -99;
   for (const e of ends) { let yy = Math.max(y(e.v) + 4, prev + 14); prev = yy;
-    txt(s, W - m.r + 8, yy, `${e.label} ${Math.round(e.v)}`, ORDER.includes(e.k) ? "lbl-ink" : "lbl", ORDER.includes(e.k) ? { style: "font-size:13px" } : {}); }
+    el("image", { href: D.logos[e.k], x: W - m.r + 6, y: yy - 11, width: 14, height: 14 }, s);
+    txt(s, W - m.r + 24, yy, `${e.label} ${Math.round(e.v)}`, ORDER.includes(e.k) ? "lbl-ink" : "lbl", ORDER.includes(e.k) ? { style: "font-size:13px" } : {}); }
   const cross = el("line", { y1: m.t, y2: H - m.b, stroke: "var(--ink-3)", "stroke-width": 1, opacity: 0 }, s);
   const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, class: "hit" }, s);
   hit.addEventListener("pointermove", ev => {
@@ -385,7 +396,7 @@ function legend(id, keys, withHist) {
   const max = Math.max(...rows.map(r => r.elo)), min = 1150;
   tbl.innerHTML = rows.map((r, i) => {
     const k = r.abbr === "TOR" ? "TOR" : r.abbr === "POR" ? "POR" : r.abbr === "GS" ? "GS" : null;
-    return `<div class="elo-row ${k ? "hl" : ""}" style="${k ? "--c:" + TEAMS[k].c : ""}"><span class="num" style="color:var(--ink-3)">${i + 1}</span><span class="ab">${r.abbr}</span><span class="bar"><i style="width:${(r.elo - min) / (max - min) * 100}%"></i></span><span class="num">${r.elo}</span></div>`;
+    return `<div class="elo-row ${k ? "hl" : ""}" style="${k ? "--c:" + TEAMS[k].c : ""}"><span class="num" style="color:var(--ink-3)">${i + 1}</span>${k ? logo(k).replace('class="logo"', 'class="logo" style="width:18px;height:18px"') : "<span></span>"}<span class="ab">${r.abbr}</span><span class="bar"><i style="width:${(r.elo - min) / (max - min) * 100}%"></i></span><span class="num">${r.elo}</span></div>`;
   }).join("");
 })();
 
@@ -426,7 +437,7 @@ function legend(id, keys, withHist) {
 /* ---------- season arc ---------- */
 (function arc() {
   const s = document.getElementById("arc-chart"), R = D.rolling;
-  const W = 640, H = 300, m = { l: 40, r: 70, t: 10, b: 26 };
+  const W = 640, H = 300, m = { l: 40, r: 100, t: 10, b: 26 };
   const x = scale(1, 44, m.l, W - m.r), y = scale(-30, 20, H - m.b, m.t);
   for (let v = -30; v <= 20; v += 10) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 0 ? "zero" : "gridline" }, s); txt(s, m.l - 8, y(v) + 4, v > 0 ? "+" + v : v, "lbl", { "text-anchor": "end" }); }
   for (const g of [10, 20, 30, 40]) txt(s, x(g), H - 8, "G" + g, "lbl", { "text-anchor": "middle" });
@@ -439,7 +450,7 @@ function legend(id, keys, withHist) {
     ends.push({ k, v: last });
   }
   ends.sort((a, b) => y(a.v) - y(b.v)); let prev = -99;
-  for (const e of ends) { const yy = Math.max(y(e.v) + 4, prev + 15); prev = yy; txt(s, W - m.r + 8, yy, `${TEAMS[e.k].name} ${fmt(e.v)}`, "lbl-ink", { style: "font-size:13px" }); }
+  for (const e of ends) { const yy = Math.max(y(e.v) + 4, prev + 15); prev = yy; el("image", { href: D.logos[e.k], x: W - m.r + 6, y: yy - 12, width: 16, height: 16 }, s); txt(s, W - m.r + 26, yy, `${TEAMS[e.k].name} ${fmt(e.v)}`, "lbl-ink", { style: "font-size:13px" }); }
   const cross = el("line", { y1: m.t, y2: H - m.b, stroke: "var(--ink-3)", opacity: 0 }, s);
   const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, class: "hit" }, s);
   hit.addEventListener("pointermove", ev => {
@@ -453,11 +464,12 @@ function legend(id, keys, withHist) {
 
   // margin strips
   const st = document.getElementById("strip-chart"), G = D.games;
-  const bandH = 70, mx = scale(0, 44, 70, 630), bw = (630 - 70) / 44 - 2, ym = scale(0, 35, 0, bandH / 2 - 2);
+  const bandH = 70, mx = scale(0, 44, 100, 630), bw = (630 - 100) / 44 - 2, ym = scale(0, 35, 0, bandH / 2 - 2);
   ORDER.forEach((k, i) => {
     const cy = i * (bandH + 6) + bandH / 2 + 2;
-    txt(st, 0, cy + 5, TEAMS[k].name, "lbl-ink");
-    el("line", { x1: 70, x2: 630, y1: cy, y2: cy, class: "gridline" }, st);
+    el("image", { href: D.logos[k], x: 0, y: cy - 10, width: 20, height: 20 }, st);
+    txt(st, 24, cy + 5, TEAMS[k].name, "lbl-ink");
+    el("line", { x1: 100, x2: 630, y1: cy, y2: cy, class: "gridline" }, st);
     G[k].forEach((g, j) => {
       const mg = g.pf - g.pa, h = Math.max(1.5, ym(Math.min(35, Math.abs(mg))));
       const b = el("rect", { x: mx(j) + 1, y: mg > 0 ? cy - h : cy, width: bw, height: h, rx: 1.5, fill: TEAMS[k].c, opacity: mg > 0 ? 1 : 0.38 }, st);
@@ -488,7 +500,7 @@ function legend(id, keys, withHist) {
   const panels = {};
   for (const k of ORDER) {
     const d = document.createElement("div"); d.className = "court";
-    d.innerHTML = `<h3><span class="chip" style="--c:${TEAMS[k].c}">${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}</span><small></small></h3>`;
+    d.innerHTML = `<h3>${chip(k, `${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}`)}<small></small></h3>`;
     const s = el("svg", { viewBox: `0 0 500 ${Math.round(Y(29))}`, role: "img", "aria-label": `${TEAMS[k].full} shot map` });
     d.appendChild(s);
     const reads = document.createElement("div"); reads.className = "reads"; d.appendChild(reads);
@@ -539,10 +551,11 @@ function legend(id, keys, withHist) {
 (function roster() {
   const E = D.experience, s = document.getElementById("exp-chart");
   const B = [["Rookie", "var(--exp1)"], ["1-2 yrs", "var(--exp2)"], ["3-5 yrs", "var(--exp3)"], ["6+ yrs", "var(--exp4)"]];
-  const x = scale(0, 1, 90, 560);
+  const x = scale(0, 1, 110, 560);
   ORDER.forEach((k, i) => {
     const y = 8 + i * 52; let acc = 0;
-    txt(s, 0, y + 22, TEAMS[k].name, "lbl-ink");
+    el("image", { href: D.logos[k], x: 0, y: y + 7, width: 20, height: 20 }, s);
+    txt(s, 24, y + 22, TEAMS[k].name, "lbl-ink");
     for (const [b, c] of B) {
       const v = E[k][b] || 0;
       const r = el("rect", { x: x(acc) + 1, y, width: Math.max(0, x(acc + v) - x(acc) - 2), height: 34, fill: c, rx: 2 }, s);
@@ -559,7 +572,7 @@ function legend(id, keys, withHist) {
   const box = document.getElementById("players");
   for (const k of ORDER) {
     const d = document.createElement("div"); d.style.setProperty("--c", TEAMS[k].c);
-    d.innerHTML = `<h3>${TEAMS[k].full}</h3><div class="tbl-wrap"><table><tr><th>Player</th><th>MPG</th><th>PPG</th><th>TS%</th><th>+/-40</th></tr>` +
+    d.innerHTML = `<h3 style="display:flex;gap:8px;align-items:center">${logo(k)}${TEAMS[k].full}</h3><div class="tbl-wrap"><table><tr><th>Player</th><th>MPG</th><th>PPG</th><th>TS%</th><th>+/-40</th></tr>` +
       D.players[k].map(p => `<tr><td>${p.name}${p.exp === 0 ? '<span class="rook">ROOK</span>' : ""}</td><td>${p.mpg}</td><td>${p.ppg}</td><td>${(100 * p.ts).toFixed(1)}</td><td>${fmt(p.pm40)}</td></tr>`).join("") + "</table></div>";
     box.appendChild(d);
   }
@@ -575,17 +588,17 @@ function legend(id, keys, withHist) {
   }
   document.getElementById("series").innerHTML = [["TOR", "POR"], ["TOR", "GS"], ["POR", "GS"]].map(([a, b]) => {
     const r = rec[pairKey(a, b)] || { [a]: 0, [b]: 0 };
-    return `<div><span class="eyebrow">${TEAMS[a].name} vs ${TEAMS[b].name}</span><span class="big num">${r[a] || 0}–${r[b] || 0}</span></div>`;
+    return `<div><span style="display:flex;gap:4px">${logo(a)}${logo(b)}</span><span class="eyebrow">${TEAMS[a].name} vs ${TEAMS[b].name}</span><span class="big num">${r[a] || 0}–${r[b] || 0}</span></div>`;
   }).join("") + `<div><span class="eyebrow">Note</span><span style="font-size:.85rem;color:var(--ink-2);max-width:26ch">Golden State was in year two in 2026.</span></div>`;
   document.getElementById("board").innerHTML = games.map(g => {
     const hw = g.hs > g.as;
     return `<div class="game"><span class="d">${g.date}</span>
-      <span class="t ${hw ? "lose" : ""}" style="--c:${TEAMS[g.away].c}"><i></i>${TEAMS[g.away].name}</span>
+      <span class="t ${hw ? "lose" : ""}" style="--c:${TEAMS[g.away].c}"><i></i>${logo(g.away)}${TEAMS[g.away].name}</span>
       <span class="s"><b class="${hw ? "lose" : ""}">${g.as}</b> – <b class="${hw ? "" : "lose"}">${g.hs}</b></span>
-      <span class="t r ${hw ? "" : "lose"}" style="--c:${TEAMS[g.home].c}">@ ${TEAMS[g.home].name}<i></i></span></div>`;
+      <span class="t r ${hw ? "" : "lose"}" style="--c:${TEAMS[g.home].c}">@ ${TEAMS[g.home].name}${logo(g.home)}<i></i></span></div>`;
   }).join("");
   const C = D.clutch;
   document.getElementById("clutch").innerHTML = `<tr><th>Team</th><th>Clutch W–L</th><th>Lost after leading 10+</th><th>Won after trailing 10+</th></tr>` +
-    ORDER.map(k => `<tr><td><span class="chip" style="--c:${TEAMS[k].c}">${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}</span></td><td>${C[k].w}–${C[k].l}</td><td>${C[k].blown10}</td><td>${C[k].comeback10}</td></tr>`).join("");
+    ORDER.map(k => `<tr><td>${chip(k, `${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}`)}</td><td>${C[k].w}–${C[k].l}</td><td>${C[k].blown10}</td><td>${C[k].comeback10}</td></tr>`).join("");
 })();
 </script>

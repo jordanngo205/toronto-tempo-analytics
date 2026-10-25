@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from common import ACCENT, INK, LEAGUE, MUTED, TEMPO, load, save, style
+from common import INK, LEAGUE, MUTED, TEMPO, TEMPO_NAVY, load, save, style
 
 OUT = Path(__file__).parent
 TOR_ID = 131935
@@ -50,7 +50,7 @@ summary.to_csv(OUT / "clutch_summary.csv")
 
 # --- Chart 1: quarter margins -------------------------------------------------
 fig, ax = plt.subplots(figsize=(7.5, 4.4))
-colors = [TEMPO if v >= 0 else ACCENT for v in by_q]
+colors = [TEMPO_NAVY if v >= 0 else TEMPO for v in by_q]
 bars = ax.bar(["Q1", "Q2", "Q3", "Q4"], by_q, color=colors, width=0.55, edgecolor="white", lw=2)
 for b, v in zip(bars, by_q):
     ax.text(b.get_x() + b.get_width() / 2, v + (0.12 if v >= 0 else -0.12), f"{v:+.1f}",

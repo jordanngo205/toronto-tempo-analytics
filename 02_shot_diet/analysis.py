@@ -73,14 +73,14 @@ def draw_court(ax):
     ax.set_aspect("equal"); ax.axis("off")
 
 
-# diverging: blue = good for Toronto, maroon = bad for Toronto, gray midpoint
-cmap = LinearSegmentedColormap.from_list("tempo_div", ["#B8325A", "#F1F2F4", "#2F5DA8"])
+# diverging in Tempo colours: navy = good for Toronto, bordeaux = bad, gray midpoint
+cmap = LinearSegmentedColormap.from_list("tempo_div", ["#8A1F42", "#F1F2F4", "#33476D"])
 gx, gy = np.meshgrid(np.linspace(0, 50, 500), np.linspace(-5.25, 30, 360))
 gz = zone(gx.ravel(), gy.ravel()).reshape(gx.shape)
 
 fig, axes = plt.subplots(1, 2, figsize=(12, 6.4), layout="constrained")
 panels = [(axes[0], offense, +1, "Tempo offense", "Shot share and points per shot, vs league average"),
-          (axes[1], defense, -1, "Tempo defense (opponents)", "Blue = opponents scored less than league average")]
+          (axes[1], defense, -1, "Tempo defense (opponents)", "Navy = opponents scored less than league average")]
 norm = TwoSlopeNorm(vcenter=0, vmin=-0.2, vmax=0.2)
 label_pos = {"Rim": (25, 1.6), "Paint (non-rim)": (25, 9), "Midrange": (25, 18.5),
              "Corner 3": (1.6, 6), "Above-break 3": (25, 26.5)}
@@ -103,7 +103,7 @@ for ax, prof, sign, title, sub in panels:
 
 cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=axes, orientation="horizontal",
                   fraction=0.05, aspect=50)
-cb.set_label("Points per shot vs 2026 league average (blue = better for Toronto)", color=MUTED, fontsize=9)
+cb.set_label("Points per shot vs 2026 league average (navy = better for Toronto)", color=MUTED, fontsize=9)
 cb.ax.tick_params(colors=MUTED, labelsize=8)
 fig.suptitle("Tempo shot diet, 2026: where the points come from and where they leak", x=0.02, ha="left",
              fontsize=14, fontweight="bold", color=INK)
@@ -116,7 +116,7 @@ mix = (ts[ts.athlete_name_1.isin(top)].groupby(["athlete_name_1", "zone"]).size(
        .unstack(fill_value=0).reindex(columns=ZONES))
 mix = mix.div(mix.sum(axis=1), axis=0).loc[top[::-1]]
 fig, ax = plt.subplots(figsize=(9, 4.8))
-zone_colors = ["#1F3F75", "#2F5DA8", "#9FB6DA", "#D88AA2", "#B8325A"]  # 2 vs 3 split, blue = 2s
+zone_colors = ["#1E2A42", "#33476D", "#9AA8C2", "#C98AA0", "#8A1F42"]  # Tempo navy = 2s, bordeaux = 3s
 left = np.zeros(len(mix))
 for z, c in zip(ZONES, zone_colors):
     ax.barh(mix.index, mix[z], left=left, color=c, edgecolor="white", lw=2, height=0.7, label=z)

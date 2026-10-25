@@ -89,7 +89,7 @@ for _, r in pairs[pairs.a.isin(core) & pairs.b.isin(core)].iterrows():
     mins.loc[r.a, r.b] = mins.loc[r.b, r.a] = r["min"]
 mat.to_csv(OUT / "pair_pm40.csv")
 
-cmap = LinearSegmentedColormap.from_list("tempo_div", ["#B8325A", "#F1F2F4", "#2F5DA8"])
+cmap = LinearSegmentedColormap.from_list("tempo_div", ["#8A1F42", "#F1F2F4", "#33476D"])
 lim = np.nanmax(np.abs(mat.to_numpy()))
 fig, ax = plt.subplots(figsize=(8.5, 7.5))
 rows_, cols_ = core[1:], core[:-1]  # lower triangle without the empty first row / last column

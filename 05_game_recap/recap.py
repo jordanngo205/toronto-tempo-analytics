@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from common import ACCENT, INK, LEAGUE, MUTED, TEMPO, load, save, style, team_games
+from common import FIRE, INK, MUTED, TEMPO, VALKYRIES, add_logo, load, save, style, team_games
 
 OUT = Path(__file__).parent / "recaps"
 TOR_ID = 131935
@@ -49,6 +49,8 @@ def factors(t):
 
 
 ft, fo = factors(tor), factors(opp)
+# ESPN's colour feed is off for some new teams; use the logo colours there
+OPP = {"POR": FIRE, "GS": VALKYRIES}.get(str(opp.team_abbreviation), "#" + str(opp.team_color))
 better_low = {"TOV%"}
 result = "W" if tor.team_winner else "L"
 date = pd.Timestamp(tor.game_date).strftime("%b %-d, %Y")
@@ -62,7 +64,7 @@ fig.text(0.06, 0.935, f"{date} · Toronto {venue} {opp.team_abbreviation}", font
 
 ax = fig.add_subplot(gs[0, :])
 ax.fill_between(elapsed, margin, 0, where=margin >= 0, color=TEMPO, alpha=0.25, step="post", lw=0)
-ax.fill_between(elapsed, margin, 0, where=margin < 0, color=ACCENT, alpha=0.25, step="post", lw=0)
+ax.fill_between(elapsed, margin, 0, where=margin < 0, color=OPP, alpha=0.3, step="post", lw=0)
 ax.step(elapsed, margin, where="post", color=INK, lw=1.4)
 ax.axhline(0, color=MUTED, lw=1)
 end = max(40, elapsed.max())
@@ -81,7 +83,7 @@ for yi, k in zip(y, labels):
             fontweight="bold" if tor_better else "normal")
     ax.text(0.85, yi, f"{b:.1f}", fontsize=10.5, va="center", ha="right", color=INK,
             fontweight="bold" if not tor_better else "normal")
-    ax.scatter(0.6, yi, s=40, color=TEMPO if tor_better else ACCENT)
+    ax.scatter(0.6, yi, s=40, color=TEMPO if tor_better else OPP)
 ax.text(0.55, len(labels) - 0.2, "TOR", ha="right", fontsize=9, color=MUTED)
 ax.text(0.85, len(labels) - 0.2, opp.team_abbreviation, ha="right", fontsize=9, color=MUTED)
 ax.set_xlim(0, 1); ax.set_ylim(-0.6, len(labels) + 0.2); ax.axis("off")
@@ -97,4 +99,13 @@ style(ax, "Top Tempo performers", "Game Score")
 ax.grid(axis="y", visible=False); ax.grid(axis="x", color="#ECEEF0")
 
 out = OUT / f"{pd.Timestamp(tor.game_date):%Y-%m-%d}_{opp.team_abbreviation}_{game_id}.png"
+logo_file = Path(__file__).resolve().parents[1] / "assets" / "logos" / f"{str(opp.team_abbreviation).lower()}_sm.png"
+if not logo_file.exists():  # fetch opponent logo once
+    import urllib.request
+    urllib.request.urlretrieve(str(opp.team_logo), logo_file.with_name(logo_file.stem.replace("_sm", "") + ".png"))
+    from PIL import Image
+    im = Image.open(logo_file.with_name(logo_file.stem.replace("_sm", "") + ".png")).convert("RGBA")
+    im.thumbnail((160, 160)); im.save(logo_file)
+add_logo(fig, str(opp.team_abbreviation).lower(), size=0.06)
+fig.axes[-1].set_position([0.86, 0.9, 0.06, 0.06])
 save(fig, out)

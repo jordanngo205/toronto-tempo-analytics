@@ -9,8 +9,11 @@ import pyarrow.parquet as pq
 ROOT = Path(__file__).parent
 RAW = ROOT / "data" / "raw"
 
-TEMPO = "#2F5DA8"   # brightened Tempo navy (the official #33476D reads gray on charts)
-ACCENT = "#B8325A"  # Tempo maroon / comparison team
+TEMPO = "#8A1F42"       # Tempo bordeaux (logo colour)
+TEMPO_NAVY = "#33476D"  # Tempo secondary
+VALKYRIES = "#9B6FC6"
+FIRE = "#E8379B"
+ACCENT = VALKYRIES      # default comparison team
 LEAGUE = "#A3A9B0"
 INK, MUTED = "#1F2328", "#6B7280"
 
@@ -54,7 +57,17 @@ def style(ax, title=None, subtitle=None):
         ax.text(0, 1.02, subtitle, transform=ax.transAxes, fontsize=9.5, color=MUTED)
 
 
-def save(fig, path, source="Data: sportsdataverse (ESPN / WNBA Stats)"):
+def add_logo(fig, team="tor", size=0.07):
+    """Team logo in the top-right corner of the figure."""
+    img = plt.imread(ROOT / "assets" / "logos" / f"{team}_sm.png")
+    ax = fig.add_axes([1 - size - 0.005, 1 - size + 0.01, size, size], anchor="NE", zorder=10)
+    ax.imshow(img)
+    ax.axis("off")
+
+
+def save(fig, path, source="Data: sportsdataverse (ESPN / WNBA Stats)", logo="tor"):
+    if logo:
+        add_logo(fig, logo)
     fig.text(0.01, -0.04, source, fontsize=7.5, color=MUTED, va="top")
     fig.savefig(path, dpi=200, bbox_inches="tight", facecolor="white")
     plt.close(fig)

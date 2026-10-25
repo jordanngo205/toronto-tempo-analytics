@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from common import ACCENT, INK, LEAGUE, MUTED, TEMPO, save, style, team_games
+from common import INK, LEAGUE, MUTED, TEMPO, VALKYRIES as ACCENT, save, style, team_games
 
 OUT = Path(__file__).parent
 
