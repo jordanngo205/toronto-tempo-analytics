@@ -292,10 +292,8 @@ lab.summary("expansion-class", {"tor_elo": first_season_bar["TOR"]["end"], "por_
                                 "gs_elo": first_season_bar["GS"]["end"], "tor_def_rank": fingerprint["TOR"]["drtg"]["rank"]})
 payload = json.dumps(data, separators=(",", ":"))
 (OUT / "expansion.json").write_text(payload)
-# version 1: a standalone html file in this folder (the data goes where page.html says /*DATA*/)
+# put the data where page.html says /*DATA*/, then add the shared site head and nav bar
 page = (OUT / "page.html").read_text().replace("/*DATA*/", payload.replace("</", "<\\/"))
-(OUT / "expansion_class.html").write_text(page)
-# version 2: the website copy, with the shared site head and nav bar added
 standalone = page.replace('<meta name="claude:viewport-fit-sides" content="cover">\n', "")
 style, rest = standalone.split("</style>", 1)
 style = style.replace("<title>The Expansion Class</title>\n", "")  # lab.head() adds its own title
