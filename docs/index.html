@@ -7,19 +7,20 @@
 <meta name="description" content="Toronto Tempo analytics: expansion-year Elo, shot charts, rotations, game flow and recaps for every 2026 game.">
 <link rel="icon" href="assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap">
 <link rel="stylesheet" href="assets/site.css">
 <style>
 .home-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; }
 .home-hero img.mark { width: clamp(110px, 18vw, 200px); height: auto; background: var(--plate); border-radius: 16px; padding: 8px; }
-.home-hero h1 { font-size: clamp(3.4rem, 11vw, 7.5rem); }
+.home-hero h1 { font-size: clamp(3rem, 8vw, 5.6rem); }
+.home-hero h1 .sub { font-size: 0.36em; }
 .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .tile { display: grid; grid-template-rows: auto 1fr; background: var(--panel); border: 1px solid var(--rule); text-decoration: none; color: inherit; min-width: 0; transition: transform 0.15s, border-color 0.15s; }
 .tile:hover { transform: translateY(-3px); border-color: var(--tor); }
 .tile .thumb { aspect-ratio: 16 / 10; overflow: hidden; border-bottom: 1px solid var(--rule); background: var(--grid); }
 .tile .thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
 .tile .body { padding: 14px 16px 16px; display: grid; gap: 6px; align-content: start; }
-.tile .k { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tor); }
+.tile .k { font-family: var(--ui); font-size: 0.8rem; font-weight: 600; color: var(--ink-3); }
 .tile h2 { font-size: 1.9rem; }
 .tile p { color: var(--ink-2); font-size: 0.95rem; }
 .tile .stat { border: 0; border-top: 1px solid var(--rule); padding: 8px 0 0; background: transparent; }
@@ -42,8 +43,7 @@
 
 <section class="hero home-hero">
   <div style="display:grid;gap:16px">
-    <div class="eyebrow">Toronto Tempo analytics · WNBA 2026</div>
-    <h1>Tempo Lab<span class="sub">Toronto's first WNBA season, broken down with data.</span></h1>
+    <h1>Tempo Lab<span class="sub">Data on the Toronto Tempo's first WNBA season.</span></h1>
     <p class="dek" id="dek"></p>
   </div>
   <img class="mark" src="assets/logos/tor_sm.png" alt="Toronto Tempo logo">
@@ -68,26 +68,26 @@ const pct = v => Math.round(v * 100) + "%";
 document.getElementById("dek").innerHTML = `The Tempo went <strong>${g.record}</strong> in their expansion season. Six interactive pages show why, and what comes next: Elo ratings, shot charts, rotations, game flow, a recap for every game, and a 2027 draft board.`;
 // one tile per page: link, small label, title, description, big number and caption. "wide" = full-width tile
 const tiles = [
-  { slug: "expansion-class", k: "01 · Elo & Four Factors", t: "The Expansion Class", wide: true,
+  { slug: "expansion-class", k: "Elo & Four Factors", t: "The Expansion Class", wide: true,
     p: "Valkyries '25, Tempo '26 and Fire '26 compared, with the 2006 Sky and 2008 Dream for history. Elo tracks, team fingerprints, hex shot maps and roster-building.",
     v: e.tor_elo, l: `Toronto's final Elo, last in the league (Portland ${e.por_elo}, Golden State's year one ${e.gs_elo})` },
-  { slug: "shot-lab", k: "02 · Shots", t: "Shot Lab", p: "Every Tempo shot, player by player. Hex maps, shot quality vs shot making, and distance curves.",
+  { slug: "shot-lab", k: "Shots", t: "Shot Lab", p: "Every Tempo shot, player by player. Hex maps, shot quality vs shot making, and distance curves.",
     v: `${sh.xpps.toFixed(2)} → ${sh.pps.toFixed(2)}`, l: "Expected vs actual points per shot" },
-  { slug: "rotation-lab", k: "03 · Rotation", t: "Rotation Lab", p: "Minutes in every game, a chemistry network of player pairs, usage vs efficiency, and five-player lineups.",
+  { slug: "rotation-lab", k: "Rotation", t: "Rotation Lab", p: "Minutes in every game, a chemistry network of player pairs, usage vs efficiency, and five-player lineups.",
     v: `${r.players} / ${r.lineups}`, l: "Players used / starting lineups" },
-  { slug: "game-flow", k: "04 · Play-by-play", t: "Game Flow", p: "A grid of every minute of every game, scoring runs, and upsets measured against pregame Elo odds.",
+  { slug: "game-flow", k: "Play-by-play", t: "Game Flow", p: "A grid of every minute of every game, scoring runs, and upsets measured against pregame Elo odds.",
     v: `${f.runs_for}–${f.runs_against}`, l: "Scoring runs of 8+, for vs against" },
-  { slug: "game-center", k: "05 · Recaps", t: "Game Center", p: "Pick any of the 44 games for the scoreboard, game flow, both shot charts, key battles and full box scores.",
+  { slug: "game-center", k: "Recaps", t: "Game Center", p: "Pick any of the 44 games for the scoreboard, game flow, both shot charts, key battles and full box scores.",
     v: g.games, l: "Games with a full recap" },
-  { slug: "draft-lab", k: "06 · 2027 draft", t: "Draft Lab", wide: true,
+  { slug: "draft-lab", k: "2027 draft", t: "Draft Lab", wide: true,
     p: "Who should Toronto take in 2027? What the team needs, which college numbers actually translate to the WNBA, and an adjustable big board of the senior class.",
     v: S["draft-lab"].pool, l: `College seniors ranked · No. 1 at the default setting: ${S["draft-lab"].top}` },
 ];
 // build the tiles. Each one is a link with a screenshot of the page on top
 document.getElementById("tiles").innerHTML = tiles.map(x => `<a class="tile ${x.wide ? "wide" : ""}" href="${x.slug}/">
   <div class="thumb"><img src="assets/shots/${x.slug}.png" alt="${x.t} preview" loading="lazy"></div>
-  <div class="body"><span class="k">${x.k}</span><h2>${x.t}</h2><p>${x.p}</p>
-  <div class="stat"><span class="v">${x.v}</span><span class="k" style="color:var(--ink-3);letter-spacing:0;text-transform:none;font-family:var(--body)">${x.l}</span></div></div></a>`).join("");
+  <div class="body"><h2>${x.t}</h2><p>${x.p}</p>
+  <div class="stat"><span class="v">${x.v}</span><span class="k" style="color:var(--ink-3)">${x.l}</span></div></div></a>`).join("");
 </script>
 
 </div>
