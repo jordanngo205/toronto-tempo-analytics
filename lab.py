@@ -12,6 +12,7 @@ PAGES = [  # slug, nav label
     ("rotation-lab", "Rotation Lab"),
     ("game-flow", "Game Flow"),
     ("game-center", "Game Center"),
+    ("draft-lab", "Draft Lab"),
 ]
 # Google Fonts link: Barlow Condensed for headings, Barlow for text, IBM Plex Mono for numbers
 FONTS = ("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800"

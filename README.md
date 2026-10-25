@@ -9,7 +9,7 @@
 
 </div>
 
-The Toronto Tempo joined the WNBA in 2026 and went **11–33**. This repo pulls every game, shot and lineup from that season and turns them into five interactive pages. The goal is to explain why the season went the way it did, and what year two needs.
+The Toronto Tempo joined the WNBA in 2026 and went **11–33**. This repo pulls every game, shot and lineup from that season and turns them into six interactive pages. The goal is to explain why the season went the way it did, and who Toronto should draft for year two.
 
 <img src="readme_art/out/by-the-numbers.png" alt="Tempo by the numbers" width="100%">
 
@@ -71,6 +71,14 @@ Each card's mini shot chart comes from that player's own 2026 shots: hex size sh
 
 ---
 
+## Who should Toronto draft?
+
+<img src="readme_art/out/big-board.png" alt="The 2027 big board: Toronto's top 10 college seniors" width="100%">
+
+The [**Draft Lab**](https://jordanngo205.github.io/toronto-tempo-analytics/draft-lab/) starts with what broke: Toronto was last in defensive rating, opponent eFG%, opponent shots at the rim and blocks. Then it follows every WNBA draftee from 2018 to 2025 back to college to see what actually translates. After you account for draft slot, box plus-minus, defensive BPM and steals still predicted WNBA minutes. College scoring didn't. Every 2026-27 senior is scored on **talent** (a ridge model plus sportsdataverse's draft projection) and **fit** (blocks, defensive rebounding, defensive BPM, size). A slider lets you trade one for the other.
+
+---
+
 ## What's on the site
 
 | | Page | What you can do there |
@@ -80,6 +88,7 @@ Each card's mini shot chart comes from that player's own 2026 shots: hex size sh
 | **03** | [**Rotation Lab**](https://jordanngo205.github.io/toronto-tempo-analytics/rotation-lab/) | See who played in every game, a network of which pairs worked together, and lineup results. |
 | **04** | [**Game Flow**](https://jordanngo205.github.io/toronto-tempo-analytics/game-flow/) | See every minute of every game, every 8–0 run, and upsets measured against pregame odds. |
 | **05** | [**Game Center**](https://jordanngo205.github.io/toronto-tempo-analytics/game-center/) | Pick any of the 44 games for a full recap: game flow, shot charts and box scores. |
+| **06** | [**Draft Lab**](https://jordanngo205.github.io/toronto-tempo-analytics/draft-lab/) | See what Toronto needs, which college numbers translate to the WNBA, and an adjustable 2027 big board of the senior class. |
 
 ---
 
@@ -87,14 +96,15 @@ Each card's mini shot chart comes from that player's own 2026 shots: hex size sh
 
 ```mermaid
 flowchart LR
-    A[sportsdataverse<br/>ESPN play-by-play<br/>box scores · lineups] -->|data/pull.py| B[(data/raw<br/>parquet files)]
+    A[sportsdataverse<br/>WNBA + college<br/>pbp · box scores · lineups · drafts] -->|data/pull.py| B[(data/raw<br/>parquet files)]
     B --> C1[01 build.py<br/>Elo · Four Factors]
     B --> C2[02 build.py<br/>shot zones]
     B --> C3[03 build.py<br/>rotations]
     B --> C4[04 build.py<br/>runs · game grid]
     B --> C5[05 build.py<br/>game recaps]
+    B --> C6[06 build.py<br/>draft board]
     E[elo.py · flow.py<br/>common.py] -.-> C1 & C4 & C5
-    C1 & C2 & C3 & C4 & C5 -->|lab.py| D[docs/<br/>HTML pages]
+    C1 & C2 & C3 & C4 & C5 & C6 -->|lab.py| D[docs/<br/>HTML pages]
     K[docs/assets/kit.js<br/>my SVG chart helpers] -.-> D
     D -->|GitHub Pages| W((live site))
     B --> R[readme_art/make_art.py] --> P[README graphics]
@@ -122,7 +132,7 @@ flowchart LR
 git clone https://github.com/jordanngo205/toronto-tempo-analytics.git
 cd toronto-tempo-analytics
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python data/pull.py              # download 2025–26 data + 2003–24 history
+.venv/bin/python data/pull.py              # WNBA 2025–26 + history, college 2015–26, drafts
 .venv/bin/python build_site.py             # rebuild every page in docs/
 .venv/bin/python readme_art/make_art.py    # rebuild the README graphics (needs Google Chrome)
 open docs/index.html
@@ -137,6 +147,7 @@ open docs/index.html
 ├── 03_player_impact/     build.py · page.html  → docs/rotation-lab/  (+ analysis.py)
 ├── 04_close_games/       build.py · page.html  → docs/game-flow/     (+ analysis.py)
 ├── 05_game_recap/        build.py · page.html  → docs/game-center/   (+ recap.py: PNG recap cards)
+├── 06_draft_lab/         build.py · page.html  → docs/draft-lab/
 ├── readme_art/           make_art.py → out/ (the graphics in this README)
 ├── data/pull.py          sportsdataverse → data/raw/ (not committed)
 ├── common.py · elo.py · flow.py · lab.py · build_site.py · home.html

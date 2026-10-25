@@ -27,5 +27,9 @@
  "game-center": {
   "games": 44,
   "record": "11-33"
+ },
+ "draft-lab": {
+  "pool": 647,
+  "top": "Breya Cunningham"
  }
 }

@@ -49,7 +49,7 @@ const e = S["expansion-class"], sh = S["shot-lab"], r = S["rotation-lab"], f = S
 // 0.28 -> "28%"
 const pct = v => Math.round(v * 100) + "%";
 // intro sentence under the title
-document.getElementById("dek").innerHTML = `The Tempo went <strong>${g.record}</strong> in their expansion season. Five interactive pages show why: Elo ratings, shot charts, rotations, game flow and a recap for every game.`;
+document.getElementById("dek").innerHTML = `The Tempo went <strong>${g.record}</strong> in their expansion season. Six interactive pages show why, and what comes next: Elo ratings, shot charts, rotations, game flow, a recap for every game, and a 2027 draft board.`;
 // one tile per page: link, small label, title, description, big number and caption. "wide" = full-width tile
 const tiles = [
   { slug: "expansion-class", k: "01 · Elo & Four Factors", t: "The Expansion Class", wide: true,
@@ -63,6 +63,9 @@ const tiles = [
     v: `${f.runs_for}–${f.runs_against}`, l: "Scoring runs of 8+, for vs against" },
   { slug: "game-center", k: "05 · Recaps", t: "Game Center", p: "Pick any of the 44 games for the scoreboard, game flow, both shot charts, key battles and full box scores.",
     v: g.games, l: "Games with a full recap" },
+  { slug: "draft-lab", k: "06 · 2027 draft", t: "Draft Lab", wide: true,
+    p: "Who should Toronto take in 2027? What the team needs, which college numbers actually translate to the WNBA, and an adjustable big board of the senior class.",
+    v: S["draft-lab"].pool, l: `College seniors ranked · No. 1 at the default setting: ${S["draft-lab"].top}` },
 ];
 // build the tiles. Each one is a link with a screenshot of the page on top
 document.getElementById("tiles").innerHTML = tiles.map(x => `<a class="tile ${x.wide ? "wide" : ""}" href="${x.slug}/">

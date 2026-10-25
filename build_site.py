@@ -16,7 +16,7 @@ ROOT = Path(__file__).parent
 PY = sys.executable  # use the same python that is running this script (the .venv one)
 # the five page builders, in order
 BUILDS = ["01_expansion_class/build.py", "02_shot_diet/build.py", "03_player_impact/build.py",
-          "04_close_games/build.py", "05_game_recap/build.py"]
+          "04_close_games/build.py", "05_game_recap/build.py", "06_draft_lab/build.py"]
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 SHOTS = ROOT / "docs" / "assets" / "shots"  # preview pictures for the home page tiles
 
@@ -51,6 +51,6 @@ if __name__ == "__main__":
         SHOTS.mkdir(parents=True, exist_ok=True)
         base = (ROOT / "docs").as_uri()
         # crop_y = how far down the page the preview starts (skip the nav, show the best part)
-        for slug, crop_y in [("expansion-class", 60), ("shot-lab", 470), ("rotation-lab", 560), ("game-flow", 600), ("game-center", 60)]:
+        for slug, crop_y in [("expansion-class", 60), ("shot-lab", 470), ("rotation-lab", 560), ("game-flow", 600), ("game-center", 60), ("draft-lab", 60)]:
             shoot(f"{base}/{slug}/index.html", SHOTS / f"{slug}.png", h=1700, crop=(0, crop_y, 1280, crop_y + 1000))
         shoot(f"{base}/index.html", SHOTS / "home.png", h=1100, crop=(0, 0, 1280, 1000))

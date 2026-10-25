@@ -37,7 +37,7 @@
 </head>
 <body>
 <div class="wrap">
-<nav class="nav" aria-label="Tempo Lab"><a class="brand" href=""><img src="assets/logos/tor_sm.png" alt="">Tempo Lab</a><div class="links"><a href="expansion-class/">Expansion Class</a><a href="shot-lab/">Shot Lab</a><a href="rotation-lab/">Rotation Lab</a><a href="game-flow/">Game Flow</a><a href="game-center/">Game Center</a></div></nav>
+<nav class="nav" aria-label="Tempo Lab"><a class="brand" href=""><img src="assets/logos/tor_sm.png" alt="">Tempo Lab</a><div class="links"><a href="expansion-class/">Expansion Class</a><a href="shot-lab/">Shot Lab</a><a href="rotation-lab/">Rotation Lab</a><a href="game-flow/">Game Flow</a><a href="game-center/">Game Center</a><a href="draft-lab/">Draft Lab</a></div></nav>
 
 
 <section class="hero home-hero">
@@ -56,7 +56,7 @@
   <p>All data comes from <a href="https://py.sportsdataverse.org/">sportsdataverse</a>: ESPN play-by-play and box scores, plus WNBA Stats lineups. Every page is static HTML with hand-built SVG charts and no chart library. The Python that builds each page is in the <a href="https://github.com/jordanngo205/toronto-tempo-analytics">GitHub repo</a>. The approach follows the film-and-data breakdowns of <a href="https://riseofthevalkyries.substack.com/">Rise of the Valkyries</a> and the Elo work of <a href="https://neilpaine.substack.com/t/basketball">Neil Paine</a>.</p>
 </section>
 <footer class="footer"><span>Built by Jordan Ngo with sportsdataverse (ESPN play-by-play, box scores, WNBA Stats).</span><a href="https://github.com/jordanngo205/toronto-tempo-analytics">Code on GitHub</a><span>Inspired by Rise of the Valkyries and Neil Paine.</span></footer>
-<script id="data" type="application/json">{"expansion-class":{"tor_elo":1234,"por_elo":1369,"gs_elo":1472,"tor_def_rank":15},"shot-lab":{"xpps":1.056,"pps":1.013,"lg_xpps":1.035,"rim":0.303,"opp_rim":0.336},"rotation-lab":{"players":20,"lineups":24,"best":31.3},"game-flow":{"lead":0.28395454545454546,"runs_for":35,"runs_against":74,"xwins":13.399,"wins":11},"game-center":{"games":44,"record":"11-33"}}</script>
+<script id="data" type="application/json">{"expansion-class":{"tor_elo":1234,"por_elo":1369,"gs_elo":1472,"tor_def_rank":15},"shot-lab":{"xpps":1.056,"pps":1.013,"lg_xpps":1.035,"rim":0.303,"opp_rim":0.336},"rotation-lab":{"players":20,"lineups":24,"best":31.3},"game-flow":{"lead":0.28395454545454546,"runs_for":35,"runs_against":74,"xwins":13.399,"wins":11},"game-center":{"games":44,"record":"11-33"},"draft-lab":{"pool":647,"top":"Breya Cunningham"}}</script>
 <script>
 // headline numbers that each page's build.py saved (docs/assets/summary.json)
 const S = JSON.parse(document.getElementById("data").textContent);
@@ -65,7 +65,7 @@ const e = S["expansion-class"], sh = S["shot-lab"], r = S["rotation-lab"], f = S
 // 0.28 -> "28%"
 const pct = v => Math.round(v * 100) + "%";
 // intro sentence under the title
-document.getElementById("dek").innerHTML = `The Tempo went <strong>${g.record}</strong> in their expansion season. Five interactive pages show why: Elo ratings, shot charts, rotations, game flow and a recap for every game.`;
+document.getElementById("dek").innerHTML = `The Tempo went <strong>${g.record}</strong> in their expansion season. Six interactive pages show why, and what comes next: Elo ratings, shot charts, rotations, game flow, a recap for every game, and a 2027 draft board.`;
 // one tile per page: link, small label, title, description, big number and caption. "wide" = full-width tile
 const tiles = [
   { slug: "expansion-class", k: "01 · Elo & Four Factors", t: "The Expansion Class", wide: true,
@@ -79,6 +79,9 @@ const tiles = [
     v: `${f.runs_for}–${f.runs_against}`, l: "Scoring runs of 8+, for vs against" },
   { slug: "game-center", k: "05 · Recaps", t: "Game Center", p: "Pick any of the 44 games for the scoreboard, game flow, both shot charts, key battles and full box scores.",
     v: g.games, l: "Games with a full recap" },
+  { slug: "draft-lab", k: "06 · 2027 draft", t: "Draft Lab", wide: true,
+    p: "Who should Toronto take in 2027? What the team needs, which college numbers actually translate to the WNBA, and an adjustable big board of the senior class.",
+    v: S["draft-lab"].pool, l: `College seniors ranked · No. 1 at the default setting: ${S["draft-lab"].top}` },
 ];
 // build the tiles. Each one is a link with a screenshot of the page on top
 document.getElementById("tiles").innerHTML = tiles.map(x => `<a class="tile ${x.wide ? "wide" : ""}" href="${x.slug}/">

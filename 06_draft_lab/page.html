@@ -1,0 +1,287 @@
+<style>
+.podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.pod { background: var(--panel); border: 1px solid var(--rule); border-top: 6px solid var(--tor); display: grid; grid-template-columns: 96px 1fr; gap: 14px; padding: 14px; align-items: center; min-width: 0; }
+.pod .rank { font-family: var(--display); font-weight: 800; font-size: 0.9rem; color: var(--tor); letter-spacing: 0.08em; }
+.pod .nm { font-family: var(--display); font-weight: 800; font-size: 1.6rem; line-height: 1; text-transform: uppercase; }
+.pod .sc { font-size: 0.82rem; color: var(--ink-3); }
+.face { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; object-position: top; background: var(--grid); }
+.face.sm { width: 34px; height: 34px; }
+.slider { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; font: 600 0.85rem var(--display); text-transform: uppercase; letter-spacing: 0.04em; max-width: 620px; }
+.slider input { width: 100%; accent-color: var(--tor); }
+.board-grid { display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+#board-tbl tr { cursor: pointer; }
+#board-tbl th:nth-child(2), #board-tbl td:nth-child(2) { text-align: left; }
+#board-tbl td, #board-tbl th { padding: 6px 5px; font-size: 0.82rem; }
+#board-tbl td { vertical-align: middle; }
+.who { display: flex; align-items: center; gap: 10px; }
+.who b { display: block; font-family: var(--body); font-weight: 600; }
+.who small { color: var(--ink-3); font-size: 0.75rem; }
+.mini { display: inline-block; width: 44px; height: 8px; background: var(--grid); vertical-align: middle; position: relative; }
+.mini i { position: absolute; inset: 0 auto 0 0; }
+.card { position: sticky; top: 12px; }
+.card .nm { font-family: var(--display); font-weight: 800; font-size: 2rem; line-height: 1; text-transform: uppercase; }
+.pbar { display: grid; grid-template-columns: 110px 1fr 34px; gap: 8px; align-items: center; font-size: 0.82rem; margin-top: 4px; }
+.pbar .tr { height: 10px; background: var(--grid); position: relative; }
+.pbar .tr i { position: absolute; inset: 0 auto 0 0; background: var(--tor); }
+.pbar .tr u { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--ink-3); }
+@media (max-width: 760px) { .podium, .board-grid { grid-template-columns: minmax(0, 1fr); } .card { position: static; } }
+</style>
+
+<section class="hero">
+  <div class="eyebrow">Toronto Tempo · 2027 WNBA draft · college class of 2026-27</div>
+  <h1>Draft Lab<span class="sub">Who should Toronto take in 2027?</span></h1>
+  <p class="dek" id="dek"></p>
+  <div class="podium" id="podium"></div>
+  <div class="cap">The top three on the board at the default setting (60% talent, 40% fit). Move the slider below to change it.</div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">01 · What Toronto needs</div>
+    <h2>Last in almost every defensive category</h2>
+    <p class="lede" id="needs-lede"></p>
+  </header>
+  <div class="figure">
+    <svg id="needs" viewBox="0 0 640 330" role="img" aria-label="Toronto's league rank on defense and offense"></svg>
+    <div class="cap">Each row shows all 15 teams in 2026, best on the left. The bordeaux dot is Toronto.</div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">02 · What translates</div>
+    <h2>College defense carries over. College scoring doesn't.</h2>
+    <p class="lede" id="tr-lede"></p>
+  </header>
+  <div class="grid-2">
+    <div class="figure">
+      <h3>Which college numbers predict a WNBA career</h3>
+      <svg id="translate" viewBox="0 0 420 400" role="img" aria-label="Correlation of college stats with WNBA minutes"></svg>
+      <div class="cap">● = correlation with WNBA minutes in a player's first two seasons, after taking out what her draft slot already predicts. ○ = correlation with raw minutes. Draftees 2018–2025, last college season.</div>
+    </div>
+    <div class="figure">
+      <h3>College BPM vs early WNBA minutes</h3>
+      <svg id="hist" viewBox="0 0 420 400" role="img" aria-label="College box plus-minus vs WNBA minutes"></svg>
+      <div class="legend" style="margin:6px 0 0"><span class="chip" style="--c:var(--tor)">1st round</span><span class="chip" style="--c:var(--tor-2)">2nd round</span><span class="chip" style="--c:var(--hist)">3rd round</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">03 · The board</div>
+    <h2>Best player available, or best fit?</h2>
+    <p class="lede">Talent blends my model, which projects WNBA minutes from college numbers, with sportsdataverse's draft projection. Fit measures how much a player helps where Toronto was worst: blocks, defensive rebounds, defensive BPM, height and steals. Both scores are percentiles within this senior class. Click a player to see her full profile.</p>
+  </header>
+  <div class="controls">
+    <label class="slider" for="w"><span>Best player available</span><input id="w" type="range" min="0" max="100" value="40" aria-label="Weight on talent vs fit"><span>Fill Toronto's needs</span></label>
+    <div class="toggle" id="pos" role="group" aria-label="Position">
+      <button type="button" data-v="all" aria-pressed="true">All</button>
+      <button type="button" data-v="G" aria-pressed="false">Guards</button>
+      <button type="button" data-v="F" aria-pressed="false">Forwards</button>
+      <button type="button" data-v="C" aria-pressed="false">Centers</button>
+    </div>
+  </div>
+  <div class="board-grid">
+    <div class="figure"><div class="tbl-wrap"><table id="board-tbl"></table></div></div>
+    <div class="figure card" id="card"></div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">04 · Talent vs fit</div>
+    <h2>The sweet spot</h2>
+    <p class="lede" id="sweet-lede"></p>
+  </header>
+  <div class="figure">
+    <svg id="tf" viewBox="0 0 640 560" role="img" aria-label="Talent percentile vs fit percentile for every prospect"></svg>
+    <div class="cap">Grey dots are every senior in the class. Coloured dots are the 60 most talented. Faces and numbers mark the current top of the board, which changes with the slider and position filter. Click any dot to open that player's profile.</div>
+  </div>
+</section>
+
+<section class="methods">
+  <h3>Method</h3>
+  <p><b>Who's eligible:</b> college players whose first season was 2023-24, which makes 2026-27 their senior year, with 400+ minutes in 2025-26. Anyone drafted in 2026 is removed. International prospects and early entrants aren't included, and the 2027 draft order hasn't been set yet.</p>
+  <p><b>Talent model:</b> a ridge regression trained on every WNBA draftee from 2018 to 2025. It predicts the square root of WNBA minutes in her first two seasons from her last college season: BPM, defensive BPM, points, rebounds, assists, steals and blocks per 40, true shooting and height. The talent score is half this model and half sportsdataverse's draft probability. <b>Fit:</b> the average z-score of blocks/40, defensive rebounds/40, defensive BPM and height, plus half-weight steals/40. College data covers ESPN-tracked games only, and BPM comes from sportsdataverse's player value file.</p>
+</section>
+<!--FOOTER-->
+<div id="tip" role="status" aria-live="polite"></div>
+<script id="data" type="application/json">/*DATA*/</script>
+<script src="../assets/kit.js"></script>
+<script>
+// read the data that build.py put into the page
+const D = JSON.parse(document.getElementById("data").textContent);
+// shortcuts to the helpers in kit.js
+const { el, txt, scale, fmt, pct, hover } = K;
+const P = D.prospects;
+// 74 inches -> 6'2"
+const ft = h => `${Math.floor(h / 12)}'${h % 12}"`;
+// headshot with a grey circle fallback when ESPN has no photo
+const face = (p, cls = "face") => p.img ? `<img class="${cls}" src="${p.img}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : `<span class="${cls}" style="display:inline-block"></span>`;
+let weight = 0.6, posFilter = "all", selected = null;
+
+// board score = weight x talent + (1 - weight) x fit
+function ranked() {
+  return P.filter(p => posFilter === "all" || (p.pos || "").includes(posFilter))
+    .map(p => ({ ...p, score: weight * p.talent + (1 - weight) * p.fit }))
+    .sort((a, b) => b.score - a.score);
+}
+
+/* hero */
+(function () {
+  const top3 = ranked().slice(0, 3);
+  document.getElementById("podium").innerHTML = top3.map((p, i) => `<div class="pod">${face(p)}<div><div class="rank">No. ${i + 1} on the board</div>
+    <div class="nm">${p.name}</div><div class="sc">${p.school} · ${p.pos} · ${ft(p.ht)}</div>
+    <div class="sc num" style="margin-top:4px">${p.pts} pts · ${p.reb} reb · ${p.blk} blk · BPM ${p.bpm}</div></div></div>`).join("");
+  const needsLast = D.needs.filter(n => n.rank === n.teams).length;
+  document.getElementById("dek").innerHTML = `Toronto finished 11–33 and ranked last in ${needsLast} of the ${D.needs.length} categories below. This page ranks all <strong>${D.pool_n}</strong> college seniors with real minutes in 2025-26 on two questions: how good are they, and do they fix what broke in 2026?`;
+})();
+
+/* 01 needs */
+(function () {
+  const s = document.getElementById("needs"), N = D.needs;
+  const W = 640, left = 200, right = 120, rowH = 36, top = 24;
+  const x = scale(1, 15, left, W - right);
+  s.setAttribute("viewBox", `0 0 ${W} ${top + N.length * rowH + 10}`);
+  txt(s, left, 12, "best", "lbl"); txt(s, W - right, 12, "worst", "lbl", { "text-anchor": "end" });
+  N.forEach((n, i) => {
+    const cy = top + i * rowH + rowH / 2;
+    // the offensive rows get a divider above them
+    if (n.key === "ortg") el("line", { x1: 0, x2: W, y1: cy - rowH / 2, y2: cy - rowH / 2, stroke: "var(--rule)" }, s);
+    txt(s, 0, cy + 4, n.label, "lbl-body");
+    // 15 small dots for the 15 teams, then Toronto's big dot on top
+    for (let r = 1; r <= n.teams; r++) el("circle", { cx: x(r), cy, r: 4, fill: "var(--grid)" }, s);
+    const c = el("circle", { cx: x(n.rank), cy, r: 9, fill: "var(--tor)", stroke: "var(--panel)", "stroke-width": 2 }, s);
+    const v = n.pct ? pct(n.v) : n.v.toFixed(1), lg = n.pct ? pct(n.lg) : n.lg.toFixed(1);
+    txt(s, W - right + 14, cy + 4, `${v} · #${n.rank}`, "lbl", { style: `fill:${n.rank >= 13 ? "var(--bad)" : "var(--ink-2)"}` });
+    hover(c, `<b>${n.label}</b><div class="num">Toronto ${v} (rank ${n.rank} of ${n.teams})</div><div class="num">League average ${lg}</div>`);
+  });
+  const rim = N.find(n => n.key === "opp_rim"), blk = N.find(n => n.key === "blk"), drb = N.find(n => n.key === "drb");
+  document.getElementById("needs-lede").innerHTML = `Opponents took <strong>${pct(rim.v, 0)}</strong> of their shots at the rim against Toronto, the most in the league. The Tempo were last in blocks (${blk.v.toFixed(1)} per 100 possessions) and 14th in defensive rebounding. The offense was below average but not the problem, at 10th. The biggest need is a big who protects the rim and finishes possessions with a rebound.`;
+})();
+
+/* 02 translate */
+(function () {
+  const s = document.getElementById("translate"), T = [...D.translate].sort((a, b) => b.r_resid - a.r_resid);
+  const W = 420, left = 150, right = 20, rowH = 28, top = 30;
+  const x = scale(-0.15, 0.45, left, W - right);
+  s.setAttribute("viewBox", `0 0 ${W} ${top + T.length * rowH + 24}`);
+  for (const v of [-0.1, 0, 0.1, 0.2, 0.3, 0.4]) {
+    el("line", { x1: x(v), x2: x(v), y1: top - 6, y2: top + T.length * rowH, class: v === 0 ? "zero" : "gridline" }, s);
+    txt(s, x(v), top + T.length * rowH + 16, v.toFixed(1), "lbl", { "text-anchor": "middle" });
+  }
+  T.forEach((t, i) => {
+    const cy = top + i * rowH + rowH / 2;
+    txt(s, 0, cy + 4, t.label, "lbl-body", { style: "font-size:12px" });
+    // line from 0 to the "beyond the draft slot" correlation, hollow dot for the raw correlation
+    el("line", { x1: x(0), x2: x(t.r_resid), y1: cy, y2: cy, stroke: t.r_resid > 0.1 ? "var(--tor)" : "var(--hist)", "stroke-width": 3 }, s);
+    el("circle", { cx: x(t.r_min), cy, r: 5, fill: "var(--panel)", stroke: "var(--ink-3)", "stroke-width": 1.5 }, s);
+    const c = el("circle", { cx: x(t.r_resid), cy, r: 7, fill: t.r_resid > 0.1 ? "var(--tor)" : "var(--hist)" }, s);
+    hover(c, `<b>${t.label}</b><div class="num">vs WNBA minutes: r = ${t.r_min.toFixed(2)}</div><div class="num">beyond draft slot: r = ${t.r_resid.toFixed(2)}</div>`);
+  });
+  const g = n => D.translate.find(t => t.f === n);
+  document.getElementById("tr-lede").innerHTML = `I followed every WNBA draftee from 2018 to 2025 back to her last college season. After removing what the draft slot already predicted, <strong>box plus-minus</strong> (r = ${g("box_bpm").r_resid.toFixed(2)}), <strong>defensive BPM</strong> (${g("box_dbpm").r_resid.toFixed(2)}) and <strong>steals</strong> (${g("stl40").r_resid.toFixed(2)}) still predicted who got minutes. Points per 40 (${fmt(g("pts40").r_resid, 2)}) and blocks (${fmt(g("blk40").r_resid, 2)}) added nothing. College scoring does predict minutes, but only because scorers get drafted higher. Once you know the pick, scoring tells you nothing more. The talent model learns from all of this and fits the history with r = ${D.model.r.toFixed(2)}.`;
+})();
+
+/* history scatter */
+(function () {
+  const s = document.getElementById("hist"), H = D.hist;
+  const W = 420, Hh = 400, m = { l: 46, r: 12, t: 12, b: 40 };
+  const x = scale(-2, 20, m.l, W - m.r), y = scale(0, Math.sqrt(2500), Hh - m.b, m.t);
+  // y axis is square-root scaled so the many low-minute players aren't squashed at the bottom
+  for (const v of [0, 100, 400, 900, 1600, 2500]) { el("line", { x1: m.l, x2: W - m.r, y1: y(Math.sqrt(v)), y2: y(Math.sqrt(v)), class: "gridline" }, s); txt(s, m.l - 6, y(Math.sqrt(v)) + 4, v, "lbl", { "text-anchor": "end" }); }
+  for (const v of [0, 5, 10, 15, 20]) txt(s, x(v), Hh - m.b + 16, v, "lbl", { "text-anchor": "middle" });
+  txt(s, (m.l + W - m.r) / 2, Hh - 4, "Last college season box plus-minus →", "lbl", { "text-anchor": "middle" });
+  txt(s, m.l + 4, m.t + 10, "WNBA minutes, first 2 seasons", "lbl");
+  const col = p => p.rd === 1 ? "var(--tor)" : p.rd === 2 ? "var(--tor-2)" : "var(--hist)";
+  // third round first so first-rounders draw on top
+  for (const p of [...H].sort((a, b) => b.pick - a.pick)) {
+    const c = el("circle", { cx: x(K.clamp(p.bpm, -2, 20)), cy: y(Math.sqrt(Math.min(p.min, 2500))), r: 4.5, fill: col(p), opacity: 0.8, stroke: "var(--panel)", "stroke-width": 1 }, s);
+    hover(c, `<b>${p.n}</b><div class="num">${p.y} draft · round ${p.rd}, pick ${p.pick}</div><div class="num">College BPM ${p.bpm} · ${p.min.toLocaleString()} WNBA min</div>`);
+  }
+})();
+
+/* 03 board */
+const tbl = document.getElementById("board-tbl"), card = document.getElementById("card");
+function drawBoard() {
+  const R = ranked().slice(0, 25);
+  if (!selected || !R.find(p => p.id === selected)) selected = R[0]?.id;
+  tbl.innerHTML = `<tr><th>#</th><th>Prospect</th><th>Ht</th><th>PTS</th><th>REB</th><th>BLK</th><th>TS%</th><th>BPM</th><th>Talent</th><th>Fit</th><th>Score</th></tr>` +
+    R.map((p, i) => `<tr data-id="${p.id}" class="${p.id === selected ? "sel" : ""}"><td>${i + 1}</td>
+      <td><div class="who">${face(p, "face sm")}<div><b>${p.name}</b><small>${p.school} · ${p.pos}</small></div></div></td>
+      <td>${ft(p.ht)}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.blk}</td><td>${(100 * p.ts).toFixed(1)}</td><td>${p.bpm}</td>
+      <td><span class="mini"><i style="width:${p.talent}%;background:var(--tor-2)"></i></span></td>
+      <td><span class="mini"><i style="width:${p.fit}%;background:var(--tor)"></i></span></td>
+      <td><b>${p.score.toFixed(0)}</b></td></tr>`).join("");
+  drawCard();
+  drawTF(R.slice(0, 10).map(p => p.id));
+}
+tbl.addEventListener("click", e => { const tr = e.target.closest("tr[data-id]"); if (!tr) return; selected = tr.dataset.id; drawBoard(); });
+
+// prospect card: headline numbers + percentile bars compared with the whole senior class
+function drawCard() {
+  const p = P.find(q => q.id === selected);
+  if (!p) { card.innerHTML = ""; return; }
+  card.innerHTML = `<div style="display:flex;gap:14px;align-items:center">${face(p)}<div><div class="eyebrow">${p.school}</div><div class="nm">${p.name}</div>
+    <div class="muted" style="font-size:.85rem">${p.pos} · ${ft(p.ht)} · ${p.gp} games · ${p.mpg} mpg</div></div></div>
+    <div class="kv" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 6px">
+      <div><b class="num" style="font:800 1.6rem var(--display)">${p.pts}</b><div class="muted" style="font-size:.75rem">PPG</div></div>
+      <div><b class="num" style="font:800 1.6rem var(--display)">${p.reb}</b><div class="muted" style="font-size:.75rem">RPG</div></div>
+      <div><b class="num" style="font:800 1.6rem var(--display)">${p.ast}</b><div class="muted" style="font-size:.75rem">APG</div></div>
+    </div>
+    <div class="eyebrow" style="margin-top:8px">Percentile among ${D.pool_n} seniors</div>
+    ${D.pct_labels.map((l, i) => `<div class="pbar"><span>${l}</span><span class="tr"><i style="width:${p.pct[i]}%"></i><u></u></span><span class="num">${p.pct[i]}</span></div>`).join("")}
+    <div class="muted" style="font-size:.8rem;margin-top:10px">Model projection: ~${p.pmin.toLocaleString()} WNBA minutes in her first two seasons · sportsdataverse draft probability ${pct(p.dp, 0)}</div>`;
+}
+
+const slider = document.getElementById("w");
+// slider left = talent only, right = fit only
+slider.addEventListener("input", () => { weight = 1 - slider.value / 100; drawBoard(); });
+K.toggle(document.getElementById("pos"), v => { posFilter = v; drawBoard(); });
+
+/* 04 talent vs fit */
+function drawTF(topIds) {
+  const s = document.getElementById("tf");
+  s.replaceChildren();
+  const W = 640, H = 560, m = { l: 46, r: 90, t: 16, b: 40 };
+  s.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  // raw talent and fit scores (in standard deviations) for the whole senior class.
+  // Percentiles squash the best players together near 100; raw scores spread them out
+  const all = D.cloud;
+  const x0 = Math.floor(Math.min(...all.map(a => a[0]))), x1 = Math.ceil(Math.max(...all.map(a => a[0])));
+  const y0 = Math.floor(Math.min(...all.map(a => a[1]))), y1 = Math.ceil(Math.max(...all.map(a => a[1])));
+  const x = scale(x0, x1, m.l, W - m.r), y = scale(y0, y1, H - m.b, m.t);
+  // shaded "sweet spot": at least 1 standard deviation above average on both
+  el("rect", { x: x(1), y: m.t, width: W - m.r - x(1), height: y(1) - m.t, fill: "var(--tor-soft)" }, s);
+  txt(s, W - m.r - 6, y(1) - 8, "THE SWEET SPOT", "lbl-ink", { "text-anchor": "end", style: "font-size:12px;fill:var(--tor)" });
+  for (let v = y0; v <= y1; v++) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 0 ? "zero" : "gridline" }, s); txt(s, m.l - 6, y(v) + 4, fmt(v, 0), "lbl", { "text-anchor": "end" }); }
+  for (let v = x0; v <= x1; v++) txt(s, x(v), H - m.b + 16, fmt(v, 0), "lbl", { "text-anchor": "middle" });
+  txt(s, (m.l + W - m.r) / 2, H - 4, "Talent (standard deviations above the class average) →", "lbl", { "text-anchor": "middle" });
+  txt(s, m.l + 4, m.t + 10, "Fit ↑", "lbl");
+  // the whole class as faint dots
+  for (const [a, f] of all) el("circle", { cx: x(a), cy: y(f), r: 2.2, fill: "var(--hist)", opacity: 0.35 }, s);
+  const defs = el("defs", {}, s), labels = [];
+  // grey dots for everyone, current top 10 drawn last so they sit on top
+  const order = [...P].sort((a, b) => topIds.includes(a.id) - topIds.includes(b.id));
+  for (const p of order) {
+    const rank = topIds.indexOf(p.id), on = rank >= 0, cx = x(p.tz), cy = y(p.fz);
+    if (on && rank < 6 && p.img) {
+      // faces for the top 6
+      const id = "c" + p.id;
+      const cp = el("clipPath", { id }, defs); el("circle", { cx, cy, r: 12 }, cp);
+      el("circle", { cx, cy, r: 14, fill: "var(--tor)" }, s);
+      el("image", { href: p.img, x: cx - 12, y: cy - 12, width: 24, height: 24, "clip-path": `url(#${id})`, preserveAspectRatio: "xMidYMin slice" }, s);
+    }
+    const c = el("circle", { cx, cy, r: on ? (rank < 6 ? 14 : 6) : 4.5, fill: on ? (rank < 6 ? "transparent" : "var(--tor)") : "var(--hist)", opacity: on ? 1 : 0.55, style: "cursor:pointer" }, s);
+    hover(c, `<b>${p.name}</b><div>${p.school} · ${p.pos} · ${ft(p.ht)}</div><div class="num">Talent ${p.talent.toFixed(0)} · Fit ${p.fit.toFixed(0)}</div>`);
+    c.addEventListener("click", () => { selected = p.id; drawBoard(); document.getElementById("card").scrollIntoView({ behavior: "smooth", block: "center" }); });
+    if (on) labels.push({ x: cx + (rank < 6 ? 17 : 9), y: cy + 4, w: 80, s: `${rank + 1}. ${p.name.split(" ").slice(-1)[0]}` });
+  }
+  // push the top-10 labels apart so they can be read
+  for (const l of K.declutter(labels, 13)) txt(s, l.x, l.y, l.s, "lbl-ink", { style: "font-size:11px" });
+  const sweet = P.filter(p => p.tz >= 1 && p.fz >= 1).sort((a, b) => (b.talent + b.fit) - (a.talent + a.fit));
+  document.getElementById("sweet-lede").innerHTML = `${sweet.length} seniors are at least one standard deviation above the class average on both talent and fit. The strongest combinations are ${sweet.slice(0, 3).map(p => `<strong>${p.name}</strong> (${p.school.split(" ")[0]})`).join(", ")}.`;
+}
+drawBoard();
+</script>

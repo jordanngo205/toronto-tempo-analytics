@@ -646,6 +646,46 @@ def shot_fans():
     render("shot-fans", html, 1600, 900)
 
 
+# ---------------------------------------------------------------------------
+# 11. The 2027 big board (top 10 from the Draft Lab page)
+# ---------------------------------------------------------------------------
+
+def big_board():
+    import re
+    # the Draft Lab build put its data inside the page, so read it back out of the html
+    html_page = (ROOT / "docs" / "draft-lab" / "index.html").read_text()
+    data = json.loads(re.search(r'<script id="data" type="application/json">(.*?)</script>', html_page, re.S).group(1))
+    # same scoring as the page's default setting: 60% talent, 40% fit
+    top = sorted(data["prospects"], key=lambda p: -(0.6 * p["talent"] + 0.4 * p["fit"]))[:10]
+    cards = []
+    for i, p in enumerate(top, 1):
+        ht = f"{p['ht'] // 12}'{p['ht'] % 12}\""
+        img = f'<img src="{p["img"]}" style="width:100%;height:100%;object-fit:cover;object-position:top">' if p["img"] else ""
+        cards.append(f"""
+        <div style="background:#151920;border:1px solid #232934;border-radius:16px;padding:18px;display:grid;gap:10px;position:relative;overflow:hidden">
+          <div style="position:absolute;right:12px;top:-6px;font:800 92px/1 'Barlow Condensed';color:rgba(255,107,149,.14)">{i}</div>
+          <div style="width:96px;height:96px;border-radius:50%;overflow:hidden;background:#2a303b;border:3px solid #ff6b95">{img}</div>
+          <div><div style="font:800 26px/1 'Barlow Condensed';text-transform:uppercase">{p['name']}</div>
+          <div style="font:400 13px 'IBM Plex Mono';color:#8a91a0;margin-top:4px">{p['school']}</div>
+          <div style="font:400 13px 'IBM Plex Mono';color:#8a91a0">{p['pos']} · {ht} · BPM {p['bpm']}</div></div>
+          <div style="display:grid;grid-template-columns:52px 1fr;gap:6px 8px;align-items:center;font:500 12px 'IBM Plex Mono';color:#b7bdc9">
+            <span>TALENT</span><span style="height:8px;background:#2a303b"><i style="display:block;height:8px;width:{p['talent']}%;background:#7e9bd0"></i></span>
+            <span>FIT</span><span style="height:8px;background:#2a303b"><i style="display:block;height:8px;width:{p['fit']}%;background:#ff6b95"></i></span>
+          </div>
+          <div style="font:500 13px 'IBM Plex Mono';color:#d7dbe2">{p['pts']} pts · {p['reb']} reb · {p['blk']} blk</div>
+        </div>""")
+    html = f"""
+    <div style="width:1600px;height:850px;background:radial-gradient(circle at 80% 0%,#2b1420,#0f1217 60%);color:#eef0f4;font-family:Barlow,sans-serif;padding:44px 56px;box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:26px">
+        <div><div style="font:800 64px/1 'Barlow Condensed';text-transform:uppercase">The 2027 big board</div>
+        <div style="font:400 18px Barlow;color:#b7bdc9;margin-top:8px">Toronto's top 10 college seniors, weighted 60% talent and 40% fit for what the Tempo need: rim protection, defensive rebounding and defense.</div></div>
+        <img src="{uri(LOGOS / 'tor_white.png')}" style="width:120px;opacity:.9">
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:18px">{"".join(cards)}</div>
+    </div>"""
+    render("big-board", html, 1600, 850)
+
+
 if __name__ == "__main__":
     banner()
     season_ring()
@@ -656,3 +696,4 @@ if __name__ == "__main__":
     ridgeline()
     rotation_ring()
     shot_fans()
+    big_board()
