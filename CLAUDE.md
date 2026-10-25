@@ -2,32 +2,44 @@
 
 Static GitHub Pages site (`docs/`) built by Python (`build_site.py`), plus README posters (`readme_art/make_art.py`).
 No framework, no bundler, no chart library. Each `NN_*/build.py` writes its data as JSON into its `page.html` via `lab.py`.
+Shared styles live in `docs/assets/site.css`, shared chart helpers in `docs/assets/kit.js`.
 
-## Design rules (the site must not look machine-made)
+## Look and layout
 
-- **Type:** Schibsted Grotesk for headlines, numbers, labels and controls; Newsreader (serif) for reading text only.
-  Never Inter, Space Grotesk, Barlow, or monospace labels.
-- **Case:** sentence case everywhere. No `text-transform: uppercase`, no letter-spaced (tracked) small caps labels.
-- **No eyebrows:** no kicker line above a page title or section heading, and no numbered section labels (01 · …).
-  Sections are marked only by the Tempo "speed lines" before each `h2` (in `docs/assets/site.css`).
-- **No accent rails:** no coloured top/left border on cards, tiles or sections. Panels are plain.
-- **Headline numbers** use the box-score row (`.stat-row`): figures between thin rules, not cards.
-- **Headlines** are plain, specific statements of what the chart shows ("Toronto was last in four defensive
-  categories"). No slogans, no "X. Y." pairs, no "not X but Y", no colon-then-reveal.
-- **Colour:** tokens only (`--tor`, `--tor-2`, `--gs`, `--por`, `--good`/`--bad`, `--hot`/`--cold`), defined in light and
-  dark. Team colours identify teams; good/bad and hot/cold are separate and never reused for a team.
-- **Facts:** every number in copy is computed from the data in the page script, or checked against the data before
-  it is typed. Don't invent context (contracts, lottery odds, injuries) that the data doesn't contain.
+- **Keep the established look.** Barlow Condensed caps headlines, Barlow body, IBM Plex Mono labels, Tempo bordeaux
+  and navy. The owner prefers this; don't swap fonts or restyle to "look less AI". The anti-slop work is about layout.
+- **Layout, not a template.** Don't stack heading → paragraph → boxed chart on repeat. On desktop each section puts its
+  note in a sticky column beside the chart; sections with big grids or side-by-side panels use `class="section wide"`.
+  The opening puts the title and intro beside a scoreboard list of key numbers (`.hero > .stat-row`).
+- **Shot charts of many shots** use the dark full court (`K.fullCourt` in kit.js): Tempo attack the right basket,
+  opponents the left, made shots glow, misses are faint dots, positions get `K.wiggle` jitter. Labels go above the
+  court, never on top of the dots.
+- **Charts must be readable:** no labels on top of marks (use `K.declutter` or a key beside the chart), zoom axes to the
+  data, and use a log scale when the interesting values bunch at one end.
+- **Every abbreviation is explained** where it's used (BPM, TS%, Game Score…): a glossary, a caption or a header tooltip.
+- **Headlines** say what the chart shows ("Toronto was last in four defensive categories"), not slogans.
+
+## Facts
+
+- Every number in copy is computed from the page's data in its script, or checked against the data before it's typed.
+- Don't invent context the data doesn't contain. If something is missing (e.g. a player with no 2025-26 games), say
+  that plainly rather than guessing why.
+- Elo settings in `elo.py` were tuned on 2004–2023 and tested on 2024–2026. If you change them, re-run that test.
 
 ## Before calling a change done
 
-1. `.venv/bin/python build_site.py` (add `--shots` if a page's look changed).
-2. Syntax-check every page script with `node --check` (extract the inline `<script>` blocks).
-3. Render each page at 1280px and 400px wide and check nothing sticks out of its panel and the page never scrolls
-   sideways (wide grids may scroll inside their own `.heat-wrap` / `.gg-wrap` / `.tbl-wrap`).
-4. Look at a screenshot of anything you changed.
+1. `.venv/bin/python build_site.py --shots` and, if README numbers or art changed, `.venv/bin/python readme_art/make_art.py`.
+2. Syntax-check every page script and `docs/assets/kit.js` with `node --check` (extract the inline `<script>` blocks).
+3. Render every page at 1280px and at a real phone width. Headless Chrome won't lay out narrower than 500px, so load
+   the page in a 390px-wide `<iframe>`. Check that no SVG mark or HTML text sticks out of its panel, no image is broken,
+   there are no script errors, and the page never scrolls sideways (wide grids may scroll inside `.heat-wrap`,
+   `.gg-wrap` or `.tbl-wrap`).
+4. Recompute key numbers independently: box vs play-by-play finals, quarter margins summing to the final, plus-minus
+   = 5 × team margin, stint minutes vs box minutes, Elo zero-sum and calibration, and every claim in the copy.
+5. Look at a screenshot of anything you changed.
+6. Never `git checkout --` or reset a path that has uncommitted edits.
 
 ## Code style
 
 Plain, student-style comments on every block (what it does and why, in simple words). Match the existing files.
-Commits are authored by jordanngo205 only, with no AI attribution lines.
+Commits are authored by jordanngo205 only, with no AI attribution lines. One logical change per commit.
