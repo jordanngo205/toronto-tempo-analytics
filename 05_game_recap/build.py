@@ -66,6 +66,22 @@ def team_line(t, o):
     }
 
 
+def story(gp):
+    """Numbers for the game-story panel, from the play-by-play of one game."""
+    m = gp.m.to_numpy()
+    sign = np.sign(m)
+    nz = sign[sign != 0]
+    lead_changes = int((np.diff(nz) != 0).sum())                # leader switched from one team to the other
+    ties = int(((m[1:] == 0) & (m[:-1] != 0)).sum())           # score went back to level
+    # share of game time Toronto led / trailed (time between plays, counted with the margin before the play)
+    t = gp.t.to_numpy(float)
+    secs = np.diff(np.r_[0, t])
+    prev = np.r_[0, m[:-1]]
+    total = t.max()
+    return {"lc": lead_changes, "ties": ties, "lead": round(float(secs[prev > 0].sum() / total), 3),
+            "trail": round(float(secs[prev < 0].sum() / total), 3), "max": int(m.max()), "min": int(m.min())}
+
+
 def box(gid, team_id):
     """Box score rows for one team in one game (only players who played)."""
     b = pb[(pb.game_id == gid) & (pb.team_id == team_id) & (pb.minutes > 0)].copy()
@@ -112,6 +128,10 @@ for g in meta.itertuples():
         "box": {"tor": box(g.game_id, TOR), "opp": box(g.game_id, o.team_id)},
         "names": names, "shots": shots, "lead": int(t.largest_lead), "opp_lead": int(o.largest_lead),
         "opp_color": court_colour(o),
+        "story": story(gp),
+        # headshot link for every player who played (empty when ESPN has none)
+        "heads": {r.athlete_display_name: r.athlete_headshot_href for r in
+                  pb[(pb.game_id == g.game_id) & (pb.minutes > 0)].itertuples() if isinstance(r.athlete_headshot_href, str)},
     })
 
 # headline numbers for the home page, then write the page
