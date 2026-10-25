@@ -147,8 +147,8 @@ def season_ring():
     S = 1200          # picture width
     HT = 1380         # picture height (taller so the title sits above the ring)
     cx, cy = S / 2, 770
-    base = 330      # radius of the "zero" circle
-    scale = 4.2     # pixels per point of margin
+    base = 285      # radius of the "zero" circle
+    scale = 4.0     # pixels per point of margin (a 35-point loss reaches 425 px, inside the score labels at 470)
     parts = []
     n = len(games)
     # light rings for +10/+20 and -10/-20 so you can read the bars
@@ -158,7 +158,8 @@ def season_ring():
     for i, g in games.iterrows():
         # angle for this game: start at the top (-90 degrees) and go clockwise
         a = np.radians(-90 + (i + 0.5) * 360 / n)
-        r1 = base + max(-35, min(35, g.margin)) * scale
+        # bars point toward the winner: IN toward the Tempo logo for a win, OUT toward the opponent's logo for a loss
+        r1 = base - max(-35, min(35, g.margin)) * scale
         x0, y0 = cx + base * np.cos(a), cy + base * np.sin(a)
         x1, y1 = cx + r1 * np.cos(a), cy + r1 * np.sin(a)
         color = "#7e9bd0" if g.margin > 0 else "#d0587c"
@@ -193,7 +194,7 @@ def season_ring():
       </div>
       <div style="position:absolute;left:0;right:0;top:34px;text-align:center">
         <div style="font:800 48px 'Barlow Condensed';text-transform:uppercase">The season in a circle</div>
-        <div style="font:400 17px Barlow;color:#b7bdc9">Every Tempo game, clockwise from opening night. Bars point out for wins and in for losses. Longer bar = bigger margin.</div>
+        <div style="font:400 17px Barlow;color:#b7bdc9">Every Tempo game, clockwise from opening night. Each bar points toward the winner: in to the Tempo, out to the opponent. Longer bar = bigger margin.</div>
       </div>
       <div style="position:absolute;right:36px;bottom:30px;text-align:right;font:500 14px 'IBM Plex Mono';color:#8a91a0">
         <span style="color:#7e9bd0">■</span> win &nbsp; <span style="color:#d0587c">■</span> loss</div>
