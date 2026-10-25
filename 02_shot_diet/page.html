@@ -1,10 +1,10 @@
 <style>
 .picker { display: flex; gap: 6px; flex-wrap: wrap; }
-.picker button { font: 600 0.9rem var(--body); padding: 5px 10px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink-2); cursor: pointer; }
+.picker button { font: 600 0.88rem var(--ui); border-radius: 999px; padding: 5px 10px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink-2); cursor: pointer; }
 .picker button[aria-pressed="true"] { border-color: var(--tor); background: var(--tor); color: #fff; }
 .picker button.opp[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
 .profile { display: grid; gap: 14px; }
-.profile .name { font-family: var(--display); font-weight: 800; font-size: 2rem; text-transform: uppercase; line-height: 1; }
+.profile .name { font-family: var(--display); font-weight: 800; font-size: 2rem; line-height: 1; }
 .kv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .kv div { border-top: 1px solid var(--rule); padding-top: 4px; }
 .kv b { display: block; font-family: var(--display); font-size: 1.6rem; line-height: 1.05; }
@@ -19,15 +19,13 @@
 </style>
 
 <section class="hero">
-  <div class="eyebrow">Toronto Tempo · 2026 regular season · every field-goal attempt</div>
-  <h1>Shot Lab<span class="sub">Toronto got good looks. The shots didn't fall.</span></h1>
+  <h1>Shot Lab<span class="sub">Toronto took better shots than the league average and made fewer of them.</span></h1>
   <p class="dek" id="dek"></p>
   <div class="stat-row" id="tiles"></div>
 </section>
 
 <section class="section">
   <header>
-    <div class="eyebrow">01 · The shot chart</div>
     <h2>Pick a shooter</h2>
     <p class="lede">Hexes show where each player shoots from (size) and how well that zone went compared with league average (colour). Switch to "Every shot" to see each make and miss. The last two buttons show opponents against Toronto and the whole league.</p>
   </header>
@@ -51,8 +49,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">02 · Shot quality vs shot making</div>
-    <h2>Good looks, cold hands</h2>
+    <h2>Most Tempo shooters made less than their shot locations predict</h2>
     <p class="lede" id="qm-lede"></p>
   </header>
   <div class="figure">
@@ -64,8 +61,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">03 · Distance</div>
-    <h2>Where the shots come from, foot by foot</h2>
+    <h2>Shot share and points per shot by distance</h2>
     <p class="lede">The top chart shows the share of attempts at each distance. The bottom chart shows points per shot at that distance. Toronto and its opponents both lean heavily toward the rim compared with the league.</p>
   </header>
   <div class="figure">
@@ -77,8 +73,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">04 · Shot types</div>
-    <h2>How the Tempo shoot</h2>
+    <h2>Shot types compared with the league</h2>
     <p class="lede">ESPN tags every shot by type. The dot shows Toronto's share of attempts, the line runs to the league's share, and the number is Toronto's points per shot for that type.</p>
   </header>
   <div class="figure">
