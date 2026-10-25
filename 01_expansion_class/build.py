@@ -1,4 +1,4 @@
-"""Project 6 - The Expansion Class.
+"""Project 1 - The Expansion Class.
 
 Builds expansion.json for the interactive page (index.html): Golden State 2025,
 Toronto 2026 and Portland 2026, with Chicago 2006 and Atlanta 2008 as the
