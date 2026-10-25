@@ -199,7 +199,7 @@ def season_ring():
       <div style="position:absolute;right:36px;bottom:30px;text-align:right;font:500 14px 'IBM Plex Mono';color:#8a91a0">
         <span style="color:#7e9bd0">■</span> win &nbsp; <span style="color:#d0587c">■</span> loss</div>
     </div>"""
-    render("season-ring", html, S, HT)
+    render("season-circle", html, S, HT)
 
 
 # ---------------------------------------------------------------------------

@@ -158,6 +158,57 @@ beta = np.linalg.solve(X.T @ X + lam * I, X.T @ train.sqrt_min)
 pred_hist = X @ beta
 model_r = float(np.corrcoef(pred_hist, train.sqrt_min)[0, 1])  # how well it fits the history
 
+
+# ---------------------------------------------------------------------------
+# 3b. How accurate is it? Test on draft classes the model has never seen
+# ---------------------------------------------------------------------------
+# "Leave one year out": hide one draft class, train on the other 7, predict the hidden one.
+# Repeat for every year. This is a fair test because the model never saw the answers.
+def ridge_predict(tr, te, cols):
+    m_, s_ = tr[cols].mean(), tr[cols].std()
+    Xtr = np.c_[np.ones(len(tr)), (tr[cols] - m_) / s_]
+    Ii = np.eye(Xtr.shape[1]); Ii[0, 0] = 0
+    b_ = np.linalg.solve(Xtr.T @ Xtr + lam * Ii, Xtr.T @ tr.sqrt_min)
+    return np.c_[np.ones(len(te)), (te[cols] - m_) / s_] @ b_
+
+
+cv = []
+for yr in sorted(train.year.unique()):
+    tr, te = train[train.year != yr], train[train.year == yr]
+    cv.append(pd.DataFrame({
+        "name": te.name, "year": yr, "pick": te.pick, "rd": te.rd, "actual": te.pro_min,
+        "college": ridge_predict(tr, te, MODEL_F),               # my model: college stats only
+        "slot": ridge_predict(tr, te, ["log_pick"]),             # draft slot only
+        "both": ridge_predict(tr, te, MODEL_F + ["log_pick"]),   # college stats + draft slot
+    }))
+cv = pd.concat(cv, ignore_index=True)
+cv["y"] = np.sqrt(cv.actual)
+
+
+def r_of(col, d=cv):
+    # correlation between a prediction and what really happened
+    return round(float(np.corrcoef(d[col], d.y)[0, 1]), 3)
+
+
+first = cv[cv.rd == 1]  # first-round picks only (where Toronto will be picking)
+# top 5 of each class by the model vs everyone: how many became rotation players (500+ min in 2 seasons)?
+top5 = cv.sort_values("college", ascending=False).groupby("year").head(5)
+rot = lambda d: round(float((d.actual >= 500).mean()), 3)
+# hit rate by model rank group within each class (1-5, 6-10, 11-20, 21+)
+cv["mrank"] = cv.groupby("year").college.rank(ascending=False)
+tiers = []
+for lo_, hi_, lab_ in [(1, 5, "Model's top 5"), (6, 10, "6-10"), (11, 20, "11-20"), (21, 99, "21+")]:
+    d = cv[cv.mrank.between(lo_, hi_)]
+    tiers.append({"label": lab_, "n": int(len(d)), "hit": rot(d)})
+validation = {
+    "n": int(len(cv)), "classes": int(cv.year.nunique()),
+    "r": {"college": r_of("college"), "slot": r_of("slot"), "both": r_of("both")},
+    "first": {"n": int(len(first)), "college": r_of("college", first), "slot": r_of("slot", first)},
+    "top5": {"n": int(len(top5)), "hit": rot(top5)}, "all_hit": rot(cv), "tiers": tiers,
+    # every past draftee: [name, year, pick, predicted minutes, actual minutes]
+    "pts": [[r_["name"], int(r_.year), int(r_.pick), int(max(r_.college, 0) ** 2), int(r_.actual)] for _, r_ in cv.iterrows()],
+}
+
 # ---------------------------------------------------------------------------
 # 4. The 2027 board: the 2026-27 senior class
 # ---------------------------------------------------------------------------
@@ -229,7 +280,7 @@ hist_pts = [{"n": r["name"], "y": int(r.year), "pick": int(r.pick), "rd": int(r.
 data = {"needs": needs, "translate": translate, "hist": hist_pts, "prospects": prospects,
         "model": {"r": round(model_r, 3), "n": int(len(train)), "features": [LABELS[f] for f in MODEL_F],
                   "weights": [round(float(b), 3) for b in beta[1:]]},
-        "pool_n": int(len(pool)), "pct_labels": list(PCT.values()), "cloud": cloud}
+        "pool_n": int(len(pool)), "pct_labels": list(PCT.values()), "cloud": cloud, "validation": validation}
 # the No. 1 at the page's default setting (60% talent, 40% fit) for the home page tile
 top_default = max(prospects, key=lambda p: 0.6 * p["talent"] + 0.4 * p["fit"])["name"] if prospects else None
 lab.summary("draft-lab", {"pool": int(len(pool)), "top": top_default})
@@ -241,4 +292,5 @@ print(pd.DataFrame(needs)[["label", "v", "rank", "teams"]].to_string(index=False
 print(pd.DataFrame(translate).sort_values("r_resid", ascending=False).to_string(index=False))
 print("history n", len(hist), "model n", len(train), "model r", round(model_r, 3))
 print("pool", len(pool))
+print("validation", {k: v for k, v in validation.items() if k != "pts"})
 print(board[["name", "school", "pos", "height", "box_bpm", "blk40", "dreb40", "draft_prob", "proj_min", "talent_pct", "fit_pct"]].head(25).round(2).to_string(index=False))

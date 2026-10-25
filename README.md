@@ -33,7 +33,7 @@ The Tempo, the 2026 Portland Fire and the 2025 Golden State Valkyries all starte
 
 <table>
 <tr>
-<td width="55%"><img src="readme_art/out/season-ring.png" alt="Every Tempo game arranged in a circle"></td>
+<td width="55%"><img src="readme_art/out/season-circle.png" alt="Every Tempo game arranged in a circle"></td>
 <td width="45%">
 
 **44 games, one picture.** Each bar is one game and points toward the winner: in toward the Tempo logo for a win, out toward the opponent's logo for a loss. Longer bar = bigger margin.

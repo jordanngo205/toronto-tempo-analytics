@@ -69,7 +69,33 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">03 · The board</div>
+    <div class="eyebrow">03 · How accurate is this?</div>
+    <h2>Tested on draft classes it never saw</h2>
+    <p class="lede" id="acc-lede"></p>
+  </header>
+  <div class="stat-row" id="acc-tiles"></div>
+  <div class="grid-2">
+    <div class="figure">
+      <h3>Hit rate by the model's ranking</h3>
+      <svg id="tiers" viewBox="0 0 420 300" role="img" aria-label="Share of players who became rotation players, by model rank"></svg>
+      <div class="cap">Share of each group who played 500+ WNBA minutes in their first two seasons, a rough line for "made a rotation". The model ranked each class without seeing it.</div>
+    </div>
+    <div class="figure">
+      <h3>Predicted vs actual minutes</h3>
+      <svg id="pva" viewBox="0 0 420 400" role="img" aria-label="Predicted vs actual WNBA minutes for every past draftee"></svg>
+      <div class="cap">Every draftee 2018–2025, predicted by a model that never saw her class. Dots on the dashed line were called exactly. Hover for names.</div>
+    </div>
+  </div>
+  <div class="figure">
+    <h3>Compared with the draft itself</h3>
+    <svg id="vs" viewBox="0 0 640 190" role="img" aria-label="Correlation of each predictor with actual WNBA minutes"></svg>
+    <div class="cap">Correlation (r) with actual minutes on held-out classes. "Draft slot" uses where teams really picked each player, so it includes everything their scouts knew.</div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">04 · The board</div>
     <h2>Best player available, or best fit?</h2>
     <p class="lede">Talent blends my model, which projects WNBA minutes from college numbers, with sportsdataverse's draft projection. Fit measures how much a player helps where Toronto was worst: blocks, defensive rebounds, defensive BPM, height and steals. Both scores are percentiles within this senior class. Click a player to see her full profile.</p>
   </header>
@@ -90,7 +116,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">04 · Talent vs fit</div>
+    <div class="eyebrow">05 · Talent vs fit</div>
     <h2>The sweet spot</h2>
     <p class="lede" id="sweet-lede"></p>
   </header>
@@ -104,6 +130,7 @@
   <h3>Method</h3>
   <p><b>Who's eligible:</b> college players whose first season was 2023-24, which makes 2026-27 their senior year, with 400+ minutes in 2025-26. Anyone drafted in 2026 is removed. International prospects and early entrants aren't included, and the 2027 draft order hasn't been set yet.</p>
   <p><b>Talent model:</b> a ridge regression trained on every WNBA draftee from 2018 to 2025. It predicts the square root of WNBA minutes in her first two seasons from her last college season: BPM, defensive BPM, points, rebounds, assists, steals and blocks per 40, true shooting and height. The talent score is half this model and half sportsdataverse's draft probability. <b>Fit:</b> the average z-score of blocks/40, defensive rebounds/40, defensive BPM and height, plus half-weight steals/40. College data covers ESPN-tracked games only, and BPM comes from sportsdataverse's player value file.</p>
+  <p><b>Validation:</b> leave-one-draft-class-out. For each of 2018–2025, the model is retrained on the other seven classes and scored on the held-out class, so every accuracy number on this page comes from players the model never saw. "Rotation player" means 500+ WNBA minutes in her first two seasons. The limits: about 200 players is a small sample, minutes measure opportunity as well as quality, and the model can't see age, length, athleticism, injuries or strength of schedule.</p>
 </section>
 <!--FOOTER-->
 <div id="tip" role="status" aria-live="polite"></div>
@@ -202,7 +229,68 @@ function ranked() {
   }
 })();
 
-/* 03 board */
+/* 03 accuracy */
+(function () {
+  const V = D.validation;
+  // headline paragraph and four stat boxes, all filled from the test results
+  document.getElementById("acc-lede").innerHTML = `A model can always fit the past, so the fair test is whether it predicts drafts it hasn't seen. I hid one class at a time (${V.classes} classes, ${V.n} players), trained on the other ${V.classes - 1}, and predicted the hidden one. From college box scores alone, the model got most of the way to the real draft order, which uses everything every front office knows. Among first-round picks, where Toronto will be choosing, it sorted players <strong>better than the draft did</strong> (r = ${V.first.college.toFixed(2)} vs ${V.first.slot.toFixed(2)}).`;
+  document.getElementById("acc-tiles").innerHTML = [
+    [pct(V.top5.hit, 0), `of the model's top 5 in each class became rotation players (all draftees: ${pct(V.all_hit, 0)})`],
+    [V.r.college.toFixed(2), `r with real WNBA minutes, college stats only (draft slot: ${V.r.slot.toFixed(2)})`],
+    [V.first.college.toFixed(2), `r among first-round picks (draft slot: ${V.first.slot.toFixed(2)})`],
+    [V.n, `past draftees tested, ${V.classes} draft classes`],
+  ].map(([v, k]) => `<div class="stat"><span class="v">${v}</span><span class="k">${k}</span></div>`).join("");
+
+  // hit-rate staircase: one bar per model-rank group
+  const s = document.getElementById("tiers"), T = V.tiers;
+  const W = 420, H = 300, m = { l: 40, r: 10, t: 20, b: 40 };
+  const bw = (W - m.l - m.r) / T.length;
+  const y = scale(0, 1, H - m.b, m.t);
+  for (const v of [0, 0.25, 0.5, 0.75, 1]) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: "gridline" }, s); txt(s, m.l - 6, y(v) + 4, pct(v, 0), "lbl", { "text-anchor": "end" }); }
+  // dashed line = rate for all draftees, the baseline to beat
+  el("line", { x1: m.l, x2: W - m.r, y1: y(V.all_hit), y2: y(V.all_hit), stroke: "var(--ink-3)", "stroke-dasharray": "4 3" }, s);
+  txt(s, W - m.r, y(V.all_hit) - 5, `all draftees ${pct(V.all_hit, 0)}`, "lbl", { "text-anchor": "end" });
+  T.forEach((d, i) => {
+    const x0 = m.l + i * bw + 10, top = y(d.hit);
+    const r = el("rect", { x: x0, y: top, width: bw - 20, height: H - m.b - top, rx: 4, fill: i === 0 ? "var(--tor)" : "var(--tor-2)", opacity: 1 - i * 0.18 }, s);
+    txt(s, x0 + (bw - 20) / 2, top - 6, pct(d.hit, 0), "lbl-ink", { "text-anchor": "middle", style: "font-size:14px" });
+    txt(s, x0 + (bw - 20) / 2, H - m.b + 16, d.label, "lbl", { "text-anchor": "middle" });
+    hover(r, `<b>${d.label}</b><div class="num">${Math.round(d.hit * d.n)} of ${d.n} became rotation players</div>`);
+  });
+  txt(s, (m.l + W - m.r) / 2, H - 6, "Model's rank within each draft class", "lbl", { "text-anchor": "middle" });
+
+  // predicted vs actual scatter (square-root scale on both axes, like the history chart)
+  const s2 = document.getElementById("pva");
+  const W2 = 420, H2 = 400, m2 = { l: 46, r: 12, t: 12, b: 40 }, max = Math.sqrt(2500);
+  const x2 = scale(0, max, m2.l, W2 - m2.r), y2 = scale(0, max, H2 - m2.b, m2.t);
+  for (const v of [0, 100, 400, 900, 1600, 2500]) {
+    el("line", { x1: m2.l, x2: W2 - m2.r, y1: y2(Math.sqrt(v)), y2: y2(Math.sqrt(v)), class: "gridline" }, s2);
+    txt(s2, m2.l - 6, y2(Math.sqrt(v)) + 4, v, "lbl", { "text-anchor": "end" });
+    txt(s2, x2(Math.sqrt(v)), H2 - m2.b + 16, v, "lbl", { "text-anchor": "middle" });
+  }
+  // dashed diagonal = perfect prediction
+  el("line", { x1: x2(0), y1: y2(0), x2: x2(max), y2: y2(max), stroke: "var(--ink-3)", "stroke-dasharray": "4 3" }, s2);
+  txt(s2, (m2.l + W2 - m2.r) / 2, H2 - 4, "Predicted WNBA minutes (first 2 seasons) →", "lbl", { "text-anchor": "middle" });
+  txt(s2, m2.l + 4, m2.t + 10, "Actual minutes ↑", "lbl");
+  for (const [n, yr, pk, pr, ac] of V.pts) {
+    const c = el("circle", { cx: x2(Math.sqrt(Math.min(pr, 2500))), cy: y2(Math.sqrt(Math.min(ac, 2500))), r: 4, fill: pk <= 12 ? "var(--tor)" : "var(--hist)", opacity: 0.75 }, s2);
+    hover(c, `<b>${n}</b><div class="num">${yr} draft · pick ${pk}</div><div class="num">Predicted ${pr.toLocaleString()} · actual ${ac.toLocaleString()} min</div>`);
+  }
+
+  // three bars: college stats vs draft slot vs both
+  const s3 = document.getElementById("vs");
+  const rows = [["My model (college stats only)", V.r.college, "var(--tor)"], ["Draft slot (what teams decided)", V.r.slot, "var(--tor-2)"], ["Both together", V.r.both, "var(--ink-2)"]];
+  const x3 = scale(0, 1, 230, 600);
+  for (const v of [0, 0.25, 0.5, 0.75, 1]) { el("line", { x1: x3(v), x2: x3(v), y1: 6, y2: 150, class: "gridline" }, s3); txt(s3, x3(v), 170, v.toFixed(2), "lbl", { "text-anchor": "middle" }); }
+  rows.forEach(([lab, v, col], i) => {
+    const cy = 30 + i * 44;
+    txt(s3, 0, cy + 5, lab, "lbl-body");
+    el("rect", { x: x3(0), y: cy - 12, width: x3(v) - x3(0), height: 24, rx: 4, fill: col }, s3);
+    txt(s3, x3(v) + 8, cy + 5, `r = ${v.toFixed(2)}`, "lbl", { style: "font-size:13px;fill:var(--ink)" });
+  });
+})();
+
+/* 04 board */
 const tbl = document.getElementById("board-tbl"), card = document.getElementById("card");
 function drawBoard() {
   const R = ranked().slice(0, 25);
@@ -240,7 +328,7 @@ const slider = document.getElementById("w");
 slider.addEventListener("input", () => { weight = 1 - slider.value / 100; drawBoard(); });
 K.toggle(document.getElementById("pos"), v => { posFilter = v; drawBoard(); });
 
-/* 04 talent vs fit */
+/* 05 talent vs fit */
 function drawTF(topIds) {
   const s = document.getElementById("tf");
   s.replaceChildren();
