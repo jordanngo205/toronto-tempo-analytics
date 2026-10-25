@@ -2,11 +2,11 @@
 .podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .pod { background: var(--panel); border: 1px solid var(--rule); border-top: 6px solid var(--tor); display: grid; grid-template-columns: 96px 1fr; gap: 14px; padding: 14px; align-items: center; min-width: 0; }
 .pod .rank { font-family: var(--display); font-weight: 800; font-size: 0.9rem; color: var(--tor); letter-spacing: 0.08em; }
-.pod .nm { font-family: var(--display); font-weight: 800; font-size: 1.6rem; line-height: 1; }
+.pod .nm { font-family: var(--display); font-weight: 800; font-size: 1.6rem; line-height: 1; text-transform: uppercase; }
 .pod .sc { font-size: 0.82rem; color: var(--ink-3); }
 .face { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; object-position: top; background: var(--grid); }
 .face.sm { width: 34px; height: 34px; }
-.slider { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; font: 600 0.85rem var(--display); letter-spacing: 0.04em; max-width: 620px; }
+.slider { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; font: 600 0.85rem var(--display); text-transform: uppercase; letter-spacing: 0.04em; max-width: 620px; }
 .slider input { width: 100%; accent-color: var(--tor); }
 .board-grid { display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 #board-tbl tr { cursor: pointer; }
@@ -14,17 +14,30 @@
 #board-tbl td, #board-tbl th { padding: 6px 5px; font-size: 0.82rem; }
 #board-tbl td { vertical-align: middle; }
 .who { display: flex; align-items: center; gap: 10px; }
-.who b { display: block; font-family: var(--ui); font-weight: 700; }
+.who b { display: block; font-family: var(--body); font-weight: 600; }
 .who small { color: var(--ink-3); font-size: 0.75rem; }
 .mini { display: inline-block; width: 44px; height: 8px; background: var(--grid); vertical-align: middle; position: relative; }
 .mini i { position: absolute; inset: 0 auto 0 0; }
 .card { position: sticky; top: 12px; }
-.card .nm { font-family: var(--display); font-weight: 800; font-size: 2rem; line-height: 1; }
+.card .nm { font-family: var(--display); font-weight: 800; font-size: clamp(1.4rem, 2.2vw, 1.9rem); line-height: 1; text-transform: uppercase; overflow-wrap: anywhere; }
+.card .face { flex: none; }
 .pbar { display: grid; grid-template-columns: 110px 1fr 34px; gap: 8px; align-items: center; font-size: 0.82rem; margin-top: 4px; }
 .pbar .tr { height: 10px; background: var(--grid); position: relative; }
 .pbar .tr i { position: absolute; inset: 0 auto 0 0; background: var(--tor); }
 .pbar .tr u { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--ink-3); }
 @media (max-width: 760px) { .podium, .board-grid { grid-template-columns: minmax(0, 1fr); } .card { position: static; } }
+.tf-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 18px; align-items: start; }
+.tf-key { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.tf-key li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: center; font-size: 0.9rem; }
+.tf-key b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--tor); color: #fff; font-size: 0.75rem; }
+.tf-key small { display: block; color: var(--ink-3); font-size: 0.75rem; }
+@media (max-width: 760px) { .tf-wrap { grid-template-columns: minmax(0, 1fr); } }
+.glossary { display: grid; grid-template-columns: minmax(140px, 200px) minmax(0, 1fr); gap: 6px 18px; margin: 0 0 8px; }
+.glossary dt { font-weight: 700; color: var(--ink); }
+.glossary dd { margin: 0; max-width: 70ch; }
+@media (max-width: 760px) { .glossary { grid-template-columns: minmax(0, 1fr); } .glossary dd { margin-bottom: 8px; } }
+#board-tbl td:nth-child(2) { white-space: normal; min-width: 190px; }
+.who small { display: block; line-height: 1.3; }
 </style>
 
 <section class="hero">
@@ -45,7 +58,7 @@
   </div>
 </section>
 
-<section class="section">
+<section class="section wide">
   <header>
     <h2>Defensive numbers predict WNBA minutes better than scoring does</h2>
     <p class="lede" id="tr-lede"></p>
@@ -64,7 +77,7 @@
   </div>
 </section>
 
-<section class="section">
+<section class="section wide">
   <header>
     <h2>The model, tested on draft classes it never saw</h2>
     <p class="lede" id="acc-lede"></p>
@@ -89,7 +102,7 @@
   </div>
 </section>
 
-<section class="section">
+<section class="section wide">
   <header>
     <h2>The 2027 board</h2>
     <p class="lede">Talent blends my model, which projects WNBA minutes from college numbers, with sportsdataverse's draft projection. Fit measures how much a player helps where Toronto was worst: blocks, defensive rebounds, defensive BPM, height and steals. Both scores are percentiles within this senior class. Click a player to see her full profile.</p>
@@ -111,16 +124,24 @@
 
 <section class="section">
   <header>
-    <h2>Prospects who rate high on both talent and fit</h2>
+    <h2>Talent against fit for the top 60</h2>
     <p class="lede" id="sweet-lede"></p>
   </header>
   <div class="figure">
-    <svg id="tf" viewBox="0 0 640 560" role="img" aria-label="Talent percentile vs fit percentile for every prospect"></svg>
-    <div class="cap">Grey dots are every senior in the class. Coloured dots are the 60 most talented. Faces and numbers mark the current top of the board, which changes with the slider and position filter. Click any dot to open that player's profile.</div>
+    <div class="tf-wrap"><svg id="tf" viewBox="0 0 640 460" role="img" aria-label="Talent rank vs fit rank for the top 60 prospects"></svg><ol class="tf-key" id="tf-key"></ol></div>
+    <div class="cap">The 60 most talented seniors, placed by their rank in the whole class on log scales. Numbered dots are the current top 10 of the board above, so they move with the slider and position filter. Click any dot to open that player's profile.</div>
   </div>
 </section>
 
 <section class="methods">
+  <h3>What the numbers mean</h3>
+  <dl class="glossary">
+    <dt>BPM (box plus-minus)</dt><dd>An estimate of how many points per 100 possessions a player adds compared with an average player, worked out from box-score stats only (points, rebounds, assists, steals, blocks, turnovers, shooting). 0 is average for her league; positive is better. College BPMs run higher than WNBA ones because the gap between the best and worst teams is bigger. The values here come from sportsdataverse's college player value file.</dd>
+    <dt>Defensive BPM</dt><dd>The defensive part of BPM, driven mostly by steals, blocks and defensive rebounds. Box scores see little of the rest of defense, so treat it as a rough guide.</dd>
+    <dt>TS% (true shooting)</dt><dd>Points per shooting attempt, counting threes and free throws: points ÷ (2 × (FGA + 0.44 × FTA)).</dd>
+    <dt>Talent</dt><dd>The average of two percentile ranks within the senior class: my model's projected WNBA minutes, and sportsdataverse's chance of being drafted. Players with no 2025-26 season use the model's rank alone.</dd>
+    <dt>Fit</dt><dd>How well a player's college numbers match Toronto's 2026 weak spots: blocks and defensive rebounds per 40, defensive BPM, height, and (at half weight) steals per 40. Shown as a percentile within the class.</dd>
+  </dl>
   <h3>Method</h3>
   <p><b>Who's eligible:</b> college players whose first season was 2023-24, which makes 2026-27 their senior year, with 400+ minutes in 2025-26. Anyone drafted in 2026 is removed. International prospects and early entrants aren't included, and the 2027 draft order hasn't been set yet.</p>
   <p><b>Talent model:</b> a ridge regression trained on every WNBA draftee from 2018 to 2025. It predicts the square root of WNBA minutes in her first two seasons from her last college season: BPM, defensive BPM, points, rebounds, assists, steals and blocks per 40, true shooting and height. The talent score is half this model and half sportsdataverse's draft probability. <b>Fit:</b> the average z-score of blocks/40, defensive rebounds/40, defensive BPM and height, plus half-weight steals/40. College data covers ESPN-tracked games only, and BPM comes from sportsdataverse's player value file.</p>
@@ -289,9 +310,9 @@ const tbl = document.getElementById("board-tbl"), card = document.getElementById
 function drawBoard() {
   const R = ranked().slice(0, 25);
   if (!selected || !R.find(p => p.id === selected)) selected = R[0]?.id;
-  tbl.innerHTML = `<tr><th>#</th><th>Prospect</th><th>Ht</th><th>PTS</th><th>REB</th><th>BLK</th><th>TS%</th><th>BPM</th><th>Talent</th><th>Fit</th><th>Score</th></tr>` +
+  tbl.innerHTML = `<tr><th>#</th><th>Prospect</th><th>Ht</th><th>PTS</th><th>REB</th><th>BLK</th><th>TS%</th><th title="Box plus-minus: points per 100 possessions added vs an average player, from box-score stats. 0 = average.">BPM</th><th>Talent</th><th>Fit</th><th>Score</th></tr>` +
     R.map((p, i) => `<tr data-id="${p.id}" class="${p.id === selected ? "sel" : ""}"><td>${i + 1}</td>
-      <td><div class="who">${face(p, "face sm")}<div><b>${p.name}</b><small>${p.school} · ${p.pos}</small></div></div></td>
+      <td><div class="who">${face(p, "face sm")}<div><b>${p.name}</b><small>${p.school} · ${p.pos}${p.season === 2025 ? " · 2024-25 stats" : ""}</small></div></div></td>
       <td>${ft(p.ht)}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.blk}</td><td>${(100 * p.ts).toFixed(1)}</td><td>${p.bpm}</td>
       <td><span class="mini"><i style="width:${p.talent}%;background:var(--tor-2)"></i></span></td>
       <td><span class="mini"><i style="width:${p.fit}%;background:var(--tor)"></i></span></td>
@@ -305,8 +326,9 @@ tbl.addEventListener("click", e => { const tr = e.target.closest("tr[data-id]");
 function drawCard() {
   const p = P.find(q => q.id === selected);
   if (!p) { card.innerHTML = ""; return; }
-  card.innerHTML = `<div style="display:flex;gap:14px;align-items:center">${face(p)}<div><div class="eyebrow">${p.school}</div><div class="nm">${p.name}</div>
-    <div class="muted" style="font-size:.85rem">${p.pos} · ${ft(p.ht)} · ${p.gp} games · ${p.mpg} mpg</div></div></div>
+  card.innerHTML = `<div style="display:flex;gap:14px;align-items:center">${face(p)}<div style="min-width:0"><div class="eyebrow">${p.school}</div><div class="nm">${p.name}</div>
+    <div class="muted" style="font-size:.85rem">${p.pos} · ${ft(p.ht)} · ${p.gp} games · ${p.mpg} mpg · ${p.season === 2025 ? "2024-25" : "2025-26"}</div></div></div>
+    ${p.season === 2025 ? `<div class="muted" style="font-size:.82rem;margin-top:10px;padding:8px 10px;background:var(--grid)">No games in 2025-26, so these numbers are from her 2024-25 season, and sportsdataverse has no draft projection for her. Her talent score comes from my model alone.</div>` : ""}
     <div class="kv" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 6px">
       <div><b class="num" style="font:800 1.6rem var(--display)">${p.pts}</b><div class="muted" style="font-size:.75rem">PPG</div></div>
       <div><b class="num" style="font:800 1.6rem var(--display)">${p.reb}</b><div class="muted" style="font-size:.75rem">RPG</div></div>
@@ -314,7 +336,7 @@ function drawCard() {
     </div>
     <div class="eyebrow" style="margin-top:8px">Percentile among ${D.pool_n} seniors</div>
     ${D.pct_labels.map((l, i) => `<div class="pbar"><span>${l}</span><span class="tr"><i style="width:${p.pct[i]}%"></i><u></u></span><span class="num">${p.pct[i]}</span></div>`).join("")}
-    <div class="muted" style="font-size:.8rem;margin-top:10px">Model projection: ~${p.pmin.toLocaleString()} WNBA minutes in her first two seasons · sportsdataverse draft probability ${pct(p.dp, 0)}</div>`;
+    <div class="muted" style="font-size:.8rem;margin-top:10px">Model projection: ~${p.pmin.toLocaleString()} WNBA minutes in her first two seasons · sportsdataverse draft probability ${p.dp == null ? "not available" : pct(p.dp, 0)}</div>`;
 }
 
 const slider = document.getElementById("w");
@@ -323,47 +345,46 @@ slider.addEventListener("input", () => { weight = 1 - slider.value / 100; drawBo
 K.toggle(document.getElementById("pos"), v => { posFilter = v; drawBoard(); });
 
 /* 05 talent vs fit */
+// scatter of the 60 ranked prospects. The current top 10 get a numbered dot, and their names go in a
+// key next to the chart instead of on top of the dots, so nothing overlaps.
 function drawTF(topIds) {
   const s = document.getElementById("tf");
   s.replaceChildren();
-  const W = 640, H = 560, m = { l: 46, r: 90, t: 16, b: 40 };
+  const W = 640, H = 460, m = { l: 52, r: 16, t: 16, b: 44 };
   s.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  // raw talent and fit scores (in standard deviations) for the whole senior class.
-  // Percentiles squash the best players together near 100; raw scores spread them out
-  const all = D.cloud;
-  const x0 = Math.floor(Math.min(...all.map(a => a[0]))), x1 = Math.ceil(Math.max(...all.map(a => a[0])));
-  const y0 = Math.floor(Math.min(...all.map(a => a[1]))), y1 = Math.ceil(Math.max(...all.map(a => a[1])));
-  const x = scale(x0, x1, m.l, W - m.r), y = scale(y0, y1, H - m.b, m.t);
-  // shaded "sweet spot": at least 1 standard deviation above average on both
-  el("rect", { x: x(1), y: m.t, width: W - m.r - x(1), height: y(1) - m.t, fill: "var(--tor-soft)" }, s);
-  txt(s, W - m.r - 6, y(1) - 8, "THE SWEET SPOT", "lbl-ink", { "text-anchor": "end", style: "font-size:12px;fill:var(--tor)" });
-  for (let v = y0; v <= y1; v++) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 0 ? "zero" : "gridline" }, s); txt(s, m.l - 6, y(v) + 4, fmt(v, 0), "lbl", { "text-anchor": "end" }); }
-  for (let v = x0; v <= x1; v++) txt(s, x(v), H - m.b + 16, fmt(v, 0), "lbl", { "text-anchor": "middle" });
-  txt(s, (m.l + W - m.r) / 2, H - 4, "Talent (standard deviations above the class average) →", "lbl", { "text-anchor": "middle" });
-  txt(s, m.l + 4, m.t + 10, "Fit ↑", "lbl");
-  // the whole class as faint dots
-  for (const [a, f] of all) el("circle", { cx: x(a), cy: y(f), r: 2.2, fill: "var(--hist)", opacity: 0.35 }, s);
-  const defs = el("defs", {}, s), labels = [];
-  // grey dots for everyone, current top 10 drawn last so they sit on top
+  // both axes are rank within the senior class on a log scale: 1 (best) at the top/right.
+  // A log scale gives ranks 1-10 as much room as ranks 10-100, so the top of the board spreads out
+  const maxR = Math.max(...P.map(p => Math.max(p.tr, p.fr)), 100);
+  const lg = v => Math.log10(v);
+  const x = v => m.l + (lg(maxR) - lg(v)) / lg(maxR) * (W - m.l - m.r);
+  const y = v => m.t + lg(v) / lg(maxR) * (H - m.t - m.b);
+  // shaded corner: top 10 in the class on both
+  el("rect", { x: x(10), y: m.t, width: W - m.r - x(10), height: y(10) - m.t, fill: "var(--tor-soft)" }, s);
+  txt(s, W - m.r - 6, y(10) - 8, "TOP 10 ON BOTH", "lbl-ink", { "text-anchor": "end", style: "font-size:12px;fill:var(--tor)" });
+  for (const v of [1, 2, 5, 10, 20, 50, 100, 200, 500].filter(v => v <= maxR)) {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: "gridline" }, s);
+    txt(s, m.l - 6, y(v) + 4, v, "lbl", { "text-anchor": "end" });
+    el("line", { x1: x(v), x2: x(v), y1: m.t, y2: H - m.b, class: "gridline" }, s);
+    txt(s, x(v), H - m.b + 16, v, "lbl", { "text-anchor": "middle" });
+  }
+  txt(s, (m.l + W - m.r) / 2, H - 6, `Talent rank in the class of ${D.pool_n} (1 = best) →`, "lbl", { "text-anchor": "middle" });
+  txt(s, m.l + 4, m.t + 10, "Fit rank ↑", "lbl");
+  // grey dots first, the current top 10 last so they sit on top
   const order = [...P].sort((a, b) => topIds.includes(a.id) - topIds.includes(b.id));
   for (const p of order) {
-    const rank = topIds.indexOf(p.id), on = rank >= 0, cx = x(p.tz), cy = y(p.fz);
-    if (on && rank < 6 && p.img) {
-      // faces for the top 6
-      const id = "c" + p.id;
-      const cp = el("clipPath", { id }, defs); el("circle", { cx, cy, r: 12 }, cp);
-      el("circle", { cx, cy, r: 14, fill: "var(--tor)" }, s);
-      el("image", { href: p.img, x: cx - 12, y: cy - 12, width: 24, height: 24, "clip-path": `url(#${id})`, preserveAspectRatio: "xMidYMin slice" }, s);
-    }
-    const c = el("circle", { cx, cy, r: on ? (rank < 6 ? 14 : 6) : 4.5, fill: on ? (rank < 6 ? "transparent" : "var(--tor)") : "var(--hist)", opacity: on ? 1 : 0.55, style: "cursor:pointer" }, s);
-    hover(c, `<b>${p.name}</b><div>${p.school} · ${p.pos} · ${ft(p.ht)}</div><div class="num">Talent ${p.talent.toFixed(0)} · Fit ${p.fit.toFixed(0)}</div>`);
+    const rank = topIds.indexOf(p.id), on = rank >= 0, cx = x(p.tr), cy = y(p.fr);
+    const c = el("circle", { cx, cy, r: on ? 11 : 4.5, fill: on ? "var(--tor)" : "var(--hist)", opacity: on ? 1 : 0.55, stroke: "var(--panel)", "stroke-width": on ? 2 : 0, style: "cursor:pointer" }, s);
+    if (on) txt(s, cx, cy + 4, rank + 1, "lbl", { "text-anchor": "middle", style: "fill:#fff;font-weight:700;font-size:11px;pointer-events:none" });
+    hover(c, `<b>${on ? rank + 1 + ". " : ""}${p.name}</b><div>${p.school} · ${p.pos} · ${ft(p.ht)}</div><div class="num">Talent rank ${p.tr} · fit rank ${p.fr} of ${D.pool_n}</div>`);
     c.addEventListener("click", () => { selected = p.id; drawBoard(); document.getElementById("card").scrollIntoView({ behavior: "smooth", block: "center" }); });
-    if (on) labels.push({ x: cx + (rank < 6 ? 17 : 9), y: cy + 4, w: 80, s: `${rank + 1}. ${p.name.split(" ").slice(-1)[0]}` });
   }
-  // push the top-10 labels apart so they can be read
-  for (const l of K.declutter(labels, 13)) txt(s, l.x, l.y, l.s, "lbl-ink", { style: "font-size:11px" });
-  const sweet = P.filter(p => p.tz >= 1 && p.fz >= 1).sort((a, b) => (b.talent + b.fit) - (a.talent + a.fit));
-  document.getElementById("sweet-lede").innerHTML = `${sweet.length} seniors are at least one standard deviation above the class average on both talent and fit. The strongest combinations are ${sweet.slice(0, 3).map(p => `<strong>${p.name}</strong> (${p.school.split(" ")[0]})`).join(", ")}.`;
+  // the key: board rank, name, school
+  document.getElementById("tf-key").innerHTML = topIds.map((id, i) => { const p = P.find(q => q.id === id);
+    return `<li><b>${i + 1}</b><span>${p.name}<small>${p.school} · talent ${p.tr}, fit ${p.fr}</small></span></li>`; }).join("");
+  const both = P.filter(p => p.tr <= 10 && p.fr <= 10);
+  document.getElementById("sweet-lede").innerHTML = both.length
+    ? `${both.map(p => `<strong>${p.name}</strong>`).join(" and ")} ${both.length === 1 ? "is" : "are"} in the class's top 10 for both talent and fit. The numbered dots match the board above, so moving the slider or picking a position moves them.`
+    : `No senior is in the class's top 10 for both talent and fit. The numbered dots match the board above, so moving the slider or picking a position moves them.`;
 }
 drawBoard();
 </script>

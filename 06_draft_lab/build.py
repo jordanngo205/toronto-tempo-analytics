@@ -221,8 +221,12 @@ ro["athlete_id"] = ro.athlete_id.astype(str)
 info = ro[ro.season == 2026].drop_duplicates("athlete_id").set_index("athlete_id")
 # anyone who already went in the 2026 draft (early entrants / international) is off the board
 gone = set(read("wnba_draft_2026").athlete_uid.astype(str).str.extract(r"a:(\d+)")[0].dropna())
-# their 2025-26 season (season 2026) with at least 400 minutes
-pool = cs[(cs.season == 2026) & (cs.minutes >= 400) & (cs.athlete_id.map(first) == 2024) & ~cs.athlete_id.isin(gone)].copy()
+# their most recent full season: 2025-26 if they played 400+ minutes, otherwise 2024-25.
+# The 2024-25 fallback is only for players still on a 2025-26 college roster (someone who sat out
+# 2025-26, like JuJu Watkins), so players who left college don't sneak back in.
+cand = cs[cs.season.isin([2025, 2026]) & (cs.minutes >= 400) & (cs.athlete_id.map(first) == 2024) & ~cs.athlete_id.isin(gone)]
+cand = cand[(cand.season == 2026) | cand.athlete_id.isin(info.index)]
+pool = cand.sort_values("season").groupby("athlete_id").tail(1).copy()  # keep the latest season per player
 pool["height"] = pool.athlete_id.map(info.height).map(inches)  # roster height is text like 6' 2", turn it into inches
 # a few players have no height listed: give them the typical height for their position
 pool["height"] = pool.height.fillna(pool.groupby("pos").height.transform("median")).fillna(pool.height.median())
@@ -236,18 +240,28 @@ pool = pool.dropna(subset=MODEL_F)
 proj = read("wbb_draft_projection")
 proj["player_id"] = proj.player_id.astype(str)
 pool = pool.merge(proj[["player_id", "draft_prob", "projected_pick"]], left_on="athlete_id", right_on="player_id", how="left", suffixes=("", "_p"))
-pool["draft_prob"] = pool.draft_prob.fillna(0)
+# sportsdataverse only projects players from their 2025-26 numbers, so anyone using a 2024-25 season has no projection
+pool.loc[pool.season != 2026, ["draft_prob", "projected_pick"]] = np.nan
 
 # talent = my model's projected WNBA minutes, mixed 50/50 with sportsdataverse's draft probability
 Xp = np.c_[np.ones(len(pool)), (pool[MODEL_F] - mu) / sd]
 pool["proj_min"] = np.clip(Xp @ beta, 0, None) ** 2   # undo the square root -> minutes in first two seasons
-pool["talent"] = 0.5 * z(np.sqrt(pool.proj_min)) + 0.5 * z(pool.draft_prob)
+# talent = half my model, half sportsdataverse's draft probability, each as a percentile rank (0 to 1).
+# Ranks, not z-scores: draft probabilities are very skewed (most near 0%, a few above 70%), and a z-score
+# of a skewed number lets one input swamp the other. Players without a projection use my model's rank only.
+model_rank = np.sqrt(pool.proj_min).rank(pct=True)
+has_dp = pool.draft_prob.notna()
+dp_rank = pool.draft_prob.rank(pct=True)  # NaN for players without a projection
+pool["talent"] = np.where(has_dp, 0.5 * model_rank + 0.5 * dp_rank, model_rank)
 # fit = fixes Toronto's weak spots: rim protection, defensive rebounding, defense in general, size, steals
 pool["dreb40"] = pool.dreb40
 pool["fit"] = (z(pool.blk40) + z(pool.dreb40) + z(pool.box_dbpm) + z(pool.height) + 0.5 * z(pool.stl40)) / 4.5
 # scores on a 0-100 scale (percentile among all eligible seniors) so they're easy to read
 pool["talent_pct"] = pool.talent.rank(pct=True) * 100
 pool["fit_pct"] = pool.fit.rank(pct=True) * 100
+# rank within the class (1 = best) for the talent-vs-fit chart, which uses a log scale so the top spreads out
+pool["talent_rank"] = pool.talent.rank(ascending=False, method="min").astype(int)
+pool["fit_rank"] = pool.fit.rank(ascending=False, method="min").astype(int)
 
 # percentile of each prospect on key stats compared with the whole senior class (for the prospect card)
 PCT = {"box_bpm": "BPM", "box_dbpm": "Def. BPM", "pts40": "Points/40", "ast40": "Assists/40", "stl40": "Steals/40",
@@ -264,13 +278,11 @@ prospects = [{
     "blk": round(r.blocks / r.gp, 1), "stl": round(r.steals / r.gp, 1),
     "blk40": round(r.blk40, 2), "dreb40": round(r.dreb40, 1), "ts": round(r.ts, 3), "bpm": round(r.box_bpm, 1),
     "dbpm": round(r.box_dbpm, 1), "three": round(r.three_rate, 3),
-    "dp": round(float(r.draft_prob), 3), "pick": None if pd.isna(r.projected_pick) else round(float(r.projected_pick), 1),
+    "dp": None if pd.isna(r.draft_prob) else round(float(r.draft_prob), 3), "pick": None if pd.isna(r.projected_pick) else round(float(r.projected_pick), 1),
+    "season": int(r.season), "tr": int(r.talent_rank), "fr": int(r.fit_rank),  # which college season the numbers come from (2026 = 2025-26)
     "pmin": round(float(r.proj_min)), "talent": round(float(r.talent_pct), 1), "fit": round(float(r.fit_pct), 1),
     "pct": [round(float(r[col + "_pct"])) for col in PCT],
-    "tz": round(float(r.talent), 3), "fz": round(float(r.fit), 3),  # raw scores (z-score units) for the scatter
 } for _, r in board.iterrows()]
-# every senior as [talent, fit] so the scatter can show the whole class behind the top 60
-cloud = [[round(float(a), 2), round(float(f), 2)] for a, f in zip(pool.talent, pool.fit)]
 
 # history points for the scatter: last college BPM vs WNBA minutes in first two seasons
 hist_pts = [{"n": r["name"], "y": int(r.year), "pick": int(r.pick), "rd": int(r.rd), "bpm": round(r.box_bpm, 1), "min": int(r.pro_min),
@@ -280,7 +292,7 @@ hist_pts = [{"n": r["name"], "y": int(r.year), "pick": int(r.pick), "rd": int(r.
 data = {"needs": needs, "translate": translate, "hist": hist_pts, "prospects": prospects,
         "model": {"r": round(model_r, 3), "n": int(len(train)), "features": [LABELS[f] for f in MODEL_F],
                   "weights": [round(float(b), 3) for b in beta[1:]]},
-        "pool_n": int(len(pool)), "pct_labels": list(PCT.values()), "cloud": cloud, "validation": validation}
+        "pool_n": int(len(pool)), "pct_labels": list(PCT.values()), "validation": validation}
 # the No. 1 at the page's default setting (60% talent, 40% fit) for the home page tile
 top_default = max(prospects, key=lambda p: 0.6 * p["talent"] + 0.4 * p["fit"])["name"] if prospects else None
 lab.summary("draft-lab", {"pool": int(len(pool)), "top": top_default})
