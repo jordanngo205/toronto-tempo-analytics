@@ -39,8 +39,8 @@ TOR = 131935  # ESPN's team id for the Toronto Tempo
 # team colours (same ones the website uses)
 BORDEAUX = "#8a1f42"
 NAVY = "#33476d"
-FONTS = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800'
-         '&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">')
+FONTS = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900'
+         '&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">')
 
 
 def render(name, html, width, height):
@@ -119,21 +119,21 @@ def banner():
                      f'fill="#fff" opacity="{opacity}"/>')
     svg = f'<svg width="{W}" height="{H}" style="position:absolute;inset:0">{"".join(lines)}</svg>'
     html = f"""
-    <div style="width:{W}px;height:{H}px;position:relative;overflow:hidden;font-family:Barlow,sans-serif;color:#fff;
+    <div style="width:{W}px;height:{H}px;position:relative;overflow:hidden;font-family:'Schibsted Grotesk',sans-serif;color:#fff;
                 background:linear-gradient(115deg,#140a10 0%,#3d0d1f 45%,{BORDEAUX} 100%)">
       {svg}
       <img src="{uri(LOGOS / 'tor_white.png')}" style="position:absolute;right:40px;top:150px;width:300px;opacity:.96">
       <div style="position:absolute;left:70px;top:70px;width:760px">
-        <div style="font:500 17px 'IBM Plex Mono';letter-spacing:.18em;opacity:.75">TORONTO TEMPO · WNBA 2026</div>
-        <div style="font:800 168px/0.9 'Barlow Condensed';letter-spacing:-.01em;margin-top:18px">TEMPO LAB</div>
-        <div style="font:700 34px 'Barlow Condensed';text-transform:uppercase;letter-spacing:.03em;margin-top:14px;color:#f3c1d1">
+        <div style="font:500 17px 'Schibsted Grotesk';opacity:.75">Toronto Tempo · WNBA 2026</div>
+        <div style="font:800 132px/0.95 'Schibsted Grotesk';letter-spacing:-0.045em;white-space:nowrap;margin-top:14px">Tempo Lab</div>
+        <div style="font:700 34px 'Schibsted Grotesk';margin-top:14px;color:#f3c1d1">
           Toronto's first season, broken down with data</div>
         <div style="display:flex;gap:12px;margin-top:34px">
-          {"".join(f'<span style="font:700 24px Barlow Condensed;padding:8px 16px;border:2px solid rgba(255,255,255,.55)">{t}</span>'
-                   for t in [f"{wins}–{losses}", f"Elo {summary['expansion-class']['tor_elo']}", "44 games", "5 interactive pages"])}
+          {"".join(f'<span style="font:700 24px Schibsted Grotesk;padding:8px 16px;border:2px solid rgba(255,255,255,.55)">{t}</span>'
+                   for t in [f"{wins}–{losses}", f"Elo {summary['expansion-class']['tor_elo']}", "44 games", "6 interactive pages"])}
         </div>
       </div>
-      <div style="position:absolute;left:70px;bottom:26px;font:400 14px 'IBM Plex Mono';opacity:.6">
+      <div style="position:absolute;left:70px;bottom:26px;font:400 14px 'Schibsted Grotesk';opacity:.6">
         each streak = one game · length = points scored · bright = win</div>
     </div>"""
     render("banner", html, W, H)
@@ -171,32 +171,32 @@ def season_ring():
         parts.append(f'<image href="{uri(logo)}" x="{lx - 15:.1f}" y="{ly - 15:.1f}" width="30" height="30"/>')
         # score text just inside the logo ring
         tx, ty = cx + 470 * np.cos(a), cy + 470 * np.sin(a)
-        parts.append(f'<text x="{tx:.1f}" y="{ty + 4:.1f}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" '
+        parts.append(f'<text x="{tx:.1f}" y="{ty + 4:.1f}" text-anchor="middle" font-family="Schibsted Grotesk" font-size="11" '
                      f'fill="{"#c9d4ea" if g.margin > 0 else "#8a91a0"}">{g.team_score}-{g.opponent_team_score}</text>')
     # month labels inside the ring, placed at each month's first game
     seen = set()
     for i, g in games.iterrows():
-        mon = g.game_date.strftime("%b").upper()
+        mon = g.game_date.strftime("%b")
         if mon in seen:
             continue
         seen.add(mon)
         a = np.radians(-90 + i * 360 / n)
         mx, my = cx + 574 * np.cos(a), cy + 574 * np.sin(a)
-        parts.append(f'<text x="{mx:.1f}" y="{my + 5:.1f}" text-anchor="middle" font-family="IBM Plex Mono" font-size="14" font-weight="500" fill="#d0587c">{mon}</text>')
+        parts.append(f'<text x="{mx:.1f}" y="{my + 5:.1f}" text-anchor="middle" font-family="Schibsted Grotesk" font-size="14" font-weight="500" fill="#d0587c">{mon.title()}</text>')
     avg = games.margin.mean()
     html = f"""
-    <div style="width:{S}px;height:{HT}px;background:#12161d;position:relative;font-family:Barlow,sans-serif;color:#eef0f4">
+    <div style="width:{S}px;height:{HT}px;background:#12161d;position:relative;font-family:'Schibsted Grotesk',sans-serif;color:#eef0f4">
       <svg width="{S}" height="{HT}" style="position:absolute;inset:0">{"".join(parts)}</svg>
       <div style="position:absolute;left:0;right:0;top:{cy - 95}px;text-align:center">
         <img src="{uri(LOGOS / 'tor_white.png')}" style="width:120px;opacity:.95">
-        <div style="font:800 96px/0.95 'Barlow Condensed'">{wins}–{losses}</div>
-        <div style="font:500 15px 'IBM Plex Mono';letter-spacing:.14em;color:#8a91a0;margin-top:6px">AVG MARGIN {avg:+.1f}</div>
+        <div style="font:800 96px/0.95 'Schibsted Grotesk'">{wins}–{losses}</div>
+        <div style="font:500 15px 'Schibsted Grotesk';color:#8a91a0;margin-top:6px">Average margin {avg:+.1f}</div>
       </div>
       <div style="position:absolute;left:0;right:0;top:34px;text-align:center">
-        <div style="font:800 48px 'Barlow Condensed';text-transform:uppercase">The season in a circle</div>
-        <div style="font:400 17px Barlow;color:#b7bdc9">Every Tempo game, clockwise from opening night. Each bar points toward the winner: in to the Tempo, out to the opponent. Longer bar = bigger margin.</div>
+        <div style="font:800 48px 'Schibsted Grotesk'">The season in a circle</div>
+        <div style="font:400 17px 'Schibsted Grotesk';color:#b7bdc9">Every Tempo game, clockwise from opening night. Each bar points toward the winner: in to the Tempo, out to the opponent. Longer bar = bigger margin.</div>
       </div>
-      <div style="position:absolute;right:36px;bottom:30px;text-align:right;font:500 14px 'IBM Plex Mono';color:#8a91a0">
+      <div style="position:absolute;right:36px;bottom:30px;text-align:right;font:500 14px 'Schibsted Grotesk';color:#8a91a0">
         <span style="color:#7e9bd0">■</span> win &nbsp; <span style="color:#d0587c">■</span> loss</div>
     </div>"""
     render("season-circle", html, S, HT)
@@ -249,31 +249,31 @@ def player_cards():
         stats = [("PPG", f"{r.pts / r.gp:.1f}"), ("RPG", f"{r.reb / r.gp:.1f}"), ("APG", f"{r.ast / r.gp:.1f}"), ("TS%", f"{100 * r.ts:.1f}")]
         cards.append(f"""
         <div style="width:350px;height:720px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.35);
-                    position:relative;font-family:Barlow,sans-serif;color:#12161d">
+                    position:relative;font-family:'Schibsted Grotesk',sans-serif;color:#12161d">
           <div style="height:330px;position:relative;background:linear-gradient(160deg,{BORDEAUX},#3d0d1f);overflow:hidden">
-            <div style="position:absolute;right:-10px;top:-30px;font:800 230px/1 'Barlow Condensed';color:rgba(255,255,255,.12)">{r.jersey}</div>
+            <div style="position:absolute;right:-10px;top:-30px;font:800 230px/1 'Schibsted Grotesk';color:rgba(255,255,255,.12)">{r.jersey}</div>
             {"".join(f'<div style="position:absolute;left:0;top:{40 + j * 22}px;height:6px;width:{120 + (j * 37) % 90}px;background:rgba(255,255,255,.18);border-radius:3px"></div>' for j in range(6))}
             <img src="{uri(HEADS / (last.lower() + '.png'))}" style="position:absolute;left:50%;bottom:0;transform:translateX(-50%);height:300px">
             <img src="{uri(LOGOS / 'tor_white.png')}" style="position:absolute;left:18px;top:16px;width:64px">
             <div style="position:absolute;left:0;right:0;bottom:0;height:70px;background:linear-gradient(transparent,rgba(20,10,16,.85))"></div>
-            <div style="position:absolute;left:20px;bottom:14px;color:#fff;font:700 15px 'IBM Plex Mono';letter-spacing:.1em">#{r.jersey} · {r.pos}</div>
+            <div style="position:absolute;left:20px;bottom:14px;color:#fff;font:700 15px 'Schibsted Grotesk';">#{r.jersey} · {r.pos}</div>
           </div>
           <div style="padding:16px 20px 0">
-            <div style="font:600 13px 'IBM Plex Mono';letter-spacing:.12em;color:{BORDEAUX};text-transform:uppercase">{tag}</div>
-            <div style="font:800 40px/1 'Barlow Condensed';text-transform:uppercase;margin-top:4px">{name}</div>
+            <div style="font:600 13px 'Schibsted Grotesk';color:{BORDEAUX}">{tag}</div>
+            <div style="font:800 40px/1 'Schibsted Grotesk';margin-top:4px">{name}</div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);margin-top:14px;border-top:2px solid #12161d">
-              {"".join(f'<div style="padding-top:8px"><div style="font:800 30px/1 Barlow Condensed">{v}</div><div style="font:500 12px IBM Plex Mono;color:#7a8191">{k}</div></div>' for k, v in stats)}
+              {"".join(f'<div style="padding-top:8px"><div style="font:800 30px/1 Schibsted Grotesk">{v}</div><div style="font:500 12px Schibsted Grotesk;color:#7a8191">{k}</div></div>' for k, v in stats)}
             </div>
             <div style="margin-top:10px">{mini_hexes(name)}</div>
-            <div style="font:400 12px 'IBM Plex Mono';color:#7a8191">{int(r.gp)} games · {r.mins / r.gp:.1f} min · {len(shots[shots.athlete_name_1 == name])} shots charted</div>
+            <div style="font:400 12px 'Schibsted Grotesk';color:#7a8191">{int(r.gp)} games · {r.mins / r.gp:.1f} min · {len(shots[shots.athlete_name_1 == name])} shots charted</div>
           </div>
-          <div style="position:absolute;right:18px;top:346px;font:700 13px 'IBM Plex Mono';color:#c9ced8">{i + 1:02d}/04</div>
+          <div style="position:absolute;right:18px;top:346px;font:700 13px 'Schibsted Grotesk';color:#c9ced8">{i + 1:02d}/04</div>
         </div>""")
     html = f"""
     <div style="width:1600px;height:900px;background:radial-gradient(circle at 30% 20%,#2b1420,#0f1217 70%);display:flex;flex-direction:column;
                 align-items:center;justify-content:center;gap:26px">
-      <div style="font:800 46px 'Barlow Condensed';color:#fff;letter-spacing:.02em;text-transform:uppercase">The 2026 Tempo card set
-        <span style="font:500 16px 'IBM Plex Mono';color:#b7bdc9;letter-spacing:.1em;margin-left:14px">hex = where she shoots · darker = more makes</span></div>
+      <div style="font:800 46px 'Schibsted Grotesk';color:#fff;">The 2026 Tempo card set
+        <span style="font:500 16px 'Schibsted Grotesk';color:#b7bdc9;margin-left:14px">hex = where she shoots · darker = more makes</span></div>
       <div style="display:flex;gap:28px">{"".join(cards)}</div>
     </div>"""
     render("player-cards", html, 1600, 900)
@@ -300,14 +300,14 @@ def by_the_numbers():
     cells = "".join(f"""
       <div style="grid-column:span {span};background:{bg};color:{fg};padding:26px 30px;display:flex;flex-direction:column;justify-content:flex-end;
                   border-radius:6px;min-height:318px">
-        <div style="font:800 {150 if span == 2 else 112}px/0.85 'Barlow Condensed';letter-spacing:-.02em">{big}</div>
-        <div style="font:600 21px Barlow;margin-top:12px;opacity:.85">{small}</div>
+        <div style="font:800 {150 if span == 2 else 112}px/0.85 'Schibsted Grotesk';letter-spacing:-.02em">{big}</div>
+        <div style="font:600 21px 'Schibsted Grotesk';margin-top:12px;opacity:.85">{small}</div>
       </div>""" for big, small, bg, fg, span in tiles)
     html = f"""
-    <div style="width:1600px;height:900px;background:#f5f6f8;padding:40px;box-sizing:border-box;font-family:Barlow,sans-serif">
+    <div style="width:1600px;height:900px;background:#f5f6f8;padding:40px;box-sizing:border-box;font-family:'Schibsted Grotesk',sans-serif">
       <div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:22px">
-        <div style="font:800 64px/1 'Barlow Condensed';text-transform:uppercase;color:#12161d">Tempo by the numbers</div>
-        <div style="font:500 16px 'IBM Plex Mono';color:#7a8191;letter-spacing:.1em">2026 REGULAR SEASON</div>
+        <div style="font:800 64px/1 'Schibsted Grotesk';color:#12161d">Tempo by the numbers</div>
+        <div style="font:500 16px 'Schibsted Grotesk';color:#7a8191;">2026 regular season</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">{cells}</div>
     </div>"""
@@ -355,7 +355,7 @@ def elo_race():
         side.set_visible(False)
     ax.grid(axis="y", color="#222833")
     ax.set_xlabel("game number in year one", color="#8a91a0")
-    ax.text(0, 1.06, "THE EXPANSION ELO RACE", transform=ax.transAxes, color="#eef0f4", fontsize=20, fontweight="bold")
+    ax.text(0, 1.06, "The expansion Elo race", transform=ax.transAxes, color="#eef0f4", fontsize=20, fontweight="bold")
     ax.text(0, 1.015, "new teams start at 1300 · league average is 1500", transform=ax.transAxes, color="#8a91a0", fontsize=10)
     counter = ax.text(0.98, 0.93, "", transform=ax.transAxes, ha="right", color="#eef0f4", fontsize=26, fontweight="bold")
     labels = {k: ax.text(0, 0, "", color=c, fontsize=10, fontweight="bold") for k, _, _, c, _ in teams}
@@ -440,7 +440,7 @@ def constellation():
     tor_n = int((s2.team_id == TOR).sum())
     opp_n = len(s2) - tor_n
     html = f"""
-    <div style="width:{W}px;height:{H}px;position:relative;font-family:Barlow,sans-serif;color:#fff;
+    <div style="width:{W}px;height:{H}px;position:relative;font-family:'Schibsted Grotesk',sans-serif;color:#fff;
                 background:radial-gradient(ellipse at 50% 55%,#1c1220 0%,#0a0b10 70%)">
       <svg width="{W}" height="{H}" style="position:absolute;inset:0">
         <defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs>
@@ -449,12 +449,12 @@ def constellation():
         {"".join(dots)}
       </svg>
       <div style="position:absolute;left:0;right:0;top:40px;text-align:center">
-        <div style="font:800 64px/1 'Barlow Condensed';letter-spacing:.02em">EVERY SHOT OF 2026</div>
-        <div style="font:500 16px 'IBM Plex Mono';letter-spacing:.12em;color:#b7bdc9;margin-top:10px">
-          <span style="color:#9fb4e0">OPPONENTS · {opp_n:,} SHOTS</span> &nbsp;←&nbsp; glowing = made &nbsp;→&nbsp; <span style="color:#ff6b95">TEMPO · {tor_n:,} SHOTS</span></div>
+        <div style="font:800 64px/1 'Schibsted Grotesk';">Every shot of 2026</div>
+        <div style="font:500 16px 'Schibsted Grotesk';color:#b7bdc9;margin-top:10px">
+          <span style="color:#9fb4e0">Opponents · {opp_n:,} shots</span> &nbsp;←&nbsp; glowing = made &nbsp;→&nbsp; <span style="color:#ff6b95">Tempo · {tor_n:,} shots</span></div>
       </div>
       <img src="{uri(LOGOS / 'tor_white.png')}" style="position:absolute;right:56px;bottom:26px;width:90px;opacity:.9">
-      <div style="position:absolute;left:56px;bottom:34px;font:400 14px 'IBM Plex Mono';color:#8a91a0">
+      <div style="position:absolute;left:56px;bottom:34px;font:400 14px 'Schibsted Grotesk';color:#8a91a0">
         Toronto attacks the right basket · opponents attack the left · 44 games · ESPN shot locations</div>
     </div>"""
     render("constellation", html, W, H)
@@ -486,18 +486,18 @@ def ridgeline():
         layers.append(f'<polygon points="{left},{base + 60} {pts} {right},{base + 60}" fill="#0a0b10"/>'
                       f'<polyline points="{pts}" fill="none" stroke="{stroke}" stroke-width="{2.2 if win else 1.6}" stroke-linejoin="round"/>')
         # small label on the left: opponent and result
-        layers.append(f'<text x="{left - 14}" y="{base + 4}" text-anchor="end" font-family="IBM Plex Mono" font-size="11" '
-                      f'fill="{"#ff6b95" if win else "#5d6472"}">{g.game_date.strftime("%b %-d").upper()} {g.opponent_team_abbreviation} '
+        layers.append(f'<text x="{left - 14}" y="{base + 4}" text-anchor="end" font-family="Schibsted Grotesk" font-size="11" '
+                      f'fill="{"#ff6b95" if win else "#5d6472"}">{g.game_date.strftime("%b %-d")} {g.opponent_team_abbreviation} '
                       f'{g.team_score}-{g.opponent_team_score}</text>')
     html = f"""
-    <div style="width:{W}px;height:{H}px;background:#0a0b10;position:relative;color:#eef0f4;font-family:Barlow,sans-serif">
+    <div style="width:{W}px;height:{H}px;background:#0a0b10;position:relative;color:#eef0f4;font-family:'Schibsted Grotesk',sans-serif">
       <svg width="{W}" height="{H}" style="position:absolute;inset:0">{"".join(layers)}</svg>
       <div style="position:absolute;left:0;right:0;top:70px;text-align:center">
-        <div style="font:800 72px/1 'Barlow Condensed';letter-spacing:.08em">UNKNOWN PRESSURES</div>
-        <div style="font:500 15px 'IBM Plex Mono';letter-spacing:.14em;color:#8a91a0;margin-top:12px">
-          TORONTO TEMPO · 2026 · 44 GAMES · TIP-OFF TO FINAL BUZZER</div>
+        <div style="font:800 72px/1 'Schibsted Grotesk';">Unknown Pressures</div>
+        <div style="font:500 15px 'Schibsted Grotesk';color:#8a91a0;margin-top:12px">
+          Toronto Tempo · 2026 · 44 games · tip-off to final buzzer</div>
       </div>
-      <div style="position:absolute;left:0;right:0;bottom:44px;text-align:center;font:400 14px 'IBM Plex Mono';color:#8a91a0">
+      <div style="position:absolute;left:0;right:0;bottom:44px;text-align:center;font:400 14px 'Schibsted Grotesk';color:#8a91a0">
         each line is one game's score margin · peaks = Toronto leading · <span style="color:#ff6b95">pink = win</span></div>
     </div>"""
     render("ridgeline", html, W, H)
@@ -550,30 +550,30 @@ def rotation_ring():
                 parts.append(f'<path d="M {px - 4} {py - 4} L {px + 4} {py + 4} M {px + 4} {py - 4} L {px - 4} {py + 4}" stroke="#7e9bd0" stroke-width="1.6"/>')
         # player's last name in the gap at the top
         ny = cy - (r_in + r_out) / 2 + 4
-        parts.append(f'<text x="{cx}" y="{ny:.1f}" text-anchor="middle" font-family="Barlow Condensed" font-weight="700" '
-                     f'font-size="13" fill="#d7dbe2" letter-spacing="0.5">{name.split()[-1].upper()}</text>')
+        parts.append(f'<text x="{cx}" y="{ny:.1f}" text-anchor="middle" font-family="Schibsted Grotesk" font-weight="700" '
+                     f'font-size="13" fill="#d7dbe2" >{name.split()[-1]}</text>')
     # month labels around the outside
     seen = set()
     for i, g in games.iterrows():
-        mon = g.game_date.strftime("%b").upper()
+        mon = g.game_date.strftime("%b")
         if mon in seen:
             continue
         seen.add(mon)
         a = np.radians(gap_deg / 2 + i * span - 90)
         rr = r0 + len(order) * ring + 26
         parts.append(f'<text x="{cx + rr * np.cos(a):.1f}" y="{cy + rr * np.sin(a) + 5:.1f}" text-anchor="middle" '
-                     f'font-family="IBM Plex Mono" font-size="15" fill="#ff6b95">{mon}</text>')
+                     f'font-family="Schibsted Grotesk" font-size="15" fill="#ff6b95">{mon.title()}</text>')
     lineups = summary["rotation-lab"]["lineups"]
     html = f"""
-    <div style="width:{S}px;height:{S + 80}px;background:#0f1217;position:relative;color:#eef0f4;font-family:Barlow,sans-serif">
+    <div style="width:{S}px;height:{S + 80}px;background:#0f1217;position:relative;color:#eef0f4;font-family:'Schibsted Grotesk',sans-serif">
       <svg width="{S}" height="{S + 80}" style="position:absolute;inset:0">{"".join(parts)}</svg>
       <div style="position:absolute;left:0;right:0;top:{cy - 70}px;text-align:center">
-        <div style="font:800 110px/0.9 'Barlow Condensed'">{lineups}</div>
-        <div style="font:500 14px 'IBM Plex Mono';letter-spacing:.14em;color:#8a91a0">STARTING LINEUPS</div>
+        <div style="font:800 110px/0.9 'Schibsted Grotesk'">{lineups}</div>
+        <div style="font:500 14px 'Schibsted Grotesk';color:#8a91a0">starting lineups</div>
       </div>
       <div style="position:absolute;left:44px;top:36px">
-        <div style="font:800 50px 'Barlow Condensed';text-transform:uppercase">The rotation ring</div>
-        <div style="font:400 17px Barlow;color:#b7bdc9;max-width:420px">Each ring is a player and each slice is a game, clockwise from opening night. Brighter = more minutes. <span style="color:#7e9bd0">✕ = missed through injury or illness.</span></div>
+        <div style="font:800 50px 'Schibsted Grotesk'">The rotation ring</div>
+        <div style="font:400 17px 'Schibsted Grotesk';color:#b7bdc9;max-width:420px">Each ring is a player and each slice is a game, clockwise from opening night. Brighter = more minutes. <span style="color:#7e9bd0">✕ = missed through injury or illness.</span></div>
       </div>
       <img src="{uri(LOGOS / 'tor_white.png')}" style="position:absolute;right:44px;top:44px;width:110px;opacity:.9">
     </div>"""
@@ -630,17 +630,17 @@ def shot_fans():
         cards.append(f"""
         <div style="background:#151920;border:1px solid #232934;border-radius:14px;padding:18px 18px 14px;display:grid;gap:4px">
           <svg width="{W2}" height="{H2}">{guide}{"".join(paths)}</svg>
-          <div style="font:800 26px/1 'Barlow Condensed';text-transform:uppercase;margin-top:6px">{name}</div>
-          <div style="font:400 13px 'IBM Plex Mono';color:#8a91a0">#{r.jersey} · {len(s)} shots · {100 * r.ts:.1f} TS%</div>
+          <div style="font:800 26px/1 'Schibsted Grotesk';margin-top:6px">{name}</div>
+          <div style="font:400 13px 'Schibsted Grotesk';color:#8a91a0">#{r.jersey} · {len(s)} shots · {100 * r.ts:.1f} TS%</div>
         </div>""")
     legend = "".join(f'<span style="display:inline-flex;align-items:center;gap:8px"><i style="width:14px;height:14px;background:{c};display:inline-block;border-radius:3px"></i>{n}</span>'
                      for n, c, _, _ in bands)
     html = f"""
-    <div style="width:1600px;height:900px;background:#0f1217;color:#eef0f4;font-family:Barlow,sans-serif;padding:44px 60px;box-sizing:border-box">
+    <div style="width:1600px;height:900px;background:#0f1217;color:#eef0f4;font-family:'Schibsted Grotesk',sans-serif;padding:44px 60px;box-sizing:border-box">
       <div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:26px">
-        <div><div style="font:800 56px/1 'Barlow Condensed';text-transform:uppercase">Shot fans</div>
-        <div style="font:400 17px Barlow;color:#b7bdc9;margin-top:6px">Each fan opens from the basket. Petal = direction, length = share of her shots, colour = distance.</div></div>
-        <div style="display:flex;gap:22px;font:500 15px 'IBM Plex Mono';color:#d7dbe2">{legend}</div>
+        <div><div style="font:800 56px/1 'Schibsted Grotesk'">Shot fans</div>
+        <div style="font:400 17px 'Schibsted Grotesk';color:#b7bdc9;margin-top:6px">Each fan opens from the basket. Petal = direction, length = share of her shots, colour = distance.</div></div>
+        <div style="display:flex;gap:22px;font:500 15px 'Schibsted Grotesk';color:#d7dbe2">{legend}</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">{"".join(cards)}</div>
     </div>"""
@@ -664,22 +664,22 @@ def big_board():
         img = f'<img src="{p["img"]}" style="width:100%;height:100%;object-fit:cover;object-position:top">' if p["img"] else ""
         cards.append(f"""
         <div style="background:#151920;border:1px solid #232934;border-radius:16px;padding:18px;display:grid;gap:10px;position:relative;overflow:hidden">
-          <div style="position:absolute;right:12px;top:-6px;font:800 92px/1 'Barlow Condensed';color:rgba(255,107,149,.14)">{i}</div>
+          <div style="position:absolute;right:12px;top:-6px;font:800 92px/1 'Schibsted Grotesk';color:rgba(255,107,149,.14)">{i}</div>
           <div style="width:96px;height:96px;border-radius:50%;overflow:hidden;background:#2a303b;border:3px solid #ff6b95">{img}</div>
-          <div><div style="font:800 26px/1 'Barlow Condensed';text-transform:uppercase">{p['name']}</div>
-          <div style="font:400 13px 'IBM Plex Mono';color:#8a91a0;margin-top:4px">{p['school']}</div>
-          <div style="font:400 13px 'IBM Plex Mono';color:#8a91a0">{p['pos']} · {ht} · BPM {p['bpm']}</div></div>
-          <div style="display:grid;grid-template-columns:52px 1fr;gap:6px 8px;align-items:center;font:500 12px 'IBM Plex Mono';color:#b7bdc9">
+          <div><div style="font:800 26px/1 'Schibsted Grotesk'">{p['name']}</div>
+          <div style="font:400 13px 'Schibsted Grotesk';color:#8a91a0;margin-top:4px">{p['school']}</div>
+          <div style="font:400 13px 'Schibsted Grotesk';color:#8a91a0">{p['pos']} · {ht} · BPM {p['bpm']}</div></div>
+          <div style="display:grid;grid-template-columns:52px 1fr;gap:6px 8px;align-items:center;font:500 12px 'Schibsted Grotesk';color:#b7bdc9">
             <span>TALENT</span><span style="height:8px;background:#2a303b"><i style="display:block;height:8px;width:{p['talent']}%;background:#7e9bd0"></i></span>
             <span>FIT</span><span style="height:8px;background:#2a303b"><i style="display:block;height:8px;width:{p['fit']}%;background:#ff6b95"></i></span>
           </div>
-          <div style="font:500 13px 'IBM Plex Mono';color:#d7dbe2">{p['pts']} pts · {p['reb']} reb · {p['blk']} blk</div>
+          <div style="font:500 13px 'Schibsted Grotesk';color:#d7dbe2">{p['pts']} pts · {p['reb']} reb · {p['blk']} blk</div>
         </div>""")
     html = f"""
-    <div style="width:1600px;height:850px;background:radial-gradient(circle at 80% 0%,#2b1420,#0f1217 60%);color:#eef0f4;font-family:Barlow,sans-serif;padding:44px 56px;box-sizing:border-box">
+    <div style="width:1600px;height:850px;background:radial-gradient(circle at 80% 0%,#2b1420,#0f1217 60%);color:#eef0f4;font-family:'Schibsted Grotesk',sans-serif;padding:44px 56px;box-sizing:border-box">
       <div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:26px">
-        <div><div style="font:800 64px/1 'Barlow Condensed';text-transform:uppercase">The 2027 big board</div>
-        <div style="font:400 18px Barlow;color:#b7bdc9;margin-top:8px">Toronto's top 10 college seniors, weighted 60% talent and 40% fit for what the Tempo need: rim protection, defensive rebounding and defense.</div></div>
+        <div><div style="font:800 64px/1 'Schibsted Grotesk'">The 2027 big board</div>
+        <div style="font:400 18px 'Schibsted Grotesk';color:#b7bdc9;margin-top:8px">Toronto's top 10 college seniors, weighted 60% talent and 40% fit for what the Tempo need: rim protection, defensive rebounding and defense.</div></div>
         <img src="{uri(LOGOS / 'tor_white.png')}" style="width:120px;opacity:.9">
       </div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:18px">{"".join(cards)}</div>
