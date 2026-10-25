@@ -1,0 +1,265 @@
+<style>
+.gg-wrap { overflow-x: auto; }
+.gg-wrap svg { min-width: 700px; }
+.sel-card { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.sel-card .score { font-family: var(--display); font-weight: 800; font-size: 2.2rem; line-height: 1; }
+.sel-card .meta { font-size: 0.85rem; color: var(--ink-3); }
+.qbox { display: flex; gap: 4px; }
+.qbox span { font: 500 0.8rem var(--mono); padding: 3px 7px; background: var(--grid); }
+.pill { font: 700 0.75rem var(--display); letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; color: #fff; }
+</style>
+
+<section class="hero">
+  <div class="eyebrow">Toronto Tempo · 2026 regular season · play-by-play</div>
+  <h1>Game Flow<span class="sub">Toronto spent most of 2026 chasing.</span></h1>
+  <p class="dek" id="dek"></p>
+  <div class="stat-row" id="tiles"></div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">01 · The game grid</div>
+    <h2>Every minute of every game</h2>
+    <p class="lede">Each row is one game, running from tip-off on the left to the final buzzer on the right. Navy means Toronto was ahead and bordeaux means it was behind, with darker shades for bigger margins. Sort the rows to see patterns, then click a row to see that game below.</p>
+  </header>
+  <div class="controls">
+    <div class="toggle" id="sort" role="group" aria-label="Sort games">
+      <button type="button" data-v="date" aria-pressed="true">By date</button>
+      <button type="button" data-v="margin" aria-pressed="false">By final margin</button>
+      <button type="button" data-v="odds" aria-pressed="false">By pregame odds</button>
+    </div>
+    <div class="scale"><span>Trailing by 20</span><span class="ramp gb"></span><span>Leading by 20</span></div>
+  </div>
+  <div class="figure">
+    <div class="gg-wrap"><svg id="grid" role="img" aria-label="Score margin through every game"></svg></div>
+  </div>
+  <div class="figure">
+    <div class="sel-card" id="sel-card"></div>
+    <svg id="worm" viewBox="0 0 640 260" role="img" aria-label="Margin through the selected game" style="margin-top:10px"></svg>
+    <div class="cap">The black line is the selected game. Faint lines are the other 43 games, and the shaded band covers the middle half of all games. Shaded blocks mark scoring runs of 8+ points.</div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">02 · Runs</div>
+    <h2>The 8–0 problem</h2>
+    <p class="lede" id="runs-lede"></p>
+  </header>
+  <div class="figure">
+    <div class="legend"><span class="chip" style="--c:var(--good)">Tempo run</span><span class="chip" style="--c:var(--bad)">Opponent run</span><span class="muted">Dot size = points in the run</span></div>
+    <svg id="runs" viewBox="0 0 640 330" role="img" aria-label="Scoring runs by game minute"></svg>
+    <div class="cap">Each dot is an unanswered run of 8+ points, placed at the minute it started. Tempo runs are above the line and opponent runs below. The bars on the right count runs by quarter.</div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">03 · Upsets & heartbreaks</div>
+    <h2>Expected vs what happened</h2>
+    <p class="lede" id="odds-lede"></p>
+  </header>
+  <div class="figure">
+    <svg id="odds" viewBox="0 0 640 420" role="img" aria-label="Pregame win probability vs final margin"></svg>
+    <div class="cap">Pregame win probability comes from Elo ratings built from every WNBA game since 2003, including home court. Opponent logos mark each game. Top-left games are upset wins and bottom-right games are losses Toronto was favoured to win.</div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">04 · By quarter</div>
+    <h2>Quarter by quarter</h2>
+    <p class="lede">Each cell is Toronto's margin within that quarter of that game. Read across a row to follow one game, or down a column to compare quarters across the season.</p>
+  </header>
+  <div class="figure"><div class="gg-wrap"><svg id="qgrid" role="img" aria-label="Margin by quarter for every game"></svg></div></div>
+</section>
+
+<section class="methods">
+  <h3>Method</h3>
+  <p>Score and clock come from ESPN play-by-play. Margin is sampled every 20 seconds for the grid, and overtime is left off the grid but included everywhere else. A run is consecutive points by one team with no opposing points between them, free throws included. Elo uses K = 20, an 80-point home edge, a margin-of-victory multiplier and 25% regression between seasons. New teams start at 1300.</p>
+</section>
+<!--FOOTER-->
+<div id="tip" role="status" aria-live="polite"></div>
+<script id="data" type="application/json">/*DATA*/</script>
+<script src="../assets/kit.js"></script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const { el, txt, scale, fmt, pct, hover } = K;
+const G = D.games, RUNS = D.runs;
+const mmss = t => { const p = Math.min(4, Math.floor(t / 600) + 1); const s = t >= 2400 ? 300 - (t - 2400) % 300 : 600 - t % 600; return (t >= 2400 ? "OT " : "Q" + p + " ") + Math.floor(s / 60) + ":" + String(Math.round(s % 60)).padStart(2, "0"); };
+const res = g => g.pf > g.pa ? "W" : "L";
+const mcol = m => K.div(m / 20, "var(--bad)", "var(--good)");
+
+/* hero */
+(function () {
+  const lead = G.reduce((a, g) => a + g.lead, 0) / G.length, trail = G.reduce((a, g) => a + g.trail, 0) / G.length;
+  const rf = RUNS.filter(r => r.team === "TOR").length, ra = RUNS.length - rf;
+  const exp = G.reduce((a, g) => a + g.p, 0), w = G.filter(g => g.pf > g.pa).length;
+  const blown = G.filter(g => g.max >= 10 && g.pf < g.pa).length;
+  document.getElementById("dek").innerHTML = `Toronto led for <strong>${pct(lead, 0)}</strong> of its playing time and trailed for <strong>${pct(trail, 0)}</strong>. Opponents went on ${ra} runs of 8+ unanswered points, and the Tempo managed ${rf}. Elo expected about ${exp.toFixed(1)} wins, and Toronto won ${w}.`;
+  document.getElementById("tiles").innerHTML = [[pct(lead, 0), "Of game time leading"], [`${rf}–${ra}`, "8+ point runs, for–against"], [`${w} / ${exp.toFixed(1)}`, "Wins / Elo-expected wins"], [blown, "Losses after leading by 10+"]]
+    .map(([v, k]) => `<div class="stat"><span class="v">${v}</span><span class="k">${k}</span></div>`).join("");
+})();
+
+/* 01 game grid */
+let selected = G[G.length - 1].n;
+const gridSvg = document.getElementById("grid");
+function drawGrid(order) {
+  gridSvg.replaceChildren();
+  const left = 120, right = 84, rowH = 12, top = 22, W = 774, cols = G[0].s.length;
+  const cw = (W - left - right) / cols;
+  gridSvg.setAttribute("viewBox", `0 0 ${W} ${top + G.length * rowH + 8}`);
+  [["Tip", 0], ["Q2", 600], ["Half", 1200], ["Q4", 1800], ["End", 2400]].forEach(([l, t]) => {
+    txt(gridSvg, left + t / D.grid_step * cw, top - 8, l, "lbl", { "text-anchor": "middle" });
+  });
+  const games = [...G].sort(order);
+  games.forEach((g, r) => {
+    const y = top + r * rowH;
+    const row = el("g", { style: "cursor:pointer" }, gridSvg);
+    // one rect per run of equal colour bucket keeps the DOM light
+    let start = 0;
+    for (let i = 1; i <= cols; i++) {
+      const b = i < cols ? Math.round(K.clamp(g.s[i], -20, 20) / 2) : null;
+      if (i === cols || b !== Math.round(K.clamp(g.s[start], -20, 20) / 2)) {
+        el("rect", { x: left + start * cw, y: y + 1, width: (i - start) * cw + 0.3, height: rowH - 2, fill: mcol(g.s[start]) }, row);
+        start = i;
+      }
+    }
+    for (const t of [600, 1200, 1800]) el("line", { x1: left + t / D.grid_step * cw, x2: left + t / D.grid_step * cw, y1: y, y2: y + rowH, stroke: "var(--panel)", "stroke-width": 1 }, row);
+    el("image", { href: K.LOGO(g.opp), x: left - 18, y: y, width: 12, height: 12 }, row);
+    txt(row, left - 22, y + rowH - 3, `${g.date} ${g.home ? "vs" : "@"}`, "lbl", { "text-anchor": "end", style: "font-size:9px" });
+    txt(row, W - right + 6, y + rowH - 3, `${res(g)} ${g.pf}-${g.pa}${g.ot ? " OT" : ""}`, "lbl", { style: `font-size:9.5px;fill:${g.pf > g.pa ? "var(--good)" : "var(--ink-3)"}` });
+    if (g.n === selected) el("rect", { x: left - 1, y, width: W - left - right + 2, height: rowH, fill: "none", stroke: "var(--ink)", "stroke-width": 1.5 }, row);
+    const hit = el("rect", { x: 0, y, width: W, height: rowH, class: "hit", style: "cursor:pointer" }, row);
+    hit.addEventListener("pointermove", ev => {
+      const p = K.svgPoint(gridSvg, ev), i = K.clamp(Math.floor((p.x - left) / cw), 0, cols - 1);
+      K.tip(`<b>${g.date} ${g.home ? "vs" : "at"} ${g.opp}</b><div class="num">${res(g)} ${g.pf}–${g.pa}${g.ot ? " (OT)" : ""} · pregame ${pct(g.p, 0)}</div>${p.x > left ? `<div class="num">${mmss(i * D.grid_step)}: ${g.s[i] > 0 ? "up" : g.s[i] < 0 ? "down" : "tied"} ${Math.abs(g.s[i]) || ""}</div>` : ""}`, ev);
+    });
+    hit.addEventListener("pointerleave", K.hide);
+    hit.addEventListener("click", () => { selected = g.n; drawGrid(order); drawWorm(); });
+  });
+}
+const orders = { date: (a, b) => a.n - b.n, margin: (a, b) => (b.pf - b.pa) - (a.pf - a.pa), odds: (a, b) => b.p - a.p };
+let curOrder = orders.date;
+K.toggle(document.getElementById("sort"), v => { curOrder = orders[v]; drawGrid(curOrder); });
+
+/* worm */
+function drawWorm() {
+  const s = document.getElementById("worm"), g = G.find(x => x.n === selected);
+  s.replaceChildren();
+  const W = 640, H = 260, m = { l: 34, r: 10, t: 10, b: 24 };
+  const end = Math.max(2400, g.steps[g.steps.length - 1][0]);
+  const x = scale(0, end, m.l, W - m.r), lim = Math.max(25, Math.abs(g.max), Math.abs(g.min)), y = scale(-lim, lim, H - m.b, m.t);
+  for (let v = -20; v <= 20; v += 10) if (Math.abs(v) <= lim) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v ? "gridline" : "zero" }, s); txt(s, m.l - 6, y(v) + 4, v > 0 ? "+" + v : v, "lbl", { "text-anchor": "end" }); }
+  [["Tip", 0], ["Q2", 600], ["Half", 1200], ["Q4", 1800], ["End", 2400]].forEach(([l, t]) => { el("line", { x1: x(t), x2: x(t), y1: m.t, y2: H - m.b, class: "gridline" }, s); txt(s, x(t), H - 6, l, "lbl", { "text-anchor": "middle" }); });
+  // interquartile band of all games
+  const n = G[0].s.length, lo = [], hi = [];
+  for (let i = 0; i < n; i++) { const v = G.map(q => q.s[i]).sort((a, b) => a - b); lo.push(v[Math.floor(v.length * 0.25)]); hi.push(v[Math.floor(v.length * 0.75)]); }
+  el("path", { d: "M" + hi.map((v, i) => `${x(i * D.grid_step)} ${y(K.clamp(v, -lim, lim))}`).join("L") + "L" + lo.map((v, i) => [x(i * D.grid_step), y(K.clamp(v, -lim, lim))]).reverse().map(p => p.join(" ")).join("L") + "Z", fill: "var(--grid)", opacity: 0.9 }, s);
+  for (const o of G) if (o.n !== g.n) el("polyline", { points: o.s.map((v, i) => `${x(i * D.grid_step)},${y(K.clamp(v, -lim, lim))}`).join(" "), fill: "none", stroke: "var(--hist)", "stroke-width": 0.6, opacity: 0.35 }, s);
+  for (const r of RUNS.filter(r => r.g === g.n)) el("rect", { x: x(r.t0), y: m.t, width: Math.max(2, x(r.t1) - x(r.t0)), height: H - m.t - m.b, fill: r.team === "TOR" ? "var(--good)" : "var(--bad)", opacity: 0.12 }, s);
+  const d = g.steps.map((p, i) => (i ? `H${x(p[0]).toFixed(1)}V${y(p[1]).toFixed(1)}` : `M${x(p[0])} ${y(p[1])}`)).join("");
+  el("path", { d, fill: "none", stroke: "var(--ink)", "stroke-width": 2 }, s);
+  const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, class: "hit" }, s);
+  const dot = el("circle", { r: 4, fill: "var(--ink)", opacity: 0 }, s);
+  hit.addEventListener("pointermove", ev => {
+    const p = K.svgPoint(s, ev), t = (p.x - m.l) / (W - m.l - m.r) * end;
+    let cur = g.steps[0]; for (const st of g.steps) { if (st[0] <= t) cur = st; else break; }
+    dot.setAttribute("cx", x(t)); dot.setAttribute("cy", y(cur[1])); dot.setAttribute("opacity", 1);
+    K.tip(`<b>${mmss(t)}</b><div class="num">Tempo ${cur[1] > 0 ? "up " + cur[1] : cur[1] < 0 ? "down " + -cur[1] : "tied"}</div>`, ev);
+  });
+  hit.addEventListener("pointerleave", () => { dot.setAttribute("opacity", 0); K.hide(); });
+  const runsHere = RUNS.filter(r => r.g === g.n);
+  document.getElementById("sel-card").innerHTML = `${K.logo("TOR", "logo lg")}<div><div class="score">${g.pf}–${g.pa}</div><div class="meta">${g.date} · ${g.home ? "vs" : "at"} ${g.opp}${g.ot ? " · OT" : ""}</div></div>${K.logo(g.opp, "logo lg")}
+    <span class="pill" style="background:${g.pf > g.pa ? "var(--good)" : "var(--bad)"}">${g.pf > g.pa ? "Win" : "Loss"}</span>
+    <div class="qbox">${g.q.map((v, i) => `<span title="Quarter margin">${i < 4 ? "Q" + (i + 1) : "OT"} ${fmt(v, 0)}</span>`).join("")}</div>
+    <div class="meta">Pregame odds ${pct(g.p, 0)} · biggest lead ${Math.max(0, g.max)} · biggest deficit ${Math.max(0, -g.min)} · runs ${runsHere.filter(r => r.team === "TOR").length}–${runsHere.filter(r => r.team === "OPP").length} · <a href="../game-center/#g${g.n}">Open in Game Center →</a></div>`;
+}
+drawGrid(curOrder); drawWorm();
+
+/* 02 runs */
+(function () {
+  const s = document.getElementById("runs");
+  const W = 640, H = 330, m = { l: 20, r: 150, t: 20, b: 30 }, mid = (m.t + H - m.b) / 2;
+  const x = scale(0, 2700, m.l, W - m.r);
+  el("line", { x1: m.l, x2: W - m.r, y1: mid, y2: mid, class: "zero" }, s);
+  [["Tip", 0], ["Q2", 600], ["Half", 1200], ["Q4", 1800], ["End", 2400], ["OT", 2700]].forEach(([l, t]) => { el("line", { x1: x(t), x2: x(t), y1: m.t, y2: H - m.b, class: "gridline" }, s); txt(s, x(t), H - 8, l, "lbl", { "text-anchor": "middle" }); });
+  txt(s, m.l, m.t - 6, "Tempo runs ↑", "lbl"); txt(s, m.l, H - m.b + 2, "", "lbl");
+  // simple beeswarm: stack dots that would overlap
+  const placed = { TOR: [], OPP: [] };
+  const sorted = [...RUNS].sort((a, b) => b.pts - a.pts);
+  for (const r of sorted) {
+    const rr = 3 + (r.pts - 8) * 0.9, cx = x(Math.min(r.t0, 2690)), dir = r.team === "TOR" ? -1 : 1;
+    let cy = mid + dir * (rr + 3);
+    while (placed[r.team].some(p => Math.hypot(p.x - cx, p.y - cy) < p.r + rr + 1)) cy += dir * 2;
+    placed[r.team].push({ x: cx, y: cy, r: rr });
+    const g = G.find(q => q.n === r.g);
+    const c = el("circle", { cx, cy, r: rr, fill: r.team === "TOR" ? "var(--good)" : "var(--bad)", opacity: 0.85, stroke: "var(--panel)", "stroke-width": 1 }, s);
+    hover(c, `<b>${r.pts}–0 ${r.team === "TOR" ? "Tempo" : g.opp} run</b><div>${g.date} ${g.home ? "vs" : "at"} ${g.opp} (${res(g)} ${g.pf}–${g.pa})</div><div class="num">${mmss(r.t0)} → ${mmss(r.t1)}</div>`);
+  }
+  // by-quarter bars
+  const bx = W - m.r + 30, bw = 100;
+  txt(s, bx, m.t - 6, "Runs by quarter", "lbl-ink", { style: "font-size:12px" });
+  const per = q => [RUNS.filter(r => r.team === "TOR" && Math.min(r.per, 5) === q).length, RUNS.filter(r => r.team === "OPP" && Math.min(r.per, 5) === q).length];
+  const maxc = Math.max(...[1, 2, 3, 4, 5].flatMap(per));
+  [1, 2, 3, 4, 5].forEach((q, i) => {
+    const [f, a] = per(q), yy = m.t + 14 + i * 52;
+    txt(s, bx, yy + 10, q < 5 ? "Q" + q : "OT", "lbl");
+    el("rect", { x: bx + 24, y: yy, width: f / maxc * bw, height: 12, rx: 2, fill: "var(--good)" }, s); txt(s, bx + 28 + f / maxc * bw, yy + 10, f, "lbl");
+    el("rect", { x: bx + 24, y: yy + 15, width: a / maxc * bw, height: 12, rx: 2, fill: "var(--bad)" }, s); txt(s, bx + 28 + a / maxc * bw, yy + 25, a, "lbl");
+  });
+  const rf = RUNS.filter(r => r.team === "TOR"), ra = RUNS.filter(r => r.team === "OPP");
+  const big = [...ra].sort((a, b) => b.pts - a.pts)[0], bg = G.find(q => q.n === big.g);
+  const q2 = ra.filter(r => r.per === 2).length + ra.filter(r => r.per === 3).length;
+  document.getElementById("runs-lede").innerHTML = `Opponents put together <strong>${ra.length}</strong> runs of 8+ unanswered points against Toronto, ${(ra.length / rf.length).toFixed(1)} times the Tempo's <strong>${rf.length}</strong>. ${q2} of them came in the second and third quarters. The biggest was a <strong>${big.pts}–0</strong> run by ${bg.opp} on ${bg.date}.`;
+})();
+
+/* 03 odds */
+(function () {
+  const s = document.getElementById("odds");
+  const W = 640, H = 420, m = { l: 46, r: 16, t: 14, b: 40 };
+  const x = scale(0, 0.8, m.l, W - m.r), lim = 40, y = scale(-lim, lim, H - m.b, m.t);
+  el("rect", { x: m.l, y: m.t, width: x(0.5) - m.l, height: y(0) - m.t, fill: "var(--good)", opacity: 0.06 }, s);
+  el("rect", { x: x(0.5), y: y(0), width: W - m.r - x(0.5), height: H - m.b - y(0), fill: "var(--bad)", opacity: 0.06 }, s);
+  for (let v = -40; v <= 40; v += 10) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v ? "gridline" : "zero" }, s); txt(s, m.l - 6, y(v) + 4, v > 0 ? "+" + v : v, "lbl", { "text-anchor": "end" }); }
+  for (let v = 0; v <= 0.8001; v += 0.1) txt(s, x(v), H - m.b + 16, pct(v, 0), "lbl", { "text-anchor": "middle" });
+  el("line", { x1: x(0.5), x2: x(0.5), y1: m.t, y2: H - m.b, stroke: "var(--ink-3)", "stroke-dasharray": "3 3" }, s);
+  txt(s, (m.l + W - m.r) / 2, H - 4, "Pregame Elo win probability →", "lbl", { "text-anchor": "middle" });
+  txt(s, m.l + 6, m.t + 14, "UPSET WINS", "lbl-ink", { style: "font-size:12px;fill:var(--good)" });
+  txt(s, W - m.r - 6, H - m.b - 8, "HEARTBREAKS", "lbl-ink", { "text-anchor": "end", style: "font-size:12px;fill:var(--bad)" });
+  for (const g of G) {
+    const mg = g.pf - g.pa, cx = x(g.p), cy = y(K.clamp(mg, -lim, lim));
+    const ring = el("circle", { cx, cy, r: 11, fill: "var(--panel)", stroke: mg > 0 ? "var(--good)" : "var(--bad)", "stroke-width": 2 }, s);
+    el("image", { href: K.LOGO(g.opp), x: cx - 8, y: cy - 8, width: 16, height: 16, style: "pointer-events:none" }, s);
+    hover(ring, `<b>${g.date} ${g.home ? "vs" : "at"} ${g.opp}</b><div class="num">${res(g)} ${g.pf}–${g.pa} · pregame ${pct(g.p, 0)}</div><div class="num">Tempo Elo ${g.elo}</div>`);
+    ring.style.cursor = "pointer";
+    ring.addEventListener("click", () => { selected = g.n; drawGrid(curOrder); drawWorm(); document.getElementById("sel-card").scrollIntoView({ behavior: "smooth", block: "center" }); });
+  }
+  const ups = G.filter(g => g.p < 0.35 && g.pf > g.pa).sort((a, b) => a.p - b.p), favs = G.filter(g => g.p > 0.5);
+  const u = ups[0];
+  document.getElementById("odds-lede").innerHTML = `Toronto was favoured in only <strong>${favs.length}</strong> of 44 games and won ${favs.filter(g => g.pf > g.pa).length}. It also won <strong>${ups.length}</strong> games it had less than a 35% chance to win. The biggest upset was ${u.date} ${u.home ? "vs" : "at"} ${u.opp}, at ${pct(u.p, 0)} pregame. Click a logo to load that game above.`;
+})();
+
+/* 04 quarter grid */
+(function () {
+  const s = document.getElementById("qgrid");
+  const cols = G.length, cw = 16, left = 46, top = 26, rh = 22, W = left + cols * cw + 60;
+  s.setAttribute("viewBox", `0 0 ${W} ${top + 4 * rh + 40}`);
+  ["Q1", "Q2", "Q3", "Q4"].forEach((q, r) => {
+    txt(s, left - 8, top + r * rh + rh / 2 + 4, q, "lbl-ink", { "text-anchor": "end", style: "font-size:12px" });
+    const avg = G.reduce((a, g) => a + g.q[r], 0) / G.length;
+    txt(s, left + cols * cw + 8, top + r * rh + rh / 2 + 4, fmt(avg), "lbl", { style: `fill:${avg >= 0 ? "var(--good)" : "var(--bad)"}` });
+  });
+  txt(s, left + cols * cw + 8, top - 8, "avg", "lbl");
+  G.forEach((g, i) => {
+    el("image", { href: K.LOGO(g.opp), x: left + i * cw + 2, y: 4, width: cw - 4, height: cw - 4 }, s);
+    for (let r = 0; r < 4; r++) {
+      const v = g.q[r];
+      const c = el("rect", { x: left + i * cw + 1, y: top + r * rh + 1, width: cw - 2, height: rh - 2, rx: 2, fill: K.div(v / 12, "var(--bad)", "var(--good)") }, s);
+      hover(c, `<b>Game ${g.n} · Q${r + 1}</b><div>${g.date} ${g.home ? "vs" : "at"} ${g.opp}</div><div class="num">Quarter margin ${fmt(v, 0)}</div>`);
+    }
+    el("rect", { x: left + i * cw + 3, y: top + 4 * rh + 4, width: cw - 6, height: 6, rx: 1, fill: g.pf > g.pa ? "var(--good)" : "var(--bad)", opacity: g.pf > g.pa ? 1 : 0.5 }, s);
+  });
+  txt(s, left - 8, top + 4 * rh + 11, "W/L", "lbl", { "text-anchor": "end" });
+})();
+</script>

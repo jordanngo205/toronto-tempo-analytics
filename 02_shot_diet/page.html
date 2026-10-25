@@ -1,0 +1,262 @@
+<style>
+.picker { display: flex; gap: 6px; flex-wrap: wrap; }
+.picker button { font: 600 0.9rem var(--body); padding: 5px 10px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink-2); cursor: pointer; }
+.picker button[aria-pressed="true"] { border-color: var(--tor); background: var(--tor); color: #fff; }
+.picker button.opp[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.profile { display: grid; gap: 14px; }
+.profile .name { font-family: var(--display); font-weight: 800; font-size: 2rem; text-transform: uppercase; line-height: 1; }
+.kv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.kv div { border-top: 1px solid var(--rule); padding-top: 4px; }
+.kv b { display: block; font-family: var(--display); font-size: 1.6rem; line-height: 1.05; }
+.kv span { font-size: 0.78rem; color: var(--ink-3); }
+.zbar { display: grid; grid-template-columns: 112px 1fr 44px; gap: 8px; align-items: center; font-size: 0.8rem; }
+.zbar .track { position: relative; height: 12px; background: var(--grid); }
+.zbar .track i { position: absolute; inset: 0 auto 0 0; }
+.zbar .track u { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); text-decoration: none; }
+.zlist { display: grid; gap: 5px; }
+.dot-key { display: inline-flex; gap: 12px; align-items: center; font-size: 0.8rem; color: var(--ink-3); }
+.dot-key svg { width: 14px; height: 14px; vertical-align: middle; }
+</style>
+
+<section class="hero">
+  <div class="eyebrow">Toronto Tempo · 2026 regular season · every field-goal attempt</div>
+  <h1>Shot Lab<span class="sub">Toronto got good looks. The shots didn't fall.</span></h1>
+  <p class="dek" id="dek"></p>
+  <div class="stat-row" id="tiles"></div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">01 · The shot chart</div>
+    <h2>Pick a shooter</h2>
+    <p class="lede">Hexes show where each player shoots from (size) and how well that zone went compared with league average (colour). Switch to "Every shot" to see each make and miss. The last two buttons show opponents against Toronto and the whole league.</p>
+  </header>
+  <div class="picker" id="picker" role="group" aria-label="Choose a shooter"></div>
+  <div class="controls">
+    <div class="toggle" id="mode" role="group" aria-label="Map style">
+      <button type="button" data-v="hex" aria-pressed="true">Hexes</button>
+      <button type="button" data-v="dots" aria-pressed="false">Every shot</button>
+    </div>
+    <div class="scale" id="hex-key"><span>Colder</span><span class="ramp"></span><span>Hotter than league, by zone</span></div>
+    <div class="dot-key" id="dot-key" hidden>
+      <span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="var(--tor)"/></svg> Make</span>
+      <span><svg viewBox="0 0 14 14"><path d="M3 3 L11 11 M11 3 L3 11" stroke="var(--ink-3)" stroke-width="1.6"/></svg> Miss</span>
+    </div>
+  </div>
+  <div class="split">
+    <div class="figure"><svg id="court" role="img" aria-label="Shot chart"></svg></div>
+    <div class="figure profile" id="profile"></div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">02 · Shot quality vs shot making</div>
+    <h2>Good looks, cold hands</h2>
+    <p class="lede" id="qm-lede"></p>
+  </header>
+  <div class="figure">
+    <div class="legend"><span class="chip has-logo"><img class="logo" src="../assets/logos/tor_sm.png" alt="">Tempo</span><span class="chip" style="--c:var(--hist)">Rest of the WNBA (150+ FGA)</span><span class="muted">Dot size = attempts</span></div>
+    <svg id="qm" viewBox="0 0 640 440" role="img" aria-label="Expected points per shot vs shot making for every WNBA player"></svg>
+    <div class="cap">Expected points per shot is the league average for the zone of each attempt, so it measures shot location only. Shot making is actual points per shot minus expected. Above the line, the player made more than their locations predict.</div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">03 · Distance</div>
+    <h2>Where the shots come from, foot by foot</h2>
+    <p class="lede">The top chart shows the share of attempts at each distance. The bottom chart shows points per shot at that distance. Toronto and its opponents both lean heavily toward the rim compared with the league.</p>
+  </header>
+  <div class="figure">
+    <div class="legend" id="dist-legend"></div>
+    <svg id="dist" viewBox="0 0 640 470" role="img" aria-label="Shot frequency and points per shot by distance"></svg>
+    <div class="cap">1-foot bins; 28+ ft grouped. Points per shot is hidden for bins with fewer than 25 attempts.</div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">04 · Shot types</div>
+    <h2>How the Tempo shoot</h2>
+    <p class="lede">ESPN tags every shot by type. The dot shows Toronto's share of attempts, the line runs to the league's share, and the number is Toronto's points per shot for that type.</p>
+  </header>
+  <div class="figure">
+    <svg id="fam" viewBox="0 0 640 360" role="img" aria-label="Shot type frequency vs league"></svg>
+  </div>
+</section>
+
+<section class="methods">
+  <h3>Method</h3>
+  <p>Data comes from ESPN play-by-play for the 2026 regular season, excluding free throws and heaves beyond 30 ft from the baseline. There are ten zones: rim (under 4 ft), short paint (4–10 ft), and left/middle/right for midrange and threes, with corner threes split by side. Hexes are 1.5 ft in radius. Assisted rate is the share of made field goals with an assist credited.</p>
+</section>
+<!--FOOTER-->
+<div id="tip" role="status" aria-live="polite"></div>
+<script id="data" type="application/json">/*DATA*/</script>
+<script src="../assets/kit.js"></script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const { el, txt, scale, fmt, pct, hover } = K;
+const V = D.views, T = V.Tempo, O = V.Opponents, L = V.League;
+
+/* hero */
+document.getElementById("dek").innerHTML = `By location alone, Toronto's shots should have been worth <strong>${T.xpps.toFixed(3)}</strong> points each, above the league's ${L.xpps.toFixed(3)}. They produced <strong>${T.pps.toFixed(3)}</strong>, a gap of ${Math.abs(T.pps - T.xpps).toFixed(3)} points per shot, or about ${Math.round(Math.abs(T.pps - T.xpps) * T.fga / 44 * 10) / 10} points a game. On defense it went the other way: opponents beat their expected value by ${(O.pps - O.xpps).toFixed(3)}.`;
+document.getElementById("tiles").innerHTML = [
+  [T.xpps.toFixed(2), `Expected pts/shot · league ${L.xpps.toFixed(2)}`],
+  [T.pps.toFixed(2), `Actual pts/shot · league ${L.pps.toFixed(2)}`],
+  [pct(T.rim, 0), `Shots at the rim · league ${pct(L.rim, 0)}`],
+  [pct(T.ast, 0), `Makes assisted · league ${pct(L.ast, 0)}`],
+].map(([v, k]) => `<div class="stat"><span class="v">${v}</span><span class="k">${k}</span></div>`).join("");
+
+/* 01 shot chart */
+const svg = document.getElementById("court");
+const C = K.court(svg);
+const layer = el("g", {}, svg);
+const order = ["Tempo", ...D.players, "Opponents", "League"];
+let current = "Tempo", mode = "hex";
+const picker = document.getElementById("picker");
+picker.innerHTML = order.map(n => `<button type="button" data-n="${n}" class="${n === "Opponents" || n === "League" ? "opp" : ""}" aria-pressed="${n === current}">${n === "Tempo" ? "All Tempo" : n === "Opponents" ? "Opponents vs TOR" : n === "League" ? "WNBA" : n.split(" ").slice(-1)[0]}</button>`).join("");
+picker.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; current = b.dataset.n; [...picker.children].forEach(x => x.setAttribute("aria-pressed", x === b)); draw(); });
+K.toggle(document.getElementById("mode"), v => { mode = v; document.getElementById("hex-key").hidden = v !== "hex"; document.getElementById("dot-key").hidden = v === "hex"; draw(); });
+
+function draw() {
+  const P = V[current];
+  layer.replaceChildren();
+  if (mode === "hex") {
+    const shares = P.hexes.map(h => h[2] / P.fga).sort((a, b) => a - b);
+    const ref = shares[Math.floor(shares.length * 0.9)] || 0.01;
+    const R = D.hex_r * C.S * 0.98;
+    for (const [hx, hy, n, m, z] of P.hexes) {
+      const r = R * Math.sqrt(Math.min(1, n / P.fga / ref));
+      if (r < 2.5 || hy > 28) continue;
+      const zs = P.zones[z];
+      const poly = el("polygon", { points: K.hexPts(C.X(hx), C.Y(hy), r), fill: K.div(zs.d / 0.2), stroke: "var(--panel)", "stroke-width": 0.6 }, layer);
+      hover(poly, () => `<b>${K.ZONE[z]}</b><div class="num">${m}/${n} from this hex</div><div class="num">Zone: ${pct(zs.freq)} of shots, ${zs.pps.toFixed(2)} pts/shot (${fmt(zs.d, 2)} vs lg)</div>`);
+    }
+  } else {
+    const src = current === "Opponents" ? D.opp_dots : current === "League" ? [] : D.dots.filter(d => current === "Tempo" || D.players[d[4]] === current);
+    if (current === "League") txt(layer, 250, 150, "Pick a team or player to see every shot", "lbl", { "text-anchor": "middle" });
+    const r = src.length > 1500 ? 2.6 : src.length > 400 ? 3.4 : 4.4;
+    for (const [x, y, made, three] of src) {
+      if (y > 28.5) continue;
+      if (made) el("circle", { cx: C.X(x), cy: C.Y(y), r, fill: current === "Opponents" ? "var(--ink-2)" : "var(--tor)", opacity: 0.8 }, layer);
+      else el("path", { d: `M${C.X(x) - r * 0.7} ${C.Y(y) - r * 0.7} L${C.X(x) + r * 0.7} ${C.Y(y) + r * 0.7} M${C.X(x) + r * 0.7} ${C.Y(y) - r * 0.7} L${C.X(x) - r * 0.7} ${C.Y(y) + r * 0.7}`, stroke: "var(--ink-3)", "stroke-width": 1.1, opacity: 0.6 }, layer);
+    }
+  }
+  profile(P);
+}
+
+function profile(P) {
+  const ref = current === "Tempo" || current === "Opponents" || current === "League" ? L : T;
+  const refName = ref === L ? "league" : "Tempo team";
+  const zs = ["Rim", "Short", "Mid L", "Mid C", "Mid R", "Corner3 L", "Corner3 R", "Arc3 L", "Arc3 C", "Arc3 R"];
+  const maxF = Math.max(...zs.map(z => Math.max(P.zones[z]?.freq || 0, ref.zones[z]?.freq || 0)));
+  const gap = P.pps - P.xpps;
+  document.getElementById("profile").innerHTML = `
+    <div><div class="eyebrow">${current === "Opponents" ? "Opponents against Toronto" : current === "League" ? "All WNBA, 2026" : current === "Tempo" ? "Toronto Tempo" : "Tempo shooter"}</div>
+    <div class="name">${current === "Tempo" ? "All Tempo" : current}</div></div>
+    <div class="kv">
+      <div><b class="num">${P.fga.toLocaleString()}</b><span>Field-goal attempts</span></div>
+      <div><b class="num">${pct(P.fg)}</b><span>FG%</span></div>
+      <div><b class="num">${P.xpps.toFixed(2)}</b><span>Expected pts/shot</span></div>
+      <div><b class="num" style="color:${gap >= 0 ? "var(--good)" : "var(--bad)"}">${fmt(gap, 2)}</b><span>Shot making vs expected</span></div>
+      <div><b class="num">${pct(P.rim, 0)}</b><span>At the rim</span></div>
+      <div><b class="num">${pct(P.ast, 0)}</b><span>Makes assisted</span></div>
+    </div>
+    <div class="zlist"><div class="eyebrow">Shot diet by zone · bar = share, line = ${refName}</div>${zs.map(z => {
+      const f = P.zones[z]?.freq || 0, d = P.zones[z]?.d;
+      return `<div class="zbar"><span>${K.ZONE[z].replace(" (0–4 ft)", "").replace(" (4–10 ft)", "")}</span><span class="track"><i style="width:${f / maxF * 100}%;background:${d == null ? "var(--hist)" : K.div(d / 0.2)}"></i><u style="left:${(ref.zones[z]?.freq || 0) / maxF * 100}%"></u></span><span class="num">${pct(f, 0)}</span></div>`;
+    }).join("")}</div>`;
+}
+draw();
+
+/* 02 quality vs making */
+(function () {
+  const s = document.getElementById("qm"), Q = D.quality;
+  const W = 640, H = 440, m = { l: 50, r: 16, t: 16, b: 40 };
+  const xs = Q.map(q => q.x), ys = Q.map(q => q.pps - q.x);
+  const x0 = Math.floor(Math.min(...xs) * 20) / 20, x1 = Math.ceil(Math.max(...xs) * 20) / 20;
+  const y0 = -0.3, y1 = 0.3;
+  const x = scale(x0, x1, m.l, W - m.r), y = scale(y0, y1, H - m.b, m.t);
+  for (let v = y0; v <= y1 + 1e-9; v += 0.1) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: Math.abs(v) < 1e-9 ? "zero" : "gridline" }, s); txt(s, m.l - 6, y(v) + 4, fmt(v, 1), "lbl", { "text-anchor": "end" }); }
+  for (let v = x0; v <= x1 + 1e-9; v += 0.05) txt(s, x(v), H - m.b + 16, v.toFixed(2), "lbl", { "text-anchor": "middle" });
+  el("line", { x1: x(L.xpps), x2: x(L.xpps), y1: m.t, y2: H - m.b, class: "gridline", "stroke-dasharray": "3 3", stroke: "var(--ink-3)" }, s);
+  txt(s, (m.l + W - m.r) / 2, H - 4, "Expected pts/shot from shot location →", "lbl", { "text-anchor": "middle" });
+  txt(s, m.l + 4, m.t + 10, "Made more than expected", "lbl"); txt(s, m.l + 4, H - m.b - 6, "Made less than expected", "lbl");
+  txt(s, W - m.r - 4, m.t + 10, "Better locations →", "lbl", { "text-anchor": "end" });
+  const rr = f => 2.5 + Math.sqrt(f) / 4;
+  const sorted = [...Q].sort((a, b) => (a.t === "TOR") - (b.t === "TOR"));
+  for (const q of sorted) {
+    const tor = q.t === "TOR";
+    const c = el("circle", { cx: x(q.x), cy: y(K.clamp(q.pps - q.x, y0, y1)), r: rr(q.fga), fill: tor ? "var(--tor)" : "var(--hist)", opacity: tor ? 0.95 : 0.4, stroke: tor ? "var(--panel)" : "none", "stroke-width": 1.5 }, s);
+    hover(c, `<b>${q.n}</b><div>${q.t} · ${q.fga} FGA</div><div class="num">Expected ${q.x.toFixed(3)} · actual ${q.pps.toFixed(3)}</div><div class="num">Making ${fmt(q.pps - q.x, 3)} · rim ${pct(q.rim, 0)} · 3PA ${pct(q.three, 0)}</div>`);
+  }
+  // Tempo labels, nudged apart vertically so neighbours don't collide
+  const labs = Q.filter(q => q.t === "TOR").map(q => ({ q, lx: x(q.x) + rr(q.fga) + 3, ly: y(K.clamp(q.pps - q.x, y0, y1)) + 4 }))
+    .sort((a, b) => a.ly - b.ly);
+  for (let i = 1; i < labs.length; i++) for (let j = 0; j < i; j++)
+    if (Math.abs(labs[i].lx - labs[j].lx) < 70 && labs[i].ly - labs[j].ly < 13) labs[i].ly = labs[j].ly + 13;
+  for (const l of labs) txt(s, l.lx, l.ly, l.q.n.split(" ").slice(-1)[0], "lbl-ink", { style: "font-size:12px" });
+  const tq = Q.filter(q => q.t === "TOR"), below = tq.filter(q => q.pps < q.x).length;
+  document.getElementById("qm-lede").innerHTML = `<strong>${below} of Toronto's ${tq.length}</strong> high-volume shooters made less than their shot locations predict. Marina Mabrey was the clear exception, and Nyara Sabally the only other one above the line. Harrison, Conde, Sykes and Nurse all had normal shot locations and finished well below expected.`;
+})();
+
+/* 03 distance */
+(function () {
+  const s = document.getElementById("dist"), Dd = D.dist;
+  const series = [["League", "var(--hist)", "WNBA"], ["Opponents", "var(--ink-2)", "Opponents vs TOR"], ["Tempo", "var(--tor)", "Tempo"]];
+  document.getElementById("dist-legend").innerHTML = series.slice().reverse().map(([k, c, n]) => `<span class="chip" style="--c:${c}">${n}</span>`).join("");
+  const W = 640, m = { l: 50, r: 16 }, x = scale(0, 28, m.l, W - m.r);
+  const panels = [{ key: 0, top: 20, h: 170, lo: 0, hi: 0.2, f: v => pct(v, 0), title: "Share of attempts" },
+                  { key: 1, top: 250, h: 170, lo: 0.4, hi: 1.6, f: v => v.toFixed(1), title: "Points per shot" }];
+  for (const P of panels) {
+    const y = scale(P.lo, P.hi, P.top + P.h, P.top);
+    txt(s, m.l, P.top - 8, P.title, "lbl-ink", { style: "font-size:13px" });
+    const step = P.key ? 0.4 : 0.05;
+    for (let v = P.lo; v <= P.hi + 1e-9; v += step) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: "gridline" }, s); txt(s, m.l - 6, y(v) + 4, P.f(v), "lbl", { "text-anchor": "end" }); }
+    el("line", { x1: x(22.15), x2: x(22.15), y1: P.top, y2: P.top + P.h, stroke: "var(--ink-3)", "stroke-dasharray": "3 3" }, s);
+    if (!P.key) txt(s, x(22.15) + 4, P.top + 10, "3-pt line", "lbl");
+    for (const [k, c] of series) {
+      const pts = Dd[k].map((v, i) => {
+        const val = v[P.key], n = Dd[k][i][0] * (k === "League" ? L.fga : k === "Tempo" ? T.fga : O.fga);
+        return val == null || (P.key && n < 25) ? null : [x(i), y(K.clamp(val, P.lo, P.hi))];
+      });
+      let d = "", pen = false;
+      pts.forEach(p => { if (!p) { pen = false; return; } d += (pen ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); pen = true; });
+      el("path", { d, fill: "none", stroke: c, "stroke-width": k === "Tempo" ? 2.6 : 1.8, "stroke-linejoin": "round", "stroke-dasharray": k === "Opponents" ? "5 3" : null }, s);
+    }
+  }
+  for (const v of [0, 4, 10, 15, 20, 25, 28]) txt(s, x(v), 446, v === 28 ? "28+ ft" : v + " ft", "lbl", { "text-anchor": "middle" });
+  const cross = el("line", { y1: 20, y2: 420, stroke: "var(--ink-3)", opacity: 0 }, s);
+  const hit = el("rect", { x: m.l, y: 10, width: W - m.l - m.r, height: 420, class: "hit" }, s);
+  hit.addEventListener("pointermove", ev => {
+    const p = K.svgPoint(s, ev), i = K.clamp(Math.round((p.x - m.l) / (W - m.l - m.r) * 28), 0, 28);
+    cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("opacity", 0.6);
+    K.tip(`<b>${i === 28 ? "28+" : i + "–" + (i + 1)} ft</b>` + series.slice().reverse().map(([k, c, n]) => `<div><span style="color:${c}">■</span> ${n}: <span class="num">${pct(Dd[k][i][0])} · ${Dd[k][i][1] == null ? "–" : Dd[k][i][1].toFixed(2)} pts</span></div>`).join(""), ev);
+  });
+  hit.addEventListener("pointerleave", () => { cross.setAttribute("opacity", 0); K.hide(); });
+})();
+
+/* 04 shot families */
+(function () {
+  const s = document.getElementById("fam"), F = D.families.filter(f => T.fam[f] && T.fam[f].n >= 15);
+  F.sort((a, b) => T.fam[b].freq - T.fam[a].freq);
+  const W = 640, m = { l: 170, r: 90 }, rowH = 32, top = 24;
+  const max = Math.max(...F.map(f => Math.max(T.fam[f].freq, L.fam[f]?.freq || 0)));
+  const x = scale(0, Math.ceil(max * 20) / 20, m.l, W - m.r);
+  s.setAttribute("viewBox", `0 0 ${W} ${top + F.length * rowH + 30}`);
+  txt(s, W - m.r + 10, 12, "TOR pts/shot", "lbl");
+  F.forEach((f, i) => {
+    const cy = top + i * rowH + rowH / 2, t = T.fam[f], l = L.fam[f] || { freq: 0, pps: 0 };
+    txt(s, 0, cy + 4, f, "lbl-body");
+    el("line", { x1: m.l, x2: W - m.r, y1: cy, y2: cy, class: "gridline" }, s);
+    el("line", { x1: x(l.freq), x2: x(t.freq), y1: cy, y2: cy, stroke: "var(--hist)", "stroke-width": 3 }, s);
+    el("circle", { cx: x(l.freq), cy, r: 5, fill: "var(--panel)", stroke: "var(--hist)", "stroke-width": 2 }, s);
+    const c = el("circle", { cx: x(t.freq), cy, r: 7, fill: "var(--tor)", stroke: "var(--panel)", "stroke-width": 2 }, s);
+    const d = t.pps - l.pps;
+    txt(s, W - m.r + 10, cy + 4, `${t.pps.toFixed(2)} (${fmt(d, 2)})`, "lbl", { style: `fill:${d >= 0 ? "var(--good)" : "var(--bad)"}` });
+    hover(c, `<b>${f}</b><div class="num">Tempo ${pct(t.freq)} of FGA · ${t.pps.toFixed(2)} pts</div><div class="num">League ${pct(l.freq)} · ${l.pps.toFixed(2)} pts</div>`);
+  });
+  for (let v = 0; v <= Math.ceil(max * 20) / 20 + 1e-9; v += 0.05) txt(s, x(v), top + F.length * rowH + 18, pct(v, 0), "lbl", { "text-anchor": "middle" });
+})();
+</script>

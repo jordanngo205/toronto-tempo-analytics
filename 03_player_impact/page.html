@@ -1,0 +1,234 @@
+<style>
+.heat-wrap { overflow-x: auto; }
+.heat-wrap svg { min-width: 760px; }
+.net-side { display: grid; gap: 10px; align-content: start; }
+.net-side .who { font-family: var(--display); font-weight: 800; font-size: 1.8rem; text-transform: uppercase; line-height: 1; }
+.partner { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; font-size: 0.85rem; border-bottom: 1px solid var(--rule); padding: 4px 0; }
+.partner .num { color: var(--ink-3); }
+.lu { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+.lu .names { display: flex; flex-wrap: wrap; gap: 4px; }
+.lu .names span { font: 600 0.8rem var(--body); background: var(--grid); padding: 2px 7px; }
+.lu .meta { font-size: 0.75rem; color: var(--ink-3); font-family: var(--mono); }
+.lu svg { width: 100%; height: 30px; display: block; overflow: visible; }
+@media (max-width: 760px) { .lu { grid-template-columns: minmax(0, 1fr); } }
+</style>
+
+<section class="hero">
+  <div class="eyebrow">Toronto Tempo · 2026 regular season · rotation & lineups</div>
+  <h1>Rotation Lab<span class="sub">Who played, who played together, and how it went.</span></h1>
+  <p class="dek" id="dek"></p>
+  <div class="stat-row" id="tiles"></div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">01 · The rotation, game by game</div>
+    <h2>Forty-four games, one grid</h2>
+    <p class="lede">Each row is a player and each column is a game. Darker cells mean more minutes, and a navy tick on top marks a start. ✕ marks a game missed through injury or illness, and a small dot marks a coach's decision. The bars across the top show each final margin. Hover any cell for the box score line.</p>
+  </header>
+  <div class="figure">
+    <div class="heat-wrap"><svg id="heat" role="img" aria-label="Minutes played by each player in each game"></svg></div>
+    <div class="scale" style="margin-top:8px"><span>0 min</span><span class="ramp" style="background:linear-gradient(90deg,var(--grid),var(--tor))"></span><span>40 min</span></div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">02 · Chemistry</div>
+    <h2>Who works together</h2>
+    <p class="lede">Each line connects two players who shared the floor. Thicker lines mean more minutes together. Navy lines mean Toronto outscored opponents with that pair on the court, and bordeaux lines mean it was outscored. Hover or tap a player to see their best and worst partners.</p>
+  </header>
+  <div class="split">
+    <div class="figure"><svg id="net" viewBox="0 0 560 520" role="img" aria-label="Player pair network"></svg>
+      <div class="scale"><span>Outscored</span><span class="ramp gb"></span><span>Outscoring · per 40 min together</span></div></div>
+    <div class="figure net-side" id="net-side"></div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">03 · Usage vs efficiency</div>
+    <h2>Who carried the offense</h2>
+    <p class="lede">The x-axis is usage, the share of team plays a player ends with a shot, free throws or a turnover while on the court. The y-axis is true shooting. Pick a team to compare it with Toronto.</p>
+  </header>
+  <div class="figure">
+    <div class="controls" style="margin-bottom:10px"><label for="team-pick" class="eyebrow">Compare with</label><select id="team-pick"></select></div>
+    <svg id="usg" viewBox="0 0 640 420" role="img" aria-label="Usage rate vs true shooting"></svg>
+    <div class="cap">Players with 300+ minutes. The dashed line is league true shooting. Dot size shows minutes.</div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">04 · Five-player lineups</div>
+    <h2>The units that worked, and the ones that didn't</h2>
+    <p class="lede" id="lu-lede"></p>
+  </header>
+  <div class="figure" id="lineups"></div>
+</section>
+
+<section class="methods">
+  <h3>Method</h3>
+  <p>Minutes, starts and injury reasons come from ESPN box scores. Usage = (FGA + 0.44·FTA + TOV) divided by team plays while the player was on the court, estimated from minutes. Pair and lineup numbers come from WNBA Stats five-player lineup totals. The lineup table is capped league-wide, so pair minutes are a lower bound and small samples are noisy.</p>
+</section>
+<!--FOOTER-->
+<div id="tip" role="status" aria-live="polite"></div>
+<script id="data" type="application/json">/*DATA*/</script>
+<script src="../assets/kit.js"></script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const { el, txt, scale, fmt, pct, hover } = K;
+const G = D.games, R = D.roster, P = D.players;
+const last = n => n.split(" ").slice(-1)[0];
+
+/* hero */
+(function () {
+  const starts = new Set(), injured = { n: 0 };
+  G.forEach((g, i) => {
+    const five = R.filter(p => D.grid[p][i] && D.grid[p][i][0] !== "dnp" && D.grid[p][i][1] === 1).sort().join("|");
+    starts.add(five);
+  });
+  R.forEach(p => D.grid[p].forEach(c => { if (c && c[0] === "dnp" && !/coach/i.test(c[1])) injured.n++; }));
+  const wins = G.filter(g => g.pf > g.pa).length;
+  document.getElementById("dek").innerHTML = `Toronto used <strong>${R.length} players</strong> and <strong>${starts.size} different starting lineups</strong> in 44 games. Players missed ${injured.n} games through injury, illness or personal reasons.`;
+  document.getElementById("tiles").innerHTML = [[R.length, "Players used"], [starts.size, "Starting lineups"], [injured.n, "Games missed (not coach\u2019s call)"], [`${wins}–${G.length - wins}`, "Record"]]
+    .map(([v, k]) => `<div class="stat"><span class="v">${v}</span><span class="k">${k}</span></div>`).join("");
+})();
+
+/* 01 heatmap */
+(function () {
+  const s = document.getElementById("heat");
+  const left = 150, cw = 19, ch = 22, top = 70, W = left + G.length * cw + 70;
+  s.setAttribute("viewBox", `0 0 ${W} ${top + R.length * ch + 30}`);
+  // margin bars
+  const ym = scale(0, 30, 0, 26), base = 40;
+  el("line", { x1: left, x2: left + G.length * cw, y1: base, y2: base, class: "gridline" }, s);
+  txt(s, left - 8, base + 4, "Margin", "lbl", { "text-anchor": "end" });
+  G.forEach((g, i) => {
+    const m = g.pf - g.pa, h = Math.max(1.5, ym(Math.min(30, Math.abs(m))));
+    const r = el("rect", { x: left + i * cw + 2, y: m > 0 ? base - h : base, width: cw - 4, height: h, rx: 1.5, fill: m > 0 ? "var(--good)" : "var(--bad)", opacity: m > 0 ? 1 : 0.55 }, s);
+    hover(r, `<b>Game ${g.n} · ${g.date}</b><div>${g.home ? "vs" : "at"} ${g.opp}</div><div class="num">${g.pf}–${g.pa} (${m > 0 ? "W" : "L"} ${fmt(m, 0)})</div>`);
+    if (g.n % 5 === 0 || g.n === 1) txt(s, left + i * cw + cw / 2, top - 4, g.n, "lbl", { "text-anchor": "middle", style: "font-size:9px" });
+  });
+  R.forEach((p, r) => {
+    const y = top + r * ch, st = P[p];
+    txt(s, left - 8, y + ch / 2 + 4, p, "lbl-body", { "text-anchor": "end", style: "font-size:12px" });
+    D.grid[p].forEach((c, i) => {
+      const x = left + i * cw;
+      if (!c) { el("rect", { x: x + 1, y: y + 1, width: cw - 2, height: ch - 2, fill: "none", stroke: "var(--grid)" }, s); return; }
+      if (c[0] === "dnp") {
+        const coach = /coach/i.test(c[1]);
+        const n = coach ? el("circle", { cx: x + cw / 2, cy: y + ch / 2, r: 1.8, fill: "var(--ink-3)" }, s)
+          : el("path", { d: `M${x + 6} ${y + 7} L${x + cw - 6} ${y + ch - 7} M${x + cw - 6} ${y + 7} L${x + 6} ${y + ch - 7}`, stroke: "var(--bad)", "stroke-width": 1.6 }, s);
+        const hit = el("rect", { x, y, width: cw, height: ch, class: "hit" }, s);
+        hover(hit, `<b>${p}</b><div>Game ${G[i].n} · ${G[i].date} ${G[i].home ? "vs" : "at"} ${G[i].opp}</div><div>Did not play: ${c[1] || "—"}</div>`);
+        return;
+      }
+      const [min, start, pts, pm] = c;
+      const r2 = el("rect", { x: x + 1, y: y + 1, width: cw - 2, height: ch - 2, rx: 2, fill: K.seq(min / 36) }, s);
+      if (start) el("rect", { x: x + 1, y: y + 1, width: cw - 2, height: 3, fill: "var(--tor-2)" }, s);
+      hover(r2, `<b>${p}</b><div>Game ${G[i].n} · ${G[i].date} ${G[i].home ? "vs" : "at"} ${G[i].opp} (${G[i].pf > G[i].pa ? "W" : "L"})</div><div class="num">${min} min${start ? " · started" : ""} · ${pts} pts · ${fmt(pm, 0)}</div>`);
+    });
+    if (st) txt(s, left + G.length * cw + 8, y + ch / 2 + 4, `${st.mpg} mpg`, "lbl", { style: "font-size:10px" });
+  });
+})();
+
+/* 02 network */
+(function () {
+  const s = document.getElementById("net");
+  const nodes = R.filter(p => P[p] && P[p].gp * P[p].mpg >= 300).slice(0, 11);
+  const cx = 280, cy = 255, rad = 190;
+  const pos = {};
+  nodes.forEach((p, i) => { const a = -Math.PI / 2 + i / nodes.length * 2 * Math.PI; pos[p] = [cx + rad * Math.cos(a), cy + rad * Math.sin(a), a]; });
+  const pairs = D.pairs.filter(e => pos[e.a] && pos[e.b]);
+  const maxMin = Math.max(...pairs.map(e => e.min));
+  const edgeG = el("g", {}, s), nodeG = el("g", {}, s);
+  const edgeEls = pairs.map(e => {
+    const [x1, y1] = pos[e.a], [x2, y2] = pos[e.b];
+    const path = el("path", { d: `M${x1} ${y1} Q${cx + (x1 + x2 - 2 * cx) * 0.15} ${cy + (y1 + y2 - 2 * cy) * 0.15} ${x2} ${y2}`, fill: "none",
+      stroke: K.div(e.pm40 / 20, "var(--bad)", "var(--good)"), "stroke-width": 1 + 9 * Math.sqrt(e.min / maxMin), "stroke-linecap": "round", opacity: 0.85 }, edgeG);
+    hover(path, `<b>${last(e.a)} + ${last(e.b)}</b><div class="num">${Math.round(e.min)} min together · ${fmt(e.pm40)} per 40</div>`);
+    return { e, path };
+  });
+  const side = document.getElementById("net-side");
+  const posLeader = () => {
+    const c = {};
+    pairs.filter(e => e.pm40 > 0).forEach(e => { c[e.a] = (c[e.a] || 0) + 1; c[e.b] = (c[e.b] || 0) + 1; });
+    const top = Object.entries(c).sort((a, b) => b[1] - a[1])[0];
+    return top ? `<strong>${top[0]}</strong> (${top[1]})` : "nobody";
+  };
+  function focus(p) {
+    edgeEls.forEach(({ e, path }) => path.setAttribute("opacity", !p || e.a === p || e.b === p ? 0.9 : 0.08));
+    if (!p) { side.innerHTML = `<div class="eyebrow">Tap a player</div><div class="who">The network</div><p class="lede" style="font-size:.9rem">${pairs.length} pairs with 20+ minutes together, and only ${pairs.filter(e => e.pm40 > 0).length} outscored opponents. The player in the most positive pairs is ${posLeader()}.</p>`; return; }
+    const mine = pairs.filter(e => e.a === p || e.b === p).map(e => ({ o: e.a === p ? e.b : e.a, ...e })).sort((a, b) => b.pm40 - a.pm40);
+    const st = P[p];
+    side.innerHTML = `<div class="eyebrow">${st.gp} games · ${st.mpg} mpg · ${fmt(st.pm40)} per 40 overall</div><div class="who">${p}</div>
+      <div class="eyebrow" style="margin-top:6px">Partners, best to worst (per 40 together)</div>
+      ${mine.map(m => `<div class="partner"><span>${m.o}</span><span class="num">${Math.round(m.min)} min</span><b class="num" style="color:${m.pm40 >= 0 ? "var(--good)" : "var(--bad)"}">${fmt(m.pm40)}</b></div>`).join("")}`;
+  }
+  nodes.forEach(p => {
+    const [x, y, a] = pos[p], st = P[p];
+    const g = el("g", { tabindex: 0, role: "button", "aria-label": p, style: "cursor:pointer" }, nodeG);
+    el("circle", { cx: x, cy: y, r: 7 + st.mpg / 3, fill: "var(--tor)", stroke: "var(--panel)", "stroke-width": 3 }, g);
+    const lx = x + Math.cos(a) * (20 + st.mpg / 3), ly = y + Math.sin(a) * (20 + st.mpg / 3) + 4;
+    txt(g, lx, ly, last(p), "lbl-ink", { "text-anchor": Math.cos(a) > 0.3 ? "start" : Math.cos(a) < -0.3 ? "end" : "middle", style: "font-size:13px" });
+    g.addEventListener("pointerenter", () => focus(p));
+    g.addEventListener("focus", () => focus(p));
+    g.addEventListener("click", () => focus(p));
+  });
+  s.addEventListener("pointerleave", () => focus(null));
+  focus(null);
+})();
+
+/* 03 usage vs TS */
+(function () {
+  const s = document.getElementById("usg"), Lg = D.league, sel = document.getElementById("team-pick");
+  const teams = [...new Set(Lg.map(p => p.t))].filter(t => t !== "TOR").sort();
+  sel.innerHTML = `<option value="">Nobody (Tempo only)</option>` + teams.map(t => `<option value="${t}"${t === "POR" ? " selected" : ""}>${t}</option>`).join("");
+  const W = 640, H = 420, m = { l: 48, r: 16, t: 14, b: 40 };
+  const x = scale(0.05, 0.36, m.l, W - m.r), y = scale(0.38, 0.70, H - m.b, m.t);
+  for (let v = 0.40; v <= 0.701; v += 0.05) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: "gridline" }, s); txt(s, m.l - 6, y(v) + 4, pct(v, 0), "lbl", { "text-anchor": "end" }); }
+  for (let v = 0.05; v <= 0.351; v += 0.05) txt(s, x(v), H - m.b + 16, pct(v, 0), "lbl", { "text-anchor": "middle" });
+  txt(s, (m.l + W - m.r) / 2, H - 4, "Usage rate →", "lbl", { "text-anchor": "middle" });
+  el("line", { x1: m.l, x2: W - m.r, y1: y(D.lg_ts), y2: y(D.lg_ts), stroke: "var(--ink-3)", "stroke-dasharray": "4 3" }, s);
+  txt(s, W - m.r, y(D.lg_ts) - 5, "league TS%", "lbl", { "text-anchor": "end" });
+  txt(s, W - m.r - 4, m.t + 10, "High usage, efficient", "lbl", { "text-anchor": "end" });
+  const layer = el("g", {}, s);
+  const color = { POR: "var(--por)", GS: "var(--gs)" };
+  function draw() {
+    layer.replaceChildren();
+    const cmp = sel.value;
+    const labs = [];
+    const ord = [...Lg].sort((a, b) => (a.t === "TOR") * 2 + (a.t === cmp) - ((b.t === "TOR") * 2 + (b.t === cmp)));
+    for (const p of ord) {
+      const tor = p.t === "TOR", on = p.t === cmp;
+      const r = 3 + Math.sqrt(p.min) / 6;
+      const c = el("circle", { cx: x(K.clamp(p.usg, 0.05, 0.36)), cy: y(K.clamp(p.ts, 0.38, 0.70)), r, fill: tor ? "var(--tor)" : on ? (color[cmp] || "var(--ink-2)") : "var(--hist)", opacity: tor || on ? 0.95 : 0.25, stroke: tor || on ? "var(--panel)" : "none", "stroke-width": 1.5 }, layer);
+      hover(c, `<b>${p.n}</b><div>${p.t} · ${p.min} min · ${p.ppg} ppg</div><div class="num">Usage ${pct(p.usg)} · TS ${pct(p.ts)}</div>`);
+      if (tor || on) labs.push({ x: x(K.clamp(p.usg, 0.05, 0.36)) + r + 3, y: y(K.clamp(p.ts, 0.38, 0.70)) + 4, w: 70, s: last(p.n), c: tor ? "var(--ink)" : (color[cmp] || "var(--ink-2)") });
+    }
+    for (const l of K.declutter(labs)) txt(layer, l.x, l.y, l.s, "lbl-ink", { style: `font-size:11px;fill:${l.c}` });
+  }
+  sel.addEventListener("change", draw);
+  draw();
+})();
+
+/* 04 lineups */
+(function () {
+  const box = document.getElementById("lineups"), LU = D.lineups;
+  const lim = Math.max(...LU.map(l => Math.abs(l.net)));
+  const x = scale(-lim, lim, 10, 250);
+  box.innerHTML = `<div class="eyebrow" style="margin-bottom:6px">Lineups with 25+ minutes · net rating = points per 100 possessions minus points allowed per 100</div>` + LU.map((l, i) => `
+    <div class="lu"><div><div class="names">${l.p.map(n => `<span>${last(n)}</span>`).join("")}</div>
+      <div class="meta">${l.min} min · ${l.gp} games · ORtg ${l.ortg.toFixed(1)} · DRtg ${l.drtg.toFixed(1)}</div></div>
+      <svg viewBox="0 0 260 30" id="lu${i}"></svg></div>`).join("");
+  LU.forEach((l, i) => {
+    const s = document.getElementById("lu" + i);
+    el("line", { x1: x(0), x2: x(0), y1: 2, y2: 28, stroke: "var(--ink-3)" }, s);
+    el("rect", { x: Math.min(x(0), x(l.net)), y: 8, width: Math.abs(x(l.net) - x(0)), height: 14, rx: 3, fill: l.net >= 0 ? "var(--good)" : "var(--bad)" }, s);
+    txt(s, l.net >= 0 ? x(l.net) + 4 : x(l.net) - 4, 19, fmt(l.net), "lbl", { "text-anchor": l.net >= 0 ? "start" : "end", style: "fill:var(--ink)" });
+  });
+  const best = LU[0], worst = LU[LU.length - 1], most = [...LU].sort((a, b) => b.min - a.min)[0];
+  document.getElementById("lu-lede").innerHTML = `The most-used unit (${most.p.map(last).join(", ")}) played just ${Math.round(most.min)} minutes all season and was outscored by ${Math.abs(most.net).toFixed(1)} per 100. The best one, ${best.p.map(last).join(", ")}, finished <strong>${fmt(best.net)}</strong> in ${Math.round(best.min)} minutes. ${best.p.filter(n => P[n] && P[n].gp < 25).map(n => `${last(n)} played only ${P[n].gp} games`).join(" and ") || "It was used sparingly"}, so the group rarely got a chance.`;
+})();
+</script>

@@ -18,6 +18,8 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import elo
+import lab
 from common import RAW, possessions
 
 OUT = Path(__file__).parent
@@ -56,29 +58,8 @@ tb["game_date"] = pd.to_datetime(tb.game_date)
 tb = tb.sort_values(["game_date", "game_id"]).reset_index(drop=True)
 
 # --- Elo ----------------------------------------------------------------------
-K, HCA, NEW_TEAM, MEAN, CARRY = 20, 80, 1300, 1500, 0.75
-elo, last_season = {}, {}
-games = tb[tb.team_home_away == "home"]
-rows = []
-for g in games.itertuples():
-    h, a = g.team_id, g.opponent_team_id
-    for t in (h, a):
-        if t not in elo:
-            elo[t] = NEW_TEAM if g.season > 2003 else MEAN
-        elif last_season[t] != g.season:
-            elo[t] = CARRY * elo[t] + (1 - CARRY) * MEAN
-        last_season[t] = g.season
-    diff = elo[h] + HCA - elo[a]
-    p_home = 1 / (1 + 10 ** (-diff / 400))
-    mov = g.team_score - g.opponent_team_score
-    win_diff = diff if mov > 0 else -diff
-    mult = ((abs(mov) + 3) ** 0.8) / (7.5 + 0.006 * win_diff)
-    shift = K * mult * ((mov > 0) - p_home)
-    rows += [(g.game_id, h, g.season, g.season_type, elo[h], elo[h] + shift, p_home),
-             (g.game_id, a, g.season, g.season_type, elo[a], elo[a] - shift, 1 - p_home)]
-    elo[h] += shift
-    elo[a] -= shift
-elo_log = pd.DataFrame(rows, columns=["game_id", "team_id", "season", "season_type", "pre", "post", "p_win"])
+elo_log = elo.compute(tb)
+NEW_TEAM = elo.NEW_TEAM
 
 # Elo path of each expansion team through its first regular season
 elo_paths = {}
@@ -232,6 +213,7 @@ for key, tid, season, _ in MODERN:  # box history starts 2003, too short for 200
         src = src[src.team_abbreviation == key]
     else:
         src = src[src.team_id == tid]
+    src = src[src.minutes.fillna(0) > 0]  # DNP rows would deflate per-game numbers
     mins = src.groupby(["athlete_id", "athlete_display_name"]).minutes.sum().reset_index()
     prior = played[played.season < season].groupby("athlete_id").size()
     mins["exp"] = mins.athlete_id.map(prior).fillna(0).astype(int)
@@ -256,22 +238,25 @@ data = {
     "logos": logos,
     "class": [{"key": k, "season": s, "name": n} for k, _, s, n in CLASS],
     "elo": {"paths": elo_paths, "table2026": elo_2026, "end": first_season_bar,
-            "params": {"K": K, "hca": HCA, "new_team": NEW_TEAM, "carry": CARRY}},
+            "params": elo.PARAMS},
     "fingerprint": fingerprint, "rolling": rolling, "games": games_out, "h2h": h2h, "clutch": clutch,
     "hex": hexmaps, "hex_r": R, "experience": experience, "players": players,
 }
+lab.summary("expansion-class", {"tor_elo": first_season_bar["TOR"]["end"], "por_elo": first_season_bar["POR"]["end"],
+                                "gs_elo": first_season_bar["GS"]["end"], "tor_def_rank": fingerprint["TOR"]["drtg"]["rank"]})
 payload = json.dumps(data, separators=(",", ":"))
 (OUT / "expansion.json").write_text(payload)
 page = (OUT / "page.html").read_text().replace("/*DATA*/", payload.replace("</", "<\\/"))
 (OUT / "expansion_class.html").write_text(page)
-docs = OUT.parent / "docs"  # GitHub Pages
-docs.mkdir(exist_ok=True)
 standalone = page.replace('<meta name="claude:viewport-fit-sides" content="cover">\n', "")
-head = ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
-        '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-        '<meta name="description" content="Valkyries 2025, Tempo 2026 and Fire 2026 compared through Elo, Four Factors, shot maps and roster-building.">\n')
-standalone = head + standalone.replace("</style>", "</style>\n</head>\n<body>", 1) + "</body>\n</html>\n"
-(docs / "index.html").write_text(standalone)
+style, rest = standalone.split("</style>", 1)
+style = style.replace("<title>The Expansion Class</title>\n", "")
+html = (lab.head("The Expansion Class", "Valkyries 2025, Tempo 2026 and Fire 2026 compared through Elo, Four Factors, shot maps and roster-building.")
+        + style + "</style>\n</head>\n<body>\n" + rest.replace('<div class="wrap">', '<div class="wrap">\n' + lab.nav("expansion-class"), 1)
+        .replace("</script>\n", "</script>\n", 1) + "</body>\n</html>\n")
+out = lab.DOCS / "expansion-class" / "index.html"
+out.parent.mkdir(parents=True, exist_ok=True)
+out.write_text(html)
 print("wrote", OUT / "expansion.json", round((OUT / "expansion.json").stat().st_size / 1024), "KB")
 print(json.dumps({k: data["fingerprint"][k]["net"] | {"w": data["fingerprint"][k]["w"]} for k in data["fingerprint"]}, indent=0))
 print(json.dumps(first_season_bar), json.dumps(clutch), json.dumps(experience), sep="\n")

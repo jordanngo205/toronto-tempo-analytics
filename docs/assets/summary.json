@@ -1,0 +1,31 @@
+{
+ "expansion-class": {
+  "tor_elo": 1234,
+  "por_elo": 1369,
+  "gs_elo": 1472,
+  "tor_def_rank": 15
+ },
+ "shot-lab": {
+  "xpps": 1.056,
+  "pps": 1.013,
+  "lg_xpps": 1.035,
+  "rim": 0.303,
+  "opp_rim": 0.336
+ },
+ "rotation-lab": {
+  "players": 20,
+  "lineups": 24,
+  "best": 31.3
+ },
+ "game-flow": {
+  "lead": 0.28395454545454546,
+  "runs_for": 35,
+  "runs_against": 74,
+  "xwins": 13.399,
+  "wins": 11
+ },
+ "game-center": {
+  "games": 44,
+  "record": "11-33"
+ }
+}

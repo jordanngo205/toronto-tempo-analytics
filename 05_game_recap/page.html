@@ -1,0 +1,243 @@
+<style>
+.strip { display: grid; grid-template-columns: repeat(22, minmax(0, 1fr)); gap: 4px; }
+.strip button { border: 1px solid var(--rule); background: var(--panel); padding: 4px 2px 0; cursor: pointer; display: grid; justify-items: center; gap: 2px; font: 500 0.6rem var(--mono); color: var(--ink-3); position: relative; }
+.strip button img { width: 22px; height: 22px; object-fit: contain; background: var(--plate); border-radius: 3px; }
+.strip button i { display: block; width: 100%; height: 5px; }
+.strip button[aria-pressed="true"] { border-color: var(--ink); outline: 2px solid var(--tor); outline-offset: 1px; color: var(--ink); }
+.board { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; background: var(--panel); border: 1px solid var(--rule); border-top: 6px solid var(--tor); padding: 18px; }
+.board .side { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.board .side.r { justify-content: flex-end; text-align: right; }
+.board .tname { font-family: var(--display); font-weight: 700; font-size: 1.3rem; text-transform: uppercase; line-height: 1.05; }
+.board .pts { font-family: var(--display); font-weight: 800; font-size: 3.6rem; line-height: 0.9; }
+.board .pts.lose { color: var(--ink-3); }
+.board .mid { text-align: center; display: grid; gap: 4px; justify-items: center; }
+.pill { font: 700 0.78rem var(--display); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; color: #fff; }
+.potg { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; align-items: center; }
+.potg .big { font-family: var(--display); font-weight: 800; font-size: 2rem; line-height: 1; text-transform: uppercase; }
+.potg .line { font-family: var(--mono); font-size: 0.85rem; color: var(--ink-2); }
+.bfly { display: grid; gap: 6px; }
+.bfly .row { display: grid; grid-template-columns: 52px 1fr 92px 1fr 52px; gap: 8px; align-items: center; font-size: 0.85rem; }
+.bfly .bar { height: 14px; background: var(--grid); position: relative; }
+.bfly .bar i { position: absolute; top: 0; bottom: 0; }
+.bfly .l i { right: 0; } .bfly .r i { left: 0; }
+.bfly .lab { text-align: center; font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; }
+.bfly .v { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.bfly .v.r { text-align: right; }
+.bfly .win { font-weight: 600; color: var(--ink); }
+.bfly .lose { color: var(--ink-3); }
+.court-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.court-pair h3 { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.court-pair .sum { font-size: 0.8rem; color: var(--ink-3); margin-top: 4px; }
+td.hl { font-weight: 600; color: var(--tor); }
+@media (max-width: 760px) {
+  .strip { grid-template-columns: repeat(11, minmax(0, 1fr)); }
+  .board { grid-template-columns: 1fr; text-align: center; }
+  .board .side, .board .side.r { justify-content: center; }
+  .court-pair { grid-template-columns: minmax(0, 1fr); }
+  .bfly .row { grid-template-columns: 44px 1fr 70px 1fr 44px; }
+}
+</style>
+
+<section class="hero">
+  <div class="eyebrow">Toronto Tempo · 2026 regular season · 44 games</div>
+  <h1>Game Center<span class="sub">Pick a game. Get the full recap.</span></h1>
+  <div class="strip" id="strip" role="group" aria-label="Choose a game"></div>
+  <div class="cap">The bar under each logo shows the result: navy for a win, bordeaux for a loss. Each game has its own link, such as #g12.</div>
+</section>
+
+<section class="section" style="gap:16px">
+  <div class="board" id="board"></div>
+  <div class="grid-2">
+    <div class="figure"><h3>Line score</h3><div class="tbl-wrap"><table id="linescore"></table></div></div>
+    <div class="figure potg" id="potg"></div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">01 · Game flow</div>
+    <h2 id="flow-h">How it unfolded</h2>
+  </header>
+  <div class="figure">
+    <svg id="flow" viewBox="0 0 640 280" role="img" aria-label="Score margin through the game"></svg>
+    <div class="cap">The line is Toronto's margin, with navy above zero (leading) and bordeaux below (trailing). Shaded blocks mark scoring runs of 8+ points. Hover to read the score at any moment.</div>
+  </div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">02 · Shot charts</div>
+    <h2>Where both teams shot from</h2>
+  </header>
+  <div class="controls">
+    <div class="toggle" id="half" role="group" aria-label="Which shots">
+      <button type="button" data-v="all" aria-pressed="true">Full game</button>
+      <button type="button" data-v="1" aria-pressed="false">1st half</button>
+      <button type="button" data-v="2" aria-pressed="false">2nd half</button>
+    </div>
+    <span class="cap" style="margin:0">● make · ✕ miss · hover for the shooter</span>
+  </div>
+  <div class="court-pair" id="courts"></div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">03 · Key battles</div>
+    <h2>Where it was won and lost</h2>
+  </header>
+  <div class="figure bfly" id="bfly"></div>
+</section>
+
+<section class="section">
+  <header>
+    <div class="eyebrow">04 · Box score</div>
+    <h2>Every player</h2>
+  </header>
+  <div class="toggle" id="boxteam" role="group" aria-label="Team box score">
+    <button type="button" data-v="tor" aria-pressed="true">Tempo</button>
+    <button type="button" data-v="opp" aria-pressed="false" id="opp-btn">Opponent</button>
+  </div>
+  <div class="figure"><div class="tbl-wrap"><table id="box"></table></div><div class="cap">GmSc = Hollinger Game Score. The highlighted cell is the team leader in each column.</div></div>
+</section>
+<!--FOOTER-->
+<div id="tip" role="status" aria-live="polite"></div>
+<script id="data" type="application/json">/*DATA*/</script>
+<script src="../assets/kit.js"></script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const { el, txt, scale, fmt, pct, hover } = K;
+const G = D.games;
+let cur = G[G.length - 1], half = "all", boxSide = "tor";
+const win = g => g.pf > g.pa;
+const mmss = t => { const p = Math.floor(t / 600) + 1; const s = t >= 2400 ? 300 - (t - 2400) % 300 : 600 - t % 600; return (t >= 2400 ? "OT " : "Q" + Math.min(4, p) + " ") + Math.floor(s / 60) + ":" + String(Math.round(s % 60)).padStart(2, "0"); };
+
+/* strip */
+const strip = document.getElementById("strip");
+strip.innerHTML = G.map(g => `<button type="button" data-n="${g.n}" aria-pressed="false" title="${g.short} ${g.home ? "vs" : "at"} ${g.opp}: ${win(g) ? "W" : "L"} ${g.pf}-${g.pa}"><img src="${K.LOGO(g.opp)}" alt="${g.opp}">${g.home ? "" : "@"}${g.opp}<i style="background:${win(g) ? "var(--good)" : "var(--bad)"};opacity:${win(g) ? 1 : 0.6}"></i></button>`).join("");
+strip.addEventListener("click", e => { const b = e.target.closest("button"); if (b) select(+b.dataset.n, true); });
+K.toggle(document.getElementById("half"), v => { half = v; courts(); });
+K.toggle(document.getElementById("boxteam"), v => { boxSide = v; boxScore(); });
+
+function select(n, push) {
+  cur = G.find(g => g.n === n) || cur;
+  [...strip.children].forEach(b => b.setAttribute("aria-pressed", +b.dataset.n === cur.n));
+  if (push) try { history.replaceState(null, "", "#g" + cur.n); } catch (e) {}
+  board(); lineScore(); potg(); flowChart(); courts(); battles(); boxScore();
+}
+
+function board() {
+  const g = cur, w = win(g);
+  const tor = `<div class="side">${K.logo("TOR", "logo lg")}<div><div class="tname">Toronto Tempo</div><div class="muted num" style="font-size:.8rem">${g.rec} after this game</div></div><span class="pts ${w ? "" : "lose"} num">${g.pf}</span></div>`;
+  const opp = `<div class="side r"><span class="pts ${w ? "lose" : ""} num">${g.pa}</span><div><div class="tname">${g.opp_name}</div><div class="muted" style="font-size:.8rem">${g.home ? "at Toronto" : "home"}</div></div>${K.logo(g.opp, "logo lg")}</div>`;
+  const mid = `<div class="mid"><span class="pill" style="background:${w ? "var(--good)" : "var(--bad)"}">${w ? "Win" : "Loss"}${g.ot ? " · OT" : ""}</span><span class="eyebrow">${g.date}</span><span class="muted" style="font-size:.78rem">Pregame odds ${pct(g.p, 0)}</span></div>`;
+  document.getElementById("board").innerHTML = g.home ? opp.replace('class="side r"', 'class="side"') + mid + tor.replace('class="side"', 'class="side r"') : tor + mid + opp;
+  document.getElementById("opp-btn").textContent = g.opp;
+}
+
+function lineScore() {
+  const g = cur, L = g.line, n = L.tor.length;
+  const hd = Array.from({ length: n }, (_, i) => i < 4 ? "Q" + (i + 1) : "OT" + (n > 5 ? i - 3 : ""));
+  const row = (ab, arr, tot, other) => `<tr><td>${K.logo(ab)} ${ab}</td>${arr.map((v, i) => `<td class="${v > other[i] ? "hl" : ""}">${v}</td>`).join("")}<td><b>${tot}</b></td></tr>`;
+  document.getElementById("linescore").innerHTML = `<tr><th>Team</th>${hd.map(h => `<th>${h}</th>`).join("")}<th>Final</th></tr>` +
+    row("TOR", L.tor, g.pf, L.opp) + row(g.opp, L.opp, g.pa, L.tor);
+}
+
+function potg() {
+  const all = [...cur.box.tor.map(r => [...r, "TOR"]), ...cur.box.opp.map(r => [...r, cur.opp])].sort((a, b) => b[16] - a[16]);
+  const best = all[0], bestT = cur.box.tor.slice().sort((a, b) => b[16] - a[16])[0];
+  const line = r => `${r[3]} pts · ${r[4]} reb · ${r[5]} ast · ${r[9]}/${r[10]} FG · ${r[11]}/${r[12]} 3P · ${fmt(r[15], 0)}`;
+  document.getElementById("potg").innerHTML = `<div class="eyebrow" style="grid-column:1/-1">Player of the game (Game Score)</div>
+    ${K.logo(best[17], "logo lg")}<div><div class="big">${best[0]}</div><div class="line">${line(best)} · GmSc ${best[16]}</div></div>
+    ${best[17] !== "TOR" ? `<div class="eyebrow" style="grid-column:1/-1;margin-top:6px">Top Tempo</div>${K.logo("TOR")}<div><b>${bestT[0]}</b><div class="line">${line(bestT)} · GmSc ${bestT[16]}</div></div>` : ""}`;
+}
+
+function flowChart() {
+  const s = document.getElementById("flow"), g = cur;
+  s.replaceChildren();
+  const W = 640, H = 280, m = { l: 34, r: 10, t: 12, b: 26 };
+  const end = Math.max(2400, g.steps[g.steps.length - 1][0]);
+  const mx = Math.max(...g.steps.map(p => Math.abs(p[1])), 10), lim = Math.ceil(mx / 5) * 5 + 2;
+  const x = scale(0, end, m.l, W - m.r), y = scale(-lim, lim, H - m.b, m.t);
+  for (let v = -lim + (lim % 5); v <= lim; v += 5) if (v % 5 === 0) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v ? "gridline" : "zero" }, s); txt(s, m.l - 6, y(v) + 4, v > 0 ? "+" + v : v, "lbl", { "text-anchor": "end" }); }
+  const marks = [["Tip", 0], ["Q2", 600], ["Half", 1200], ["Q4", 1800], ["End", 2400]]; if (end > 2400) marks.push(["OT", 2700]);
+  marks.forEach(([l, t]) => { el("line", { x1: x(t), x2: x(t), y1: m.t, y2: H - m.b, class: "gridline" }, s); txt(s, x(t), H - 8, l, "lbl", { "text-anchor": "middle" }); });
+  for (const r of g.runs) {
+    const rect = el("rect", { x: x(r.t0), y: m.t, width: Math.max(3, x(r.t1) - x(r.t0)), height: H - m.t - m.b, fill: r.team === "TOR" ? "var(--good)" : "var(--bad)", opacity: 0.13 }, s);
+    txt(s, (x(r.t0) + x(r.t1)) / 2, r.team === "TOR" ? m.t + 12 : H - m.b - 6, `${r.pts}-0`, "lbl", { "text-anchor": "middle", style: `fill:${r.team === "TOR" ? "var(--good)" : "var(--bad)"};font-weight:500` });
+    hover(rect, `<b>${r.pts}–0 ${r.team === "TOR" ? "Tempo" : g.opp} run</b><div class="num">${mmss(r.t0)} → ${mmss(r.t1)}</div>`);
+  }
+  const path = g.steps.map((p, i) => (i ? `H${x(p[0]).toFixed(1)}V${y(p[1]).toFixed(1)}` : `M${x(p[0])} ${y(p[1])}`)).join("");
+  const id = "clip" + g.n;
+  const defs = el("defs", {}, s);
+  const cpUp = el("clipPath", { id: id + "u" }, defs); el("rect", { x: 0, y: 0, width: W, height: y(0) }, cpUp);
+  const cpDn = el("clipPath", { id: id + "d" }, defs); el("rect", { x: 0, y: y(0), width: W, height: H }, cpDn);
+  const area = path + `V${y(0)}H${x(0)}Z`;
+  el("path", { d: area, fill: "var(--good)", opacity: 0.35, "clip-path": `url(#${id}u)` }, s);
+  el("path", { d: area, fill: "var(--bad)", opacity: 0.35, "clip-path": `url(#${id}d)` }, s);
+  el("path", { d: path, fill: "none", stroke: "var(--ink)", "stroke-width": 1.6 }, s);
+  const dot = el("circle", { r: 4, fill: "var(--ink)", opacity: 0 }, s);
+  const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, class: "hit" }, s);
+  hit.addEventListener("pointermove", ev => {
+    const p = K.svgPoint(s, ev), t = (p.x - m.l) / (W - m.l - m.r) * end;
+    let c = g.steps[0]; for (const st of g.steps) { if (st[0] <= t) c = st; else break; }
+    dot.setAttribute("cx", x(t)); dot.setAttribute("cy", y(c[1])); dot.setAttribute("opacity", 1);
+    K.tip(`<b>${mmss(t)}</b><div class="num">Tempo ${c[1] > 0 ? "up " + c[1] : c[1] < 0 ? "down " + -c[1] : "tied"}</div>`, ev);
+  });
+  hit.addEventListener("pointerleave", () => { dot.setAttribute("opacity", 0); K.hide(); });
+  const big = [...g.runs].sort((a, b) => b.pts - a.pts)[0], mg = Math.abs(g.pf - g.pa);
+  const lead = Math.max(...g.steps.map(p => p[1])), deficit = -Math.min(...g.steps.map(p => p[1]));
+  document.getElementById("flow-h").textContent = `${win(g) ? "Won" : "Lost"} by ${mg}` +
+    (win(g) && deficit >= 8 ? `, after trailing by ${deficit}` : !win(g) && lead >= 8 ? `, after leading by ${lead}` : "") +
+    (big ? ` · biggest run ${big.pts}–0 ${big.team === "TOR" ? "Tempo" : g.opp}` : "");
+}
+
+function courts() {
+  const box = document.getElementById("courts"), g = cur;
+  box.innerHTML = ["TOR", g.opp].map((ab, i) => `<div class="figure"><h3>${K.logo(ab)}${ab === "TOR" ? "Tempo" : g.opp_name}</h3><svg id="ct${i}" role="img" aria-label="${ab} shot chart"></svg><div class="sum" id="cs${i}"></div></div>`).join("");
+  [0, 1].forEach(side => {
+    const s = document.getElementById("ct" + side), C = K.court(s);
+    const shots = g.shots.filter(q => q[4] === side && (half === "all" || (half === "1" ? q[6] < 1200 : q[6] >= 1200)));
+    const col = side === 0 ? "var(--tor)" : "var(--ink-2)";
+    for (const [x, y, made, three, , who, t] of shots) {
+      if (y > 28.5) continue;
+      const name = g.names[who] || "";
+      const n = made ? el("circle", { cx: C.X(x), cy: C.Y(y), r: 6, fill: col, stroke: "var(--panel)", "stroke-width": 1.5 }, s)
+        : el("path", { d: `M${C.X(x) - 4.5} ${C.Y(y) - 4.5} L${C.X(x) + 4.5} ${C.Y(y) + 4.5} M${C.X(x) + 4.5} ${C.Y(y) - 4.5} L${C.X(x) - 4.5} ${C.Y(y) + 4.5}`, stroke: "var(--ink-3)", "stroke-width": 2 }, s);
+      const hitc = el("circle", { cx: C.X(x), cy: C.Y(y), r: 8, class: "hit" }, s);
+      hover(hitc, `<b>${name}</b><div class="num">${made ? "Made" : "Missed"} ${three ? "3" : "2"} · ${mmss(t)}</div>`);
+    }
+    const fgm = shots.filter(q => q[2]).length, fg3 = shots.filter(q => q[3]), rim = shots.filter(q => Math.hypot(q[0] - 25, q[1]) < 4);
+    document.getElementById("cs" + side).innerHTML = `<span class="num">FG ${fgm}/${shots.length} · 3P ${fg3.filter(q => q[2]).length}/${fg3.length} · rim ${rim.filter(q => q[2]).length}/${rim.length}</span>`;
+  });
+}
+
+function battles() {
+  const T = cur.team.tor, O = cur.team.opp;
+  const rows = [["Off. rating", "ortg", 1, false], ["eFG%", "efg", 100, false], ["Turnover %", "tov", 100, true], ["Off. reb %", "orb", 100, false], ["FT rate", "ftr", 100, false],
+    ["Paint pts", "paint", 1, false], ["Fast break", "fast", 1, false], ["Pts off TO", "tovpts", 1, false], ["Assists", "ast", 1, false], ["Rebounds", "reb", 1, false]];
+  document.getElementById("bfly").innerHTML = `<div class="row"><span class="v">${K.logo("TOR")}</span><span></span><span class="lab muted">TOR · ${cur.opp}</span><span></span><span class="v r">${K.logo(cur.opp)}</span></div>` + rows.map(([lab, k, mul, low]) => {
+    const a = T[k] * mul, b = O[k] * mul, max = Math.max(a, b) || 1, tw = low ? a < b : a > b, tie = a === b;
+    return `<div class="row"><span class="v ${tw || tie ? "win" : "lose"}">${a.toFixed(mul === 100 || k === "ortg" ? 1 : 0)}</span>
+      <span class="bar l"><i style="width:${a / max * 100}%;background:${tw ? "var(--tor)" : "var(--hist)"}"></i></span>
+      <span class="lab">${lab}</span>
+      <span class="bar r"><i style="width:${b / max * 100}%;background:${!tw && !tie ? "var(--ink-2)" : "var(--hist)"}"></i></span>
+      <span class="v r ${!tw || tie ? "win" : "lose"}">${b.toFixed(mul === 100 || k === "ortg" ? 1 : 0)}</span></div>`;
+  }).join("");
+}
+
+function boxScore() {
+  const B = cur.box[boxSide];
+  const cols = ["Player", "MIN", "PTS", "REB", "AST", "STL", "BLK", "TO", "FG", "3P", "FT", "+/-", "GmSc"];
+  const best = i => Math.max(...B.map(r => r[i]));
+  const bP = best(3), bR = best(4), bA = best(5), bG = best(16);
+  document.getElementById("box").innerHTML = `<tr>${cols.map(c => `<th>${c}</th>`).join("")}</tr>` + B.map(r => `<tr>
+    <td>${r[0]}${r[1] ? ' <span class="muted" style="font-size:.7rem">S</span>' : ""}</td><td>${r[2]}</td>
+    <td class="${r[3] === bP ? "hl" : ""}">${r[3]}</td><td class="${r[4] === bR ? "hl" : ""}">${r[4]}</td><td class="${r[5] === bA ? "hl" : ""}">${r[5]}</td>
+    <td>${r[6]}</td><td>${r[7]}</td><td>${r[8]}</td><td>${r[9]}-${r[10]}</td><td>${r[11]}-${r[12]}</td><td>${r[13]}-${r[14]}</td>
+    <td style="color:${r[15] > 0 ? "var(--good)" : r[15] < 0 ? "var(--bad)" : "inherit"}">${fmt(r[15], 0)}</td><td class="${r[16] === bG ? "hl" : ""}">${r[16]}</td></tr>`).join("");
+}
+
+const h = (location.hash.match(/^#g(\d+)$/) || [])[1];
+select(h ? +h : G[G.length - 1].n, false);
+window.addEventListener("hashchange", () => { const m = location.hash.match(/^#g(\d+)$/); if (m) select(+m[1], false); });
+</script>
