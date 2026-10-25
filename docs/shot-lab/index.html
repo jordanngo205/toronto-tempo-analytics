@@ -7,15 +7,15 @@
 <meta name="description" content="Every Toronto Tempo shot of 2026: player hex maps, shot quality vs shot making, distance curves.">
 <link rel="icon" href="../assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="../assets/site.css">
 <style>
 .picker { display: flex; gap: 6px; flex-wrap: wrap; }
-.picker button { font: 600 0.88rem var(--ui); border-radius: 999px; padding: 5px 10px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink-2); cursor: pointer; }
+.picker button { font: 600 0.9rem var(--body); padding: 5px 10px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink-2); cursor: pointer; }
 .picker button[aria-pressed="true"] { border-color: var(--tor); background: var(--tor); color: #fff; }
 .picker button.opp[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
 .profile { display: grid; gap: 14px; }
-.profile .name { font-family: var(--display); font-weight: 800; font-size: 2rem; line-height: 1; }
+.profile .name { font-family: var(--display); font-weight: 800; font-size: 2rem; text-transform: uppercase; line-height: 1; }
 .kv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .kv div { border-top: 1px solid var(--rule); padding-top: 4px; }
 .kv b { display: block; font-family: var(--display); font-size: 1.6rem; line-height: 1.05; }
@@ -27,6 +27,7 @@
 .zlist { display: grid; gap: 5px; }
 .dot-key { display: inline-flex; gap: 12px; align-items: center; font-size: 0.8rem; color: var(--ink-3); }
 .dot-key svg { width: 14px; height: 14px; vertical-align: middle; }
+.ends { display: flex; justify-content: space-between; gap: 10px; background: #0d0b10; padding: 8px 10px; font-family: var(--display); font-weight: 700; font-size: 0.95rem; }
 </style>
 </head>
 <body>
@@ -40,7 +41,7 @@
   <div class="stat-row" id="tiles"></div>
 </section>
 
-<section class="section">
+<section class="section wide">
   <header>
     <h2>Pick a shooter</h2>
     <p class="lede">Hexes show where each player shoots from (size) and how well that zone went compared with league average (colour). Switch to "Every shot" to see each make and miss. The last two buttons show opponents against Toronto and the whole league.</p>
@@ -53,12 +54,12 @@
     </div>
     <div class="scale" id="hex-key"><span>Colder</span><span class="ramp"></span><span>Hotter than league, by zone</span></div>
     <div class="dot-key" id="dot-key" hidden>
-      <span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="var(--tor)"/></svg> Make</span>
-      <span><svg viewBox="0 0 14 14"><path d="M3 3 L11 11 M11 3 L3 11" stroke="var(--ink-3)" stroke-width="1.6"/></svg> Miss</span>
+      <span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="#ff6b95"/></svg> Made (glowing)</span>
+      <span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="2.5" fill="var(--ink-3)"/></svg> Missed</span>
     </div>
   </div>
   <div class="split">
-    <div class="figure"><svg id="court" role="img" aria-label="Shot chart"></svg></div>
+    <div class="figure"><div id="ends" class="ends" hidden></div><svg id="court" role="img" aria-label="Shot chart"></svg></div>
     <div class="figure profile" id="profile"></div>
   </div>
 </section>
@@ -127,9 +128,10 @@ document.getElementById("tiles").innerHTML = [
 
 /* 01 shot chart */
 // draw the empty court once, then "layer" is where the hexes/dots go (cleared every redraw)
-const svg = document.getElementById("court");
-const C = K.court(svg);
-const layer = el("g", {}, svg);
+const svg = document.getElementById("court"), ends = document.getElementById("ends");
+// C = the court helper for the hex view, layer = where the hexes go (both rebuilt on every draw)
+let C = K.court(svg);
+let layer = el("g", {}, svg);
 // button order: whole team, each player, then opponents and the league
 const order = ["Tempo", ...D.players, "Opponents", "League"];
 let current = "Tempo", mode = "hex";  // what is selected right now
@@ -143,8 +145,12 @@ K.toggle(document.getElementById("mode"), v => { mode = v; document.getElementBy
 
 function draw() {
   const P = V[current];
-  layer.replaceChildren();  // wipe the old shots
+  svg.replaceChildren();  // wipe the old court and shots
   if (mode === "hex") {
+    // half court with hexes
+    ends.hidden = true;
+    C = K.court(svg);
+    layer = el("g", {}, svg);
     // size the hexes so the 90th-percentile hex is full size (otherwise the rim hex makes everything else tiny)
     const shares = P.hexes.map(h => h[2] / P.fga).sort((a, b) => a - b);
     const ref = shares[Math.floor(shares.length * 0.9)] || 0.01;
@@ -160,18 +166,33 @@ function draw() {
       hover(poly, () => `<b>${K.ZONE[z]}</b><div class="num">${m}/${n} from this hex</div><div class="num">Zone: ${pct(zs.freq)} of shots, ${zs.pps.toFixed(2)} pts/shot (${fmt(zs.d, 2)} vs lg)</div>`);
     }
   } else {
-    // "every shot" mode: pick which shots to draw (d[4] is the shooter's index in D.players)
-    const src = current === "Opponents" ? D.opp_dots : current === "League" ? [] : D.dots.filter(d => current === "Tempo" || D.players[d[4]] === current);
-    // I didn't put every league shot in the page (too big), so show a message instead
-    if (current === "League") txt(layer, 250, 150, "Pick a team or player to see every shot", "lbl", { "text-anchor": "middle" });
-    // smaller dots when there are lots of shots
-    const r = src.length > 1500 ? 2.6 : src.length > 400 ? 3.4 : 4.4;
-    for (const [x, y, made, three] of src) {
-      if (y > 28.5) continue;
-      // made = filled circle, missed = little grey x
-      if (made) el("circle", { cx: C.X(x), cy: C.Y(y), r, fill: current === "Opponents" ? "var(--ink-2)" : "var(--tor)", opacity: 0.8 }, layer);
-      else el("path", { d: `M${C.X(x) - r * 0.7} ${C.Y(y) - r * 0.7} L${C.X(x) + r * 0.7} ${C.Y(y) + r * 0.7} M${C.X(x) + r * 0.7} ${C.Y(y) - r * 0.7} L${C.X(x) - r * 0.7} ${C.Y(y) + r * 0.7}`, stroke: "var(--ink-3)", "stroke-width": 1.1, opacity: 0.6 }, layer);
-    }
+    // "every shot" mode: full court on a dark background, Toronto attacking the right basket and
+    // opponents the left. Made shots glow, misses are faint dots (same look as the README poster)
+    const F = K.fullCourt(svg);
+    const COL = ["#ff6b95", "#9fb4e0"];
+    // which shots to show: a player = only hers, "All Tempo" = Tempo + opponents, "Opponents" = only theirs
+    const tor = current === "Opponents" || current === "League" ? [] : D.dots.filter(d => current === "Tempo" || D.players[d[4]] === current);
+    const opp = current === "Tempo" || current === "Opponents" ? D.opp_dots : [];
+    const glow = el("g", { filter: "url(#glow)", opacity: 0.6 }, svg), cores = el("g", {}, svg);
+    const big = tor.length + opp.length < 600;  // bigger dots when there are only a few hundred shots
+    [[tor, 0], [opp, 1]].forEach(([list, side]) => {
+      list.forEach(([x, y, made], i) => {
+        if (y > 44) return;
+        // wiggle each shot a little so whole-foot locations don't form a grid
+        const [cx, cy] = F.place(x + K.wiggle(i * 2 + side), y + K.wiggle(i * 2 + 1 + side * 7), side);
+        if (made) {
+          el("circle", { cx, cy, r: big ? 8 : 4.2, fill: COL[side] }, glow);
+          el("circle", { cx, cy, r: big ? 3.2 : 1.5, fill: "#fff" }, cores);
+        } else {
+          el("circle", { cx, cy, r: big ? 2.2 : 1.1, fill: "#fff", opacity: 0.28 }, cores);
+        }
+      });
+    });
+    // which end is which goes in a strip above the court (not on top of the dots)
+    ends.hidden = false;
+    ends.innerHTML = `<span style="color:#9fb4e0">${opp.length ? "← Opponents · " + opp.length.toLocaleString() + " shots" : ""}</span><span style="color:#ff6b95">${tor.length ? (current === "Tempo" ? "Tempo" : current) + " · " + tor.length.toLocaleString() + " shots →" : ""}</span>`;
+    // every league shot isn't stored in the page (too big), so say so instead of showing an empty court
+    if (current === "League") txt(svg, F.W / 2, F.H / 2 - 70, "Pick the Tempo, a player or opponents to see every shot", "lbl", { "text-anchor": "middle", style: "fill:#eef0f4;font-size:15px" });
   }
   profile(P);  // update the side panel too
 }
