@@ -102,6 +102,42 @@
     K.el("path", { d: `M ${X(25 - c3)} 0 L ${X(25 - c3)} ${Y(3)} A ${22.15 * S} ${22.15 * S} 0 0 0 ${X(25 + c3)} ${Y(3)} L ${X(25 + c3)} 0`, class: "court-line" }, g);
     return { X, Y, g, S };
   };
+  // a small fixed "random" nudge in feet (-0.45 to +0.45) for shot number i.
+  // ESPN rounds shot locations to whole feet, which makes dots line up in a grid; this spreads them out
+  // the same way every time the page loads
+  K.wiggle = i => { const v = Math.sin(i * 12.9898) * 43758.5453; return (v - Math.floor(v) - 0.5) * 0.9; };
+
+  // full court on a dark background (the "every shot" look), 10 px per foot.
+  // Toronto attacks the RIGHT basket, opponents attack the LEFT one.
+  // Returns place(x, y, side): turns a shot's ESPN location (x = 0-50 ft across, y = feet out from
+  // the basket) into a point on this court. side 0 = Tempo, side 1 = opponent.
+  K.fullCourt = function (svg) {
+    const k = 10, W = 94 * k, H = 50 * k;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const defs = K.el("defs", {}, svg);
+    // soft glow for made shots
+    const f = K.el("filter", { id: "glow", x: "-50%", y: "-50%", width: "200%", height: "200%" }, defs);
+    K.el("feGaussianBlur", { stdDeviation: 4 }, f);
+    K.el("rect", { x: 0, y: 0, width: W, height: H, fill: "#0d0b10" }, svg);
+    const line = { fill: "none", stroke: "#ffffff", "stroke-opacity": 0.16, "stroke-width": 1.5 };
+    K.el("rect", { x: 1, y: 1, width: W - 2, height: H - 2, ...line }, svg);
+    K.el("line", { x1: W / 2, x2: W / 2, y1: 0, y2: H, ...line }, svg);
+    K.el("circle", { cx: W / 2, cy: H / 2, r: 6 * k, ...line }, svg);
+    const c3 = Math.sqrt(22.15 ** 2 - 9);
+    for (const side of [0, 1]) {
+      const bx = side === 0 ? 5.25 * k : W - 5.25 * k;   // basket x
+      const edge = side === 0 ? 0 : W;                    // baseline x
+      const d = side === 0 ? 1 : -1;                      // direction into the court
+      K.el("rect", { x: Math.min(edge, edge + d * 19 * k), y: 17 * k, width: 19 * k, height: 16 * k, ...line }, svg);
+      K.el("circle", { cx: bx, cy: 25 * k, r: 0.75 * k, ...line }, svg);
+      K.el("path", { d: `M ${edge} ${(25 - c3) * k} L ${bx + d * 3 * k} ${(25 - c3) * k} A ${22.15 * k} ${22.15 * k} 0 0 ${side === 0 ? 1 : 0} ${bx + d * 3 * k} ${(25 + c3) * k} L ${edge} ${(25 + c3) * k}`, ...line }, svg);
+    }
+    const place = (x, y, side) => side === 0
+      ? [(94 - 5.25 - y) * k, x * k]          // Tempo: distance from the right basket goes left
+      : [(5.25 + y) * k, (50 - x) * k];       // opponent: distance from the left basket goes right
+    return { place, W, H, k };
+  };
+
   // the six corner points of a pointy-top hexagon centred at (cx, cy), as an SVG points string
   K.hexPts = (cx, cy, r) => Array.from({ length: 6 }, (_, i) => {
     const a = Math.PI / 180 * (60 * i - 90);
