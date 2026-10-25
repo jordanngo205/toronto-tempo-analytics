@@ -168,4 +168,9 @@ summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-s
   .section.wide > * { grid-column: 1; }
   .section.wide > header { grid-row: auto; position: static; max-width: 760px; margin-bottom: 20px; }
   .section.wide > header .lede { font-size: 1rem; }
+
+  /* a section with no heading (like Game Center's scoreboard) has no note, so it uses the full width */
+  .section:not(:has(> header)) { grid-template-columns: minmax(0, 1fr); }
+  .section:not(:has(> header)) > * { grid-column: 1; }
+  .section:not(:has(> header)) > :not(:first-child) { margin-top: 16px; }
 }
