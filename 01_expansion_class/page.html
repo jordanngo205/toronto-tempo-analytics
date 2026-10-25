@@ -127,6 +127,10 @@ td:first-child { font-family: var(--body); }
 .rook { font: 600 0.62rem var(--mono); letter-spacing: 0.08em; color: var(--ink-3); border: 1px solid var(--rule); padding: 0 4px; margin-left: 6px; vertical-align: 2px; }
 .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .trio > div { min-width: 0; }
+/* three tables side by side: tighter cells so every column fits without scrolling */
+.trio table { font-size: 0.8rem; }
+.trio th, .trio td { padding: 5px 4px; }
+.trio .rook { margin-left: 4px; }
 .trio h3 { border-bottom: 3px solid var(--c); padding-bottom: 4px; margin-bottom: 4px; }
 
 /* scoreboard */
@@ -139,7 +143,9 @@ td:first-child { font-family: var(--body); }
 .game .s { font-family: var(--mono); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
 .game .s b { font-weight: 500; }
 .game .lose { color: var(--ink-3); }
-.series { display: flex; flex-wrap: wrap; gap: 10px; }
+.series { display: grid; grid-template-columns: repeat(3, auto) minmax(0, 1fr); gap: 10px; align-items: stretch; }
+.series > div:last-child { align-content: center; }
+@media (max-width: 760px) { .series { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .series div { background: var(--panel); border: 1px solid var(--rule); padding: 10px 14px; display: grid; gap: 2px; }
 .series .big { font-family: var(--display); font-weight: 800; font-size: 1.8rem; line-height: 1; }
 
@@ -208,8 +214,8 @@ summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-s
 
   <section class="section" id="arc">
     <header>
-      <h2>Portland improved after midseason while Toronto fell off</h2>
-      <p class="lede">The two 2026 teams went in opposite directions. Portland bottomed out early, at about −14 over 10 games around game 20, then played close to even for the rest of the year. Toronto was near even through game 18, then fell to about −19 from game 25 on and never recovered. The bars below show every game's final margin.</p>
+      <h2>Portland figured it out. Toronto slid away.</h2>
+      <p class="lede" id="arc-lede"></p>
     </header>
     <div class="figure">
       <div class="legend" id="arc-legend"></div>
@@ -491,6 +497,14 @@ function legend(id, keys, withHist) {
   hit.addEventListener("pointerleave", () => { cross.setAttribute("opacity", 0); hideTip(); });
   legend("arc-legend", ORDER, false);
 
+  // paragraph for this chart, worked out from the rolling numbers so it can't drift from the lines
+  const pts = k => R[k].map((v, i) => [i + 1, v]).filter(p => p[1] != null);
+  const avg = a => a.reduce((s, p) => s + p[1], 0) / a.length;
+  const por = pts("POR"), porLow = por.reduce((m, p) => p[1] < m[1] ? p : m), porAfter = por.filter(p => p[0] > porLow[0] + 5);
+  const tor = pts("TOR"), torEven = [...tor].reverse().find(p => p[1] >= 0), torAfter = tor.filter(p => p[0] > torEven[0] + 9);
+  const torLow = tor.reduce((m, p) => p[1] < m[1] ? p : m);
+  document.getElementById("arc-lede").innerHTML = `The two 2026 teams went in opposite directions. Portland hit bottom at game ${porLow[0]}, at ${fmt(porLow[1])} over its last 10 games, then averaged <strong>${fmt(avg(porAfter))}</strong> the rest of the way. Toronto was still at or above even as late as game ${torEven[0]}, then slid to ${fmt(torLow[1])} by game ${torLow[0]} and averaged <strong>${fmt(avg(torAfter))}</strong> from game ${torEven[0] + 10} on. The bars below show every game's final margin.`;
+
   // margin strips
   // margin strips under the chart: one bar per game, up for wins and down (faded) for losses
   const st = document.getElementById("strip-chart"), G = D.games;
@@ -652,7 +666,7 @@ function legend(id, keys, withHist) {
   document.getElementById("series").innerHTML = [["TOR", "POR"], ["TOR", "GS"], ["POR", "GS"]].map(([a, b]) => {
     const r = rec[pairKey(a, b)] || { [a]: 0, [b]: 0 };
     return `<div><span style="display:flex;gap:4px">${logo(a)}${logo(b)}</span><span class="eyebrow">${TEAMS[a].name} vs ${TEAMS[b].name}</span><span class="big num">${r[a] || 0}–${r[b] || 0}</span></div>`;
-  }).join("") + `<div><span class="eyebrow">Note</span><span style="font-size:.85rem;color:var(--ink-2);max-width:26ch">Golden State was in year two in 2026.</span></div>`;
+  }).join("") + `<div><span class="eyebrow">Note</span><span style="font-size:.85rem;color:var(--ink-2)">Golden State was in year two in 2026.</span></div>`;
   // one scoreboard row per game, the losing team greyed out
   document.getElementById("board").innerHTML = games.map(g => {
     const hw = g.hs > g.as;
