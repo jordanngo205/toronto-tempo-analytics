@@ -37,10 +37,12 @@ Shared styles live in `docs/assets/site.css`, shared chart helpers in `docs/asse
    the page in a 390px-wide `<iframe>`. Check that no SVG mark or HTML text sticks out of its panel, no image is broken,
    there are no script errors, and the page never scrolls sideways (wide grids may scroll inside `.heat-wrap`,
    `.gg-wrap` or `.tbl-wrap`).
-4. Recompute key numbers independently: box vs play-by-play finals, quarter margins summing to the final, plus-minus
+4. Check that no chart label sits on top of two or more dots/bars. Put axis labels above the plot area; labels that
+   must sit among dots get `class="halo"`.
+5. Recompute key numbers independently: box vs play-by-play finals, quarter margins summing to the final, plus-minus
    = 5 × team margin, stint minutes vs box minutes, Elo zero-sum and calibration, and every claim in the copy.
-5. Look at a screenshot of anything you changed.
-6. Never `git checkout --` or reset a path that has uncommitted edits.
+6. Look at a screenshot of anything you changed.
+7. Never `git checkout --` or reset a path that has uncommitted edits.
 
 ## Code style
 
