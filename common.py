@@ -1,4 +1,5 @@
 """Shared loaders and chart style for the Tempo projects."""
+import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -30,6 +31,13 @@ def load(name, season=None, regular=True):
     # keep only regular season games (season_type 2), some files write it as text instead
     if regular and "season_type" in df:
         df = df[df["season_type"].astype(str).isin(["2", "Regular Season"])]
+    # ESPN has no headshot for some players (mostly rookies and overseas signings), but WNBA.com does.
+    # data/wnba_headshot_ids.json maps those names to their WNBA.com player id, so I fill the gaps from there.
+    if name == "player_box" and "athlete_headshot_href" in df:
+        ids = json.loads((ROOT / "data" / "wnba_headshot_ids.json").read_text())
+        miss = df.athlete_headshot_href.isna() & df.athlete_display_name.isin(ids)
+        df.loc[miss, "athlete_headshot_href"] = df.loc[miss, "athlete_display_name"].map(
+            lambda n: f"https://cdn.wnba.com/headshots/wnba/latest/260x190/{ids[n]}.png")
     return df.reset_index(drop=True)
 
 
