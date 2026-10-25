@@ -1,0 +1,591 @@
+<title>The Expansion Class</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one editorial column (scoreboard-style headers) with full-width chart bands; teams always in the same order GS, TOR, POR */
+:root {
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --ink: #12161d;
+  --ink-2: #4a5160;
+  --ink-3: #7a8191;
+  --rule: #dfe2e8;
+  --grid: #eceef2;
+  --tor: #2a78d6;
+  --por: #eb6834;
+  --gs: #1baf7a;
+  --hist: #9aa1ad;
+  --hot: #d03b3b;
+  --cold: #2a78d6;
+  --mid: #eceae6;
+  --exp1: #d6dbe4; --exp2: #a7b1c2; --exp3: #6c7a92; --exp4: #34405a;
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1217; --panel: #171b22; --ink: #eef0f4; --ink-2: #b7bdc9; --ink-3: #8a91a0;
+    --rule: #2a303b; --grid: #222833; --tor: #3987e5; --por: #d95926; --gs: #199e70; --hist: #6b7280;
+    --hot: #e0524f; --cold: #3987e5; --mid: #383835;
+    --exp1: #2b3240; --exp2: #4a5568; --exp3: #8090aa; --exp4: #c3cddd;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1217; --panel: #171b22; --ink: #eef0f4; --ink-2: #b7bdc9; --ink-3: #8a91a0;
+  --rule: #2a303b; --grid: #222833; --tor: #3987e5; --por: #d95926; --gs: #199e70; --hist: #6b7280;
+  --hot: #e0524f; --cold: #3987e5; --mid: #383835;
+  --exp1: #2b3240; --exp2: #4a5568; --exp3: #8090aa; --exp4: #c3cddd;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 64px; display: grid; gap: 64px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.02; }
+h1 { font-size: clamp(3rem, 9vw, 6.2rem); font-weight: 800; letter-spacing: -0.01em; text-transform: uppercase; }
+h2 { font-size: clamp(1.9rem, 4.2vw, 2.7rem); font-weight: 700; text-transform: uppercase; }
+h3 { font-size: 1.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+p { margin: 0; max-width: 66ch; }
+.eyebrow { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.dek { font-size: 1.2rem; color: var(--ink-2); max-width: 60ch; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.section { display: grid; gap: 20px; }
+.section > header { display: grid; gap: 10px; border-top: 3px solid var(--ink); padding-top: 14px; }
+.lede { color: var(--ink-2); }
+.lede strong { color: var(--ink); font-weight: 600; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+.chip::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+
+/* hero */
+.hero { display: grid; gap: 22px; }
+.hero h1 span { display: block; color: var(--ink-3); font-size: 0.34em; letter-spacing: 0.04em; margin-top: 10px; font-weight: 700; }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-top: 6px solid var(--c); padding: 16px 16px 12px; display: grid; gap: 8px; min-width: 0; }
+.card .team { font-family: var(--display); font-weight: 700; font-size: 1.35rem; text-transform: uppercase; line-height: 1; }
+.card .yr { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-3); }
+.card .rec { font-family: var(--display); font-weight: 800; font-size: 3rem; line-height: 0.9; }
+.card dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; font-size: 0.85rem; }
+.card dt { color: var(--ink-3); }
+.card dd { margin: 0; text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.card svg { width: 100%; height: 46px; display: block; }
+.byline { font-size: 0.85rem; color: var(--ink-3); }
+.byline a { color: var(--ink-2); }
+
+/* charts */
+.figure { background: var(--panel); border: 1px solid var(--rule); padding: 18px 18px 12px; min-width: 0; }
+.figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+.figure .cap { font-size: 0.82rem; color: var(--ink-3); margin-top: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.85rem; margin-bottom: 10px; color: var(--ink-2); }
+.legend .chip { font-size: 0.95rem; color: var(--ink); }
+.legend .hist::before { background: transparent; border: 2px dashed var(--hist); width: 14px; height: 0; border-radius: 0; }
+.axis text, .lbl { fill: var(--ink-3); font-family: var(--mono); font-size: 11px; }
+.lbl-ink { fill: var(--ink); font-family: var(--display); font-weight: 700; font-size: 14px; text-transform: uppercase; }
+.gridline { stroke: var(--grid); stroke-width: 1; }
+.zero { stroke: var(--ink-3); stroke-width: 1; }
+.two { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+
+/* elo table */
+.elo-list { display: grid; gap: 3px; font-size: 0.85rem; }
+.elo-row { display: grid; grid-template-columns: 22px 44px 1fr 44px; align-items: center; gap: 8px; }
+.elo-row .bar { height: 14px; background: var(--grid); position: relative; }
+.elo-row .bar i { position: absolute; inset: 0 auto 0 0; background: var(--hist); border-radius: 0 3px 3px 0; }
+.elo-row.hl .bar i { background: var(--c); }
+.elo-row.hl { font-weight: 600; }
+.elo-row .ab { font-family: var(--display); font-weight: 700; }
+
+/* toggle */
+.toggle { display: inline-flex; border: 1px solid var(--ink); }
+.toggle button { font: 700 0.95rem var(--display); text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 14px; background: transparent; color: var(--ink); border: 0; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.toggle button:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--tor); outline-offset: 2px; }
+.courts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.court h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.court h3 small { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-3); font-weight: 400; text-transform: none; letter-spacing: 0; }
+.court .line { fill: none; stroke: var(--ink-3); stroke-width: 1.2; opacity: 0.7; }
+.court .reads { font-size: 0.82rem; color: var(--ink-2); display: grid; gap: 2px; margin-top: 6px; }
+.court .reads b { font-family: var(--mono); font-weight: 500; }
+.scale { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: var(--ink-3); flex-wrap: wrap; }
+.scale .ramp { width: 180px; height: 10px; background: linear-gradient(90deg, var(--cold), var(--mid), var(--hot)); }
+.hexkey { display: inline-flex; gap: 4px; align-items: end; }
+.hexkey svg { width: 60px; height: 18px; }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th { font: 600 0.72rem var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--ink); }
+th:first-child, td:first-child { text-align: left; }
+td { padding: 6px 8px; border-bottom: 1px solid var(--rule); text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+td:first-child { font-family: var(--body); }
+.rook { font: 600 0.62rem var(--mono); letter-spacing: 0.08em; color: var(--ink-3); border: 1px solid var(--rule); padding: 0 4px; margin-left: 6px; vertical-align: 2px; }
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.trio > div { min-width: 0; }
+.trio h3 { border-bottom: 3px solid var(--c); padding-bottom: 4px; margin-bottom: 4px; }
+
+/* scoreboard */
+.board { display: grid; gap: 6px; }
+.game { display: grid; grid-template-columns: 64px 1fr auto 1fr; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--rule); padding: 8px 12px; }
+.game .d { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-3); }
+.game .t { display: flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 1.15rem; text-transform: uppercase; min-width: 0; }
+.game .t.r { justify-content: flex-end; }
+.game .t i { width: 8px; height: 22px; background: var(--c); display: inline-block; }
+.game .s { font-family: var(--mono); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.game .s b { font-weight: 500; }
+.game .lose { color: var(--ink-3); }
+.series { display: flex; flex-wrap: wrap; gap: 10px; }
+.series div { background: var(--panel); border: 1px solid var(--rule); padding: 10px 14px; display: grid; gap: 2px; }
+.series .big { font-family: var(--display); font-weight: 800; font-size: 1.8rem; line-height: 1; }
+
+.takeaways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; counter-reset: t; }
+.takeaways div { border-top: 2px solid var(--ink); padding-top: 10px; display: grid; gap: 6px; }
+.takeaways b { font-family: var(--display); font-size: 1.2rem; text-transform: uppercase; line-height: 1.1; }
+.takeaways p { font-size: 0.95rem; color: var(--ink-2); }
+
+details { font-size: 0.88rem; }
+summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.methods { font-size: 0.88rem; color: var(--ink-2); display: grid; gap: 8px; border-top: 1px solid var(--rule); padding-top: 16px; }
+.methods a { color: var(--ink); }
+
+#tip { position: fixed; pointer-events: none; z-index: 20; background: var(--ink); color: var(--bg); padding: 8px 10px; font-size: 0.8rem; line-height: 1.35; max-width: 240px; opacity: 0; transition: opacity 0.1s; }
+#tip b { font-family: var(--display); font-size: 1rem; text-transform: uppercase; letter-spacing: 0.02em; }
+#tip .num { font-size: 0.78rem; }
+.hit { fill: transparent; cursor: crosshair; }
+
+@media (max-width: 760px) {
+  .cards, .courts, .trio, .takeaways, .two { grid-template-columns: minmax(0, 1fr); }
+  .game { grid-template-columns: 52px 1fr auto 1fr; padding: 8px; gap: 6px; }
+  .game .t { font-size: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) { #tip { transition: none; } }
+</style>
+
+<div class="wrap">
+  <section class="hero">
+    <div class="eyebrow">WNBA expansion · 2025–2026 · Toronto Tempo desk</div>
+    <h1>The Expansion Class<span>Golden State made year one look easy. Toronto found out how hard it is.</span></h1>
+    <p class="dek">Three new teams in two seasons. One made the playoffs, one was respectable, and one finished last. We compare the 2025 Valkyries, 2026 Tempo and 2026 Fire with Elo ratings, the Four Factors, shot maps and roster-building, measured against the 2006 Sky and 2008 Dream.</p>
+    <div class="cards" id="cards"></div>
+    <div class="byline">Data: sportsdataverse (ESPN play-by-play, box scores, WNBA Stats lineups). Inspired by <a href="https://riseofthevalkyries.substack.com/" target="_blank" rel="noopener">Rise of the Valkyries</a> and <a href="https://neilpaine.substack.com/t/basketball" target="_blank" rel="noopener">Neil Paine</a>.</div>
+  </section>
+
+  <section class="section" id="elo">
+    <header>
+      <div class="eyebrow">01 · Elo through year one</div>
+      <h2>Toronto never found the floor</h2>
+      <p class="lede" id="elo-lede"></p>
+    </header>
+    <div class="two">
+      <div class="figure">
+        <div class="legend" id="elo-legend"></div>
+        <svg id="elo-chart" viewBox="0 0 640 360" role="img" aria-label="Elo rating by game number for five expansion teams"></svg>
+        <div class="cap">Elo after each regular-season game. New teams start at 1300; the league average is 1500. Hover for game-by-game values.</div>
+      </div>
+      <div class="figure">
+        <h3 style="margin-bottom:10px">Where 2026 ended</h3>
+        <div class="elo-list" id="elo-table"></div>
+        <div class="cap">Final 2026 Elo, playoffs included. Golden State, in year two, finished second.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="fingerprint">
+    <header>
+      <div class="eyebrow">02 · Team fingerprint</div>
+      <h2>Same offense, very different defense</h2>
+      <p class="lede">Toronto and Portland both <strong>scored more efficiently than the 2025 Valkyries</strong> (103.0 and 103.5 points per 100 possessions vs 98.8). What made Golden State a playoff team was defense: 3rd in defensive rating and 1st in opponent eFG%. Toronto finished <strong>last in both</strong>.</p>
+    </header>
+    <div class="figure">
+      <div class="legend" id="fp-legend"></div>
+      <svg id="fp-chart" viewBox="0 0 640 430" role="img" aria-label="League rank on ratings and Four Factors for the three expansion teams"></svg>
+      <div class="cap">Position within each team's own season: left = best in the league, right = worst. 2025 had 13 teams, 2026 had 15. Hover a dot for the value and league average.</div>
+      <details style="margin-top:10px"><summary>Show as table</summary><div class="tbl-wrap"><table id="fp-table"></table></div></details>
+    </div>
+  </section>
+
+  <section class="section" id="arc">
+    <header>
+      <div class="eyebrow">03 · The season arc</div>
+      <h2>Portland figured it out. Toronto slid away.</h2>
+      <p class="lede">The two 2026 teams went in opposite directions. Portland bottomed out early, at about −14 over 10 games around game 20, then played close to even for the rest of the year. Toronto was near even through game 18, then fell to about −19 from game 25 on and never recovered. The bars below show every game's final margin.</p>
+    </header>
+    <div class="figure">
+      <div class="legend" id="arc-legend"></div>
+      <svg id="arc-chart" viewBox="0 0 640 300" role="img" aria-label="Rolling ten-game net rating by game number"></svg>
+      <svg id="strip-chart" viewBox="0 0 640 230" role="img" aria-label="Final margin of every game for each team" style="margin-top:14px"></svg>
+      <div class="cap">Top: net rating over the trailing 10 games. Bottom: final margin of each game, with wins above the line and losses below.</div>
+    </div>
+  </section>
+
+  <section class="section" id="shots">
+    <header>
+      <div class="eyebrow">04 · Shot maps</div>
+      <h2>Toronto lived at the rim and died there</h2>
+      <p class="lede" id="shot-lede"></p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+        <div class="toggle" role="group" aria-label="Offense or defense">
+          <button type="button" id="btn-off" aria-pressed="true">Their shots</button>
+          <button type="button" id="btn-def" aria-pressed="false">Opponents' shots</button>
+        </div>
+        <div class="scale"><span>Colder</span><span class="ramp"></span><span>Hotter than league, by zone</span>
+          <span class="hexkey"><svg viewBox="0 0 60 18" aria-hidden="true"><polygon points="6,6 9,7.7 9,11.2 6,13 3,11.2 3,7.7" fill="var(--ink-3)"/><polygon points="24,3 29.2,6 29.2,12 24,15 18.8,12 18.8,6" fill="var(--ink-3)"/><polygon points="48,0 55.8,4.5 55.8,13.5 48,18 40.2,13.5 40.2,4.5" fill="var(--ink-3)"/></svg>size = shot share</span>
+        </div>
+      </div>
+    </header>
+    <div class="courts" id="courts"></div>
+    <div class="cap" style="font-size:0.82rem;color:var(--ink-3)">Each hex is about 2.6 ft wide, and its size shows the share of the team's attempts taken there. Colour is points per shot in that zone compared with league average for the same season. On the "Opponents' shots" view, red means opponents shot hot against this team. Hover a hex for the zone numbers.</div>
+  </section>
+
+  <section class="section" id="roster">
+    <header>
+      <div class="eyebrow">05 · How they were built</div>
+      <h2>Toronto bet on rookies</h2>
+      <p class="lede" id="roster-lede"></p>
+    </header>
+    <div class="figure">
+      <svg id="exp-chart" viewBox="0 0 640 170" role="img" aria-label="Share of minutes by prior WNBA seasons"></svg>
+      <div class="legend" id="exp-legend" style="margin-top:8px;margin-bottom:0"></div>
+    </div>
+    <div class="trio" id="players"></div>
+  </section>
+
+  <section class="section" id="rivalry">
+    <header>
+      <div class="eyebrow">06 · Expansion vs expansion</div>
+      <h2>The newcomers' mini-league</h2>
+      <p class="lede">In 2026, Toronto played Portland three times and Golden State three times. The games between new teams are the cleanest measure of who is ahead in the build.</p>
+    </header>
+    <div class="series" id="series"></div>
+    <div class="board" id="board"></div>
+    <div class="figure">
+      <h3 style="margin-bottom:8px">Close games</h3>
+      <div class="tbl-wrap"><table id="clutch"></table></div>
+      <div class="cap">Clutch = within 5 points at any point in the last 5 minutes.</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <header>
+      <div class="eyebrow">07 · For 2027</div>
+      <h2>What the Tempo need from year two</h2>
+    </header>
+    <div class="takeaways">
+      <div><b>Defense first</b><p>The offense already ranks with this class. Opponents shot an eFG% of 54.7%, the worst in the league, and Toronto was 14th in defensive rebounding. Golden State's year-one formula was a top-3 defense with an average offense.</p></div>
+      <div><b>Protect the paint</b><p>A third of opponent shots came at the rim. Toronto needs a rim deterrent, through the draft or free agency, more than another scorer.</p></div>
+      <div><b>Year two can flip fast</b><p>The Valkyries went from 1472 Elo and 8th to 1631 and 2nd in one offseason. Toronto starts 2027 near 1300 after the offseason regression, so the gap is large but not fixed.</p></div>
+    </div>
+  </section>
+
+  <section class="methods">
+    <h3>Method</h3>
+    <p>Elo uses every WNBA game from 2003 to 2026 in the style of FiveThirtyEight and Neil Paine: K = 20, 80-point home edge, a margin-of-victory multiplier, and 25% regression to 1500 between seasons. New franchises start at 1300. Possessions = FGA − ORB + TOV + 0.44·FTA. The Four Factors are ranked within each season. Shot zones come from ESPN play-by-play coordinates, and free throws are excluded. Roster experience counts prior WNBA seasons with minutes played since 2003. Close-game data comes from play-by-play. Code: <span class="num">06_expansion_class/build.py</span>.</p>
+  </section>
+</div>
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script id="data" type="application/json">/*DATA*/</script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const NS = "http://www.w3.org/2000/svg";
+const TEAMS = { GS: { name: "Valkyries", full: "Golden State Valkyries", yr: 2025, c: "var(--gs)" },
+                TOR: { name: "Tempo", full: "Toronto Tempo", yr: 2026, c: "var(--tor)" },
+                POR: { name: "Fire", full: "Portland Fire", yr: 2026, c: "var(--por)" } };
+const HIST = { CHI: { name: "Sky '06", yr: 2006 }, ATL: { name: "Dream '08", yr: 2008 } };
+const ORDER = ["GS", "TOR", "POR"];
+const fmt = (v, d = 1) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
+const pct = (v, d = 1) => (100 * v).toFixed(d) + "%";
+
+function el(tag, attrs = {}, parent) {
+  const n = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+function txt(parent, x, y, s, cls = "lbl", extra = {}) { const t = el("text", { x, y, class: cls, ...extra }, parent); t.textContent = s; return t; }
+const scale = (d0, d1, r0, r1) => v => r0 + (v - d0) / (d1 - d0) * (r1 - r0);
+
+const tip = document.getElementById("tip");
+function showTip(html, ev) {
+  tip.innerHTML = html; tip.style.opacity = 1;
+  const x = Math.min(ev.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
+  const y = ev.clientY + 14 + tip.offsetHeight > window.innerHeight ? ev.clientY - tip.offsetHeight - 10 : ev.clientY + 14;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+const hideTip = () => { tip.style.opacity = 0; };
+
+function legend(id, keys, withHist) {
+  const L = document.getElementById(id);
+  L.innerHTML = keys.map(k => `<span class="chip" style="--c:${TEAMS[k].c}">${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}</span>`).join("")
+    + (withHist ? `<span class="chip hist" style="color:var(--ink-3)">Sky '06 · Dream '08</span>` : "");
+}
+
+/* ---------- hero cards ---------- */
+(function cards() {
+  const box = document.getElementById("cards");
+  for (const k of ORDER) {
+    const f = D.fingerprint[k], e = D.elo.end[k], path = D.elo.paths[k];
+    const div = document.createElement("div");
+    div.className = "card"; div.style.setProperty("--c", TEAMS[k].c);
+    div.innerHTML = `<div><div class="team">${TEAMS[k].full}</div><div class="yr">Year one · ${TEAMS[k].yr}</div></div>
+      <div class="rec">${f.w}–${f.l}</div>
+      <dl><dt>Net rating</dt><dd>${fmt(f.net.v)} <span style="color:var(--ink-3)">(${f.net.rank}/${f.teams})</span></dd>
+      <dt>Final Elo</dt><dd>${e.end} <span style="color:var(--ink-3)">(${e.rank}/${e.of})</span></dd>
+      <dt>Close games</dt><dd>${D.clutch[k].w}–${D.clutch[k].l}</dd></dl>`;
+    const s = el("svg", { viewBox: "0 0 200 46", preserveAspectRatio: "none", "aria-hidden": "true" });
+    const x = scale(0, 44, 2, 198), y = scale(1200, 1500, 44, 2);
+    el("line", { x1: 0, x2: 200, y1: y(1300), y2: y(1300), class: "gridline", "stroke-dasharray": "2 3" }, s);
+    el("polyline", { points: path.map((v, i) => `${x(i)},${y(v)}`).join(" "), fill: "none", stroke: TEAMS[k].c, "stroke-width": 2, "vector-effect": "non-scaling-stroke" }, s);
+    el("circle", { cx: x(path.length - 1), cy: y(path.at(-1)), r: 3, fill: TEAMS[k].c }, s);
+    div.appendChild(s);
+    box.appendChild(div);
+  }
+})();
+
+/* ---------- Elo chart ---------- */
+(function eloChart() {
+  const P = D.elo.paths, s = document.getElementById("elo-chart");
+  const W = 640, H = 360, m = { l: 44, r: 82, t: 12, b: 30 };
+  const all = Object.values(P).flat();
+  const lo = Math.floor(Math.min(...all) / 50) * 50, hi = Math.ceil(Math.max(...all) / 50) * 50;
+  const x = scale(0, 44, m.l, W - m.r), y = scale(lo, hi, H - m.b, m.t);
+  for (let v = lo; v <= hi; v += 50) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 1300 ? "zero" : "gridline", "stroke-dasharray": v === 1300 ? "3 3" : "" }, s); txt(s, m.l - 8, y(v) + 4, v, "lbl", { "text-anchor": "end" }); }
+  for (const g of [0, 10, 20, 30, 40]) txt(s, x(g), H - 10, g === 0 ? "start" : "G" + g, "lbl", { "text-anchor": "middle" });
+  const ends = [];
+  for (const k of ["CHI", "ATL"]) {
+    el("polyline", { points: P[k].map((v, i) => `${x(i)},${y(v)}`).join(" "), fill: "none", stroke: "var(--hist)", "stroke-width": 1.5, "stroke-dasharray": "4 3" }, s);
+    ends.push({ k, v: P[k].at(-1), i: P[k].length - 1, label: HIST[k].name, c: "var(--ink-3)" });
+  }
+  for (const k of ORDER) {
+    el("polyline", { points: P[k].map((v, i) => `${x(i)},${y(v)}`).join(" "), fill: "none", stroke: TEAMS[k].c, "stroke-width": 2.5, "stroke-linejoin": "round" }, s);
+    el("circle", { cx: x(P[k].length - 1), cy: y(P[k].at(-1)), r: 4, fill: TEAMS[k].c, stroke: "var(--panel)", "stroke-width": 2 }, s);
+    ends.push({ k, v: P[k].at(-1), i: P[k].length - 1, label: TEAMS[k].name, c: TEAMS[k].c });
+  }
+  // end labels, nudged apart
+  ends.sort((a, b) => y(a.v) - y(b.v));
+  let prev = -99;
+  for (const e of ends) { let yy = Math.max(y(e.v) + 4, prev + 14); prev = yy;
+    txt(s, W - m.r + 8, yy, `${e.label} ${Math.round(e.v)}`, ORDER.includes(e.k) ? "lbl-ink" : "lbl", ORDER.includes(e.k) ? { style: "font-size:13px" } : {}); }
+  const cross = el("line", { y1: m.t, y2: H - m.b, stroke: "var(--ink-3)", "stroke-width": 1, opacity: 0 }, s);
+  const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, class: "hit" }, s);
+  hit.addEventListener("pointermove", ev => {
+    const r = s.getBoundingClientRect(), px = (ev.clientX - r.left) * W / r.width;
+    const g = Math.max(0, Math.min(44, Math.round((px - m.l) / (W - m.l - m.r) * 44)));
+    cross.setAttribute("x1", x(g)); cross.setAttribute("x2", x(g)); cross.setAttribute("opacity", 0.6);
+    const rows = [...ORDER.map(k => [TEAMS[k].name, P[k][g], TEAMS[k].c]), ...["CHI", "ATL"].map(k => [HIST[k].name, P[k][g], "var(--hist)"])]
+      .filter(r => r[1] != null).sort((a, b) => b[1] - a[1])
+      .map(r => `<div><span style="color:${r[2]}">■</span> ${r[0]} <span class="num">${Math.round(r[1])}</span></div>`).join("");
+    showTip(`<b>${g === 0 ? "Before game 1" : "After game " + g}</b>${rows}`, ev);
+  });
+  hit.addEventListener("pointerleave", () => { cross.setAttribute("opacity", 0); hideTip(); });
+  legend("elo-legend", ORDER, true);
+  const e = D.elo.end;
+  document.getElementById("elo-lede").innerHTML = `By Elo, the Tempo ended year one at <strong>${e.TOR.end}</strong>, last in the league and below the 2006 Sky (${e.CHI.end}) and 2008 Dream (${e.ATL.end}). Those teams won 5 and 4 games. Toronto's net rating was actually better than theirs, but this league is deeper and losses to good teams cost more Elo. Portland climbed to <strong>${e.POR.end}</strong>. Golden State reached ${e.GS.end} and made the playoffs.`;
+
+  const tbl = document.getElementById("elo-table"), rows = D.elo.table2026;
+  const max = Math.max(...rows.map(r => r.elo)), min = 1150;
+  tbl.innerHTML = rows.map((r, i) => {
+    const k = r.abbr === "TOR" ? "TOR" : r.abbr === "POR" ? "POR" : r.abbr === "GS" ? "GS" : null;
+    return `<div class="elo-row ${k ? "hl" : ""}" style="${k ? "--c:" + TEAMS[k].c : ""}"><span class="num" style="color:var(--ink-3)">${i + 1}</span><span class="ab">${r.abbr}</span><span class="bar"><i style="width:${(r.elo - min) / (max - min) * 100}%"></i></span><span class="num">${r.elo}</span></div>`;
+  }).join("");
+})();
+
+/* ---------- fingerprint ---------- */
+(function fingerprint() {
+  const s = document.getElementById("fp-chart"), F = D.fingerprint;
+  const rows = [["ortg", "Offensive rating", "pts/100", 1, false], ["drtg", "Defensive rating", "pts/100", 1, false], ["net", "Net rating", "pts/100", 1, false],
+    null, ["efg", "eFG%", "", 1, true], ["tov", "Turnover %", "", 1, true], ["orb", "Off. rebound %", "", 1, true], ["ftr", "FT rate", "FTM/FGA", 3, false],
+    null, ["opp_efg", "Opp. eFG%", "", 1, true], ["opp_tov", "Forced TO %", "", 1, true], ["drb", "Def. rebound %", "", 1, true], ["opp_ftr", "Opp. FT rate", "FTM/FGA", 3, false]];
+  const W = 640, m = { l: 140, r: 20, t: 26 }, rowH = 30;
+  const x = scale(0, 1, m.l + 10, W - m.r - 10);
+  txt(s, x(0), 14, "← best in league", "lbl"); txt(s, x(1), 14, "worst →", "lbl", { "text-anchor": "end" });
+  let yy = m.t + 10;
+  const fmtV = (r, v) => r[4] ? pct(v) : v.toFixed(r[3]);
+  for (const r of rows) {
+    if (!r) { el("line", { x1: 0, x2: W, y1: yy - 4, y2: yy - 4, stroke: "var(--rule)" }, s); yy += 10; continue; }
+    const cy = yy + rowH / 2;
+    txt(s, 0, cy + 4, r[1], "lbl", { style: "font-family:var(--body);font-size:13px;fill:var(--ink)" });
+    el("line", { x1: x(0), x2: x(1), y1: cy, y2: cy, class: "gridline" }, s);
+    const pts = ORDER.map(k => ({ k, p: (F[k][r[0]].rank - 1) / (F[k].teams - 1) }));
+    const seen = {};
+    for (const { k, p } of pts) {
+      const key = p.toFixed(3), off = (seen[key] = (seen[key] ?? -1) + 1);
+      const c = el("circle", { cx: x(p), cy: cy + (off ? (off % 2 ? -7 : 7) : 0), r: 7, fill: TEAMS[k].c, stroke: "var(--panel)", "stroke-width": 2, style: "cursor:pointer" }, s);
+      const f = F[k][r[0]];
+      c.addEventListener("pointermove", ev => showTip(`<b style="color:inherit">${TEAMS[k].name} ${TEAMS[k].yr}</b><div>${r[1]}: <span class="num">${fmtV(r, f.v)}</span></div><div>Rank <span class="num">${f.rank} of ${F[k].teams}</span></div><div>League avg <span class="num">${fmtV(r, f.lg)}</span></div>`, ev));
+      c.addEventListener("pointerleave", hideTip);
+    }
+    yy += rowH;
+  }
+  s.setAttribute("viewBox", `0 0 ${W} ${yy + 6}`);
+  legend("fp-legend", ORDER, false);
+  const t = document.getElementById("fp-table");
+  t.innerHTML = `<tr><th>Metric</th>${ORDER.map(k => `<th>${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}</th>`).join("")}</tr>` +
+    rows.filter(Boolean).map(r => `<tr><td>${r[1]}</td>${ORDER.map(k => `<td>${fmtV(r, F[k][r[0]].v)} <span style="color:var(--ink-3)">#${F[k][r[0]].rank}</span></td>`).join("")}</tr>`).join("");
+})();
+
+/* ---------- season arc ---------- */
+(function arc() {
+  const s = document.getElementById("arc-chart"), R = D.rolling;
+  const W = 640, H = 300, m = { l: 40, r: 70, t: 10, b: 26 };
+  const x = scale(1, 44, m.l, W - m.r), y = scale(-30, 20, H - m.b, m.t);
+  for (let v = -30; v <= 20; v += 10) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 0 ? "zero" : "gridline" }, s); txt(s, m.l - 8, y(v) + 4, v > 0 ? "+" + v : v, "lbl", { "text-anchor": "end" }); }
+  for (const g of [10, 20, 30, 40]) txt(s, x(g), H - 8, "G" + g, "lbl", { "text-anchor": "middle" });
+  const ends = [];
+  for (const k of ORDER) {
+    const pts = R[k].map((v, i) => v == null ? null : `${x(i + 1)},${y(Math.max(-30, Math.min(20, v)))}`).filter(Boolean);
+    el("polyline", { points: pts.join(" "), fill: "none", stroke: TEAMS[k].c, "stroke-width": 2.5, "stroke-linejoin": "round" }, s);
+    const last = R[k].at(-1);
+    el("circle", { cx: x(R[k].length), cy: y(last), r: 4, fill: TEAMS[k].c, stroke: "var(--panel)", "stroke-width": 2 }, s);
+    ends.push({ k, v: last });
+  }
+  ends.sort((a, b) => y(a.v) - y(b.v)); let prev = -99;
+  for (const e of ends) { const yy = Math.max(y(e.v) + 4, prev + 15); prev = yy; txt(s, W - m.r + 8, yy, `${TEAMS[e.k].name} ${fmt(e.v)}`, "lbl-ink", { style: "font-size:13px" }); }
+  const cross = el("line", { y1: m.t, y2: H - m.b, stroke: "var(--ink-3)", opacity: 0 }, s);
+  const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, class: "hit" }, s);
+  hit.addEventListener("pointermove", ev => {
+    const r = s.getBoundingClientRect(), px = (ev.clientX - r.left) * W / r.width;
+    const g = Math.max(10, Math.min(44, Math.round(1 + (px - m.l) / (W - m.l - m.r) * 43)));
+    cross.setAttribute("x1", x(g)); cross.setAttribute("x2", x(g)); cross.setAttribute("opacity", 0.6);
+    showTip(`<b>Games ${g - 9}–${g}</b>` + ORDER.map(k => `<div><span style="color:${TEAMS[k].c}">■</span> ${TEAMS[k].name} <span class="num">${fmt(R[k][g - 1])}</span></div>`).join(""), ev);
+  });
+  hit.addEventListener("pointerleave", () => { cross.setAttribute("opacity", 0); hideTip(); });
+  legend("arc-legend", ORDER, false);
+
+  // margin strips
+  const st = document.getElementById("strip-chart"), G = D.games;
+  const bandH = 70, mx = scale(0, 44, 70, 630), bw = (630 - 70) / 44 - 2, ym = scale(0, 35, 0, bandH / 2 - 2);
+  ORDER.forEach((k, i) => {
+    const cy = i * (bandH + 6) + bandH / 2 + 2;
+    txt(st, 0, cy + 5, TEAMS[k].name, "lbl-ink");
+    el("line", { x1: 70, x2: 630, y1: cy, y2: cy, class: "gridline" }, st);
+    G[k].forEach((g, j) => {
+      const mg = g.pf - g.pa, h = Math.max(1.5, ym(Math.min(35, Math.abs(mg))));
+      const b = el("rect", { x: mx(j) + 1, y: mg > 0 ? cy - h : cy, width: bw, height: h, rx: 1.5, fill: TEAMS[k].c, opacity: mg > 0 ? 1 : 0.38 }, st);
+      const hb = el("rect", { x: mx(j), y: cy - bandH / 2, width: bw + 2, height: bandH, class: "hit", style: "cursor:pointer" }, st);
+      hb.addEventListener("pointermove", ev => showTip(`<b>${TEAMS[k].name} · game ${g.n}</b><div>${g.date} ${g.home ? "vs" : "at"} ${g.opp}</div><div class="num">${g.pf}–${g.pa} (${mg > 0 ? "W" : "L"} ${fmt(mg, 0)})</div>`, ev));
+      hb.addEventListener("pointerleave", hideTip);
+    });
+  });
+})();
+
+/* ---------- shot maps ---------- */
+(function shots() {
+  const H = D.hex, R = D.hex_r, box = document.getElementById("courts");
+  const ZN = z => ({ "Rim": "At the rim (0–4 ft)", "Short": "Short paint (4–10 ft)", "Mid L": "Midrange, left", "Mid C": "Midrange, middle", "Mid R": "Midrange, right",
+    "Corner3 L": "Left corner 3", "Corner3 R": "Right corner 3", "Arc3 L": "Left wing 3", "Arc3 C": "Top of the key 3", "Arc3 R": "Right wing 3" }[z] || z);
+  const S = 10, Y0 = 5.25; // 10 px per foot, baseline at y = -5.25 ft
+  const X = v => v * S, Y = v => (v + Y0) * S;
+  // size reference = 90th-percentile hex share across all panels, so the rim hex doesn't shrink everything else
+  const shares = [];
+  for (const k of ORDER) for (const side of ["off", "def"]) for (const h of H[k][side].hexes) shares.push(h[2] / H[k][side].total);
+  shares.sort((a, b) => a - b);
+  const refShare = shares[Math.floor(shares.length * 0.9)];
+  function color(d) {
+    const t = Math.max(-1, Math.min(1, d / 0.2));
+    return t >= 0 ? `color-mix(in oklab, var(--hot) ${Math.round(t * 100)}%, var(--mid))` : `color-mix(in oklab, var(--cold) ${Math.round(-t * 100)}%, var(--mid))`;
+  }
+  const hexPts = (cx, cy, r) => Array.from({ length: 6 }, (_, i) => { const a = Math.PI / 180 * (60 * i - 90); return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`; }).join(" ");
+  const panels = {};
+  for (const k of ORDER) {
+    const d = document.createElement("div"); d.className = "court";
+    d.innerHTML = `<h3><span class="chip" style="--c:${TEAMS[k].c}">${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}</span><small></small></h3>`;
+    const s = el("svg", { viewBox: `0 0 500 ${Math.round(Y(29))}`, role: "img", "aria-label": `${TEAMS[k].full} shot map` });
+    d.appendChild(s);
+    const reads = document.createElement("div"); reads.className = "reads"; d.appendChild(reads);
+    box.appendChild(d);
+    // court lines
+    const g = el("g", {}, s);
+    el("rect", { x: 0, y: 0, width: 500, height: Y(29), class: "line", style: "opacity:.35" }, g);
+    el("rect", { x: X(17), y: 0, width: X(16), height: Y(13.75), class: "line" }, g);
+    el("path", { d: `M ${X(19)} ${Y(13.75)} A ${6 * S} ${6 * S} 0 0 0 ${X(31)} ${Y(13.75)}`, class: "line" }, g);
+    el("line", { x1: X(22), x2: X(28), y1: Y(-1.25), y2: Y(-1.25), class: "line", style: "stroke-width:2" }, g);
+    el("circle", { cx: X(25), cy: Y(0), r: 0.75 * S, class: "line" }, g);
+    el("path", { d: `M ${X(21)} ${Y(0)} A ${4 * S} ${4 * S} 0 0 0 ${X(29)} ${Y(0)}`, class: "line", style: "opacity:.4" }, g);
+    const cx3 = Math.sqrt(22.15 ** 2 - 9);
+    el("path", { d: `M ${X(25 - cx3)} 0 L ${X(25 - cx3)} ${Y(3)} A ${22.15 * S} ${22.15 * S} 0 0 0 ${X(25 + cx3)} ${Y(3)} L ${X(25 + cx3)} 0`, class: "line" }, g);
+    panels[k] = { s, hexes: el("g", {}, s), reads, small: d.querySelector("small") };
+  }
+  function render(side) {
+    for (const k of ORDER) {
+      const P = panels[k], M = H[k][side];
+      P.hexes.replaceChildren();
+      P.small.textContent = `${M.total.toLocaleString()} FGA`;
+      for (const [hx, hy, n, z] of M.hexes) {
+        const share = n / M.total, r = R * S * 0.98 * Math.sqrt(Math.min(1, share / refShare));
+        if (r < 3) continue;
+        const zone = M.zones[z];
+        const poly = el("polygon", { points: hexPts(X(hx), Y(hy), r), fill: color(zone.d), stroke: "var(--panel)", "stroke-width": 0.6, style: "cursor:pointer" }, P.hexes);
+        poly.addEventListener("pointermove", ev => showTip(`<b>${ZN(z)}</b><div>${TEAMS[k].name} ${side === "off" ? "shooting" : "opponents"}</div>
+          <div class="num">${pct(zone.freq)} of shots (${fmt(100 * zone.dfreq)} pp vs lg)</div><div class="num">${zone.pps.toFixed(2)} pts/shot (${fmt(zone.d, 2)} vs lg)</div><div class="num">${pct(share, 2)} from this hex</div>`, ev));
+        poly.addEventListener("pointerleave", hideTip);
+      }
+      const z = M.zones, rimF = z.Rim.freq, three = ["Corner3 L", "Corner3 R", "Arc3 L", "Arc3 C", "Arc3 R"].reduce((a, q) => a + (z[q]?.freq || 0), 0);
+      const best = Object.entries(z).filter(([, v]) => v.n >= 60).sort((a, b) => (side === "off" ? b[1].d - a[1].d : a[1].d - b[1].d))[0];
+      const worst = Object.entries(z).filter(([, v]) => v.n >= 60).sort((a, b) => (side === "off" ? a[1].d - b[1].d : b[1].d - a[1].d))[0];
+      P.reads.innerHTML = `<div>Rim share <b>${pct(rimF, 0)}</b> · 3PA share <b>${pct(three, 0)}</b></div>
+        <div>${side === "off" ? "Best" : "Best defended"}: ${ZN(best[0])} <b>${fmt(best[1].d, 2)}</b></div>
+        <div>${side === "off" ? "Worst" : "Most exposed"}: ${ZN(worst[0])} <b>${fmt(worst[1].d, 2)}</b></div>`;
+    }
+  }
+  const bOff = document.getElementById("btn-off"), bDef = document.getElementById("btn-def");
+  const set = side => { bOff.setAttribute("aria-pressed", side === "off"); bDef.setAttribute("aria-pressed", side === "def"); render(side); };
+  bOff.onclick = () => set("off"); bDef.onclick = () => set("def");
+  set("off");
+  const o = k => H[k].off.zones.Rim, dz = k => H[k].def.zones.Rim;
+  document.getElementById("shot-lede").innerHTML = `<strong>${pct(o("TOR").freq, 0)}</strong> of Toronto's shots came at the rim, the most in this class (Portland ${pct(o("POR").freq, 0)}, Golden State ${pct(o("GS").freq, 0)}). They finished those shots ${Math.abs(o("TOR").d).toFixed(2)} points per shot worse than league average. On defense they allowed even more: <strong>${pct(dz("TOR").freq, 0)}</strong> of opponent shots came at the rim. Golden State kept opponents to ${pct(dz("GS").freq, 0)}.`;
+})();
+
+/* ---------- roster ---------- */
+(function roster() {
+  const E = D.experience, s = document.getElementById("exp-chart");
+  const B = [["Rookie", "var(--exp1)"], ["1-2 yrs", "var(--exp2)"], ["3-5 yrs", "var(--exp3)"], ["6+ yrs", "var(--exp4)"]];
+  const x = scale(0, 1, 90, 560);
+  ORDER.forEach((k, i) => {
+    const y = 8 + i * 52; let acc = 0;
+    txt(s, 0, y + 22, TEAMS[k].name, "lbl-ink");
+    for (const [b, c] of B) {
+      const v = E[k][b] || 0;
+      const r = el("rect", { x: x(acc) + 1, y, width: Math.max(0, x(acc + v) - x(acc) - 2), height: 34, fill: c, rx: 2 }, s);
+      r.addEventListener("pointermove", ev => showTip(`<b>${TEAMS[k].name}</b><div>${b === "Rookie" ? "Rookies" : b + " of prior WNBA experience"}</div><div class="num">${pct(v)} of minutes</div>`, ev));
+      r.addEventListener("pointerleave", hideTip);
+      if (v > 0.07) txt(s, x(acc + v / 2), y + 22, pct(v, 0), "lbl", { "text-anchor": "middle", style: `fill:${b === "6+ yrs" || b === "3-5 yrs" ? "var(--bg)" : "var(--ink)"};font-size:12px` });
+      acc += v;
+    }
+    txt(s, 570, y + 16, `${E[k].avg_exp}`, "lbl-ink", { style: "font-size:18px" });
+    txt(s, 570, y + 30, "avg yrs", "lbl");
+  });
+  document.getElementById("exp-legend").innerHTML = B.map(([b, c]) => `<span class="chip" style="--c:${c};font-size:.9rem">${b === "Rookie" ? "Rookie" : b + " prior"}</span>`).join("") + `<span style="color:var(--ink-3)">Share of team minutes by prior WNBA seasons played. "Avg yrs" is weighted by minutes.</span>`;
+  document.getElementById("roster-lede").innerHTML = `Rookies played <strong>${pct(E.TOR.Rookie, 0)}</strong> of Toronto's minutes, compared with ${pct(E.POR.Rookie, 0)} in Portland and ${pct(E.GS.Rookie, 0)} in Golden State. Several were international pros new to the WNBA, like Laura Juskaite, Toronto's minutes leader. Toronto had almost no one in the 1–2 year range (${pct(E.TOR["1-2 yrs"], 0)}), so the roster was split between first-years and veterans.`;
+  const box = document.getElementById("players");
+  for (const k of ORDER) {
+    const d = document.createElement("div"); d.style.setProperty("--c", TEAMS[k].c);
+    d.innerHTML = `<h3>${TEAMS[k].full}</h3><div class="tbl-wrap"><table><tr><th>Player</th><th>MPG</th><th>PPG</th><th>TS%</th><th>+/-40</th></tr>` +
+      D.players[k].map(p => `<tr><td>${p.name}${p.exp === 0 ? '<span class="rook">ROOK</span>' : ""}</td><td>${p.mpg}</td><td>${p.ppg}</td><td>${(100 * p.ts).toFixed(1)}</td><td>${fmt(p.pm40)}</td></tr>`).join("") + "</table></div>";
+    box.appendChild(d);
+  }
+})();
+
+/* ---------- rivalry & clutch ---------- */
+(function rivalry() {
+  const games = D.h2h, rec = {};
+  const pairKey = (a, b) => [a, b].sort().join("-");
+  for (const g of games) {
+    const w = g.hs > g.as ? g.home : g.away, k = pairKey(g.home, g.away);
+    rec[k] = rec[k] || { [g.home]: 0, [g.away]: 0 }; rec[k][w]++;
+  }
+  document.getElementById("series").innerHTML = [["TOR", "POR"], ["TOR", "GS"], ["POR", "GS"]].map(([a, b]) => {
+    const r = rec[pairKey(a, b)] || { [a]: 0, [b]: 0 };
+    return `<div><span class="eyebrow">${TEAMS[a].name} vs ${TEAMS[b].name}</span><span class="big num">${r[a] || 0}–${r[b] || 0}</span></div>`;
+  }).join("") + `<div><span class="eyebrow">Note</span><span style="font-size:.85rem;color:var(--ink-2);max-width:26ch">Golden State was in year two in 2026.</span></div>`;
+  document.getElementById("board").innerHTML = games.map(g => {
+    const hw = g.hs > g.as;
+    return `<div class="game"><span class="d">${g.date}</span>
+      <span class="t ${hw ? "lose" : ""}" style="--c:${TEAMS[g.away].c}"><i></i>${TEAMS[g.away].name}</span>
+      <span class="s"><b class="${hw ? "lose" : ""}">${g.as}</b> – <b class="${hw ? "" : "lose"}">${g.hs}</b></span>
+      <span class="t r ${hw ? "" : "lose"}" style="--c:${TEAMS[g.home].c}">@ ${TEAMS[g.home].name}<i></i></span></div>`;
+  }).join("");
+  const C = D.clutch;
+  document.getElementById("clutch").innerHTML = `<tr><th>Team</th><th>Clutch W–L</th><th>Lost after leading 10+</th><th>Won after trailing 10+</th></tr>` +
+    ORDER.map(k => `<tr><td><span class="chip" style="--c:${TEAMS[k].c}">${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}</span></td><td>${C[k].w}–${C[k].l}</td><td>${C[k].blown10}</td><td>${C[k].comeback10}</td></tr>`).join("");
+})();
+</script>

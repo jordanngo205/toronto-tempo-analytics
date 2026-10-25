@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Valkyries 2025, Tempo 2026 and Fire 2026 compared through Elo, Four Factors, shot maps and roster-building.">
+<title>The Expansion Class</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one editorial column (scoreboard-style headers) with full-width chart bands; teams always in the same order GS, TOR, POR */
+:root {
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --ink: #12161d;
+  --ink-2: #4a5160;
+  --ink-3: #7a8191;
+  --rule: #dfe2e8;
+  --grid: #eceef2;
+  --tor: #2a78d6;
+  --por: #eb6834;
+  --gs: #1baf7a;
+  --hist: #9aa1ad;
+  --hot: #d03b3b;
+  --cold: #2a78d6;
+  --mid: #eceae6;
+  --exp1: #d6dbe4; --exp2: #a7b1c2; --exp3: #6c7a92; --exp4: #34405a;
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1217; --panel: #171b22; --ink: #eef0f4; --ink-2: #b7bdc9; --ink-3: #8a91a0;
+    --rule: #2a303b; --grid: #222833; --tor: #3987e5; --por: #d95926; --gs: #199e70; --hist: #6b7280;
+    --hot: #e0524f; --cold: #3987e5; --mid: #383835;
+    --exp1: #2b3240; --exp2: #4a5568; --exp3: #8090aa; --exp4: #c3cddd;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1217; --panel: #171b22; --ink: #eef0f4; --ink-2: #b7bdc9; --ink-3: #8a91a0;
+  --rule: #2a303b; --grid: #222833; --tor: #3987e5; --por: #d95926; --gs: #199e70; --hist: #6b7280;
+  --hot: #e0524f; --cold: #3987e5; --mid: #383835;
+  --exp1: #2b3240; --exp2: #4a5568; --exp3: #8090aa; --exp4: #c3cddd;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 64px; display: grid; gap: 64px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.02; }
+h1 { font-size: clamp(3rem, 9vw, 6.2rem); font-weight: 800; letter-spacing: -0.01em; text-transform: uppercase; }
+h2 { font-size: clamp(1.9rem, 4.2vw, 2.7rem); font-weight: 700; text-transform: uppercase; }
+h3 { font-size: 1.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+p { margin: 0; max-width: 66ch; }
+.eyebrow { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.dek { font-size: 1.2rem; color: var(--ink-2); max-width: 60ch; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.section { display: grid; gap: 20px; }
+.section > header { display: grid; gap: 10px; border-top: 3px solid var(--ink); padding-top: 14px; }
+.lede { color: var(--ink-2); }
+.lede strong { color: var(--ink); font-weight: 600; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+.chip::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+
+/* hero */
+.hero { display: grid; gap: 22px; }
+.hero h1 span { display: block; color: var(--ink-3); font-size: 0.34em; letter-spacing: 0.04em; margin-top: 10px; font-weight: 700; }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-top: 6px solid var(--c); padding: 16px 16px 12px; display: grid; gap: 8px; min-width: 0; }
+.card .team { font-family: var(--display); font-weight: 700; font-size: 1.35rem; text-transform: uppercase; line-height: 1; }
+.card .yr { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-3); }
+.card .rec { font-family: var(--display); font-weight: 800; font-size: 3rem; line-height: 0.9; }
+.card dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; font-size: 0.85rem; }
+.card dt { color: var(--ink-3); }
+.card dd { margin: 0; text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.card svg { width: 100%; height: 46px; display: block; }
+.byline { font-size: 0.85rem; color: var(--ink-3); }
+.byline a { color: var(--ink-2); }
+
+/* charts */
+.figure { background: var(--panel); border: 1px solid var(--rule); padding: 18px 18px 12px; min-width: 0; }
+.figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+.figure .cap { font-size: 0.82rem; color: var(--ink-3); margin-top: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.85rem; margin-bottom: 10px; color: var(--ink-2); }
+.legend .chip { font-size: 0.95rem; color: var(--ink); }
+.legend .hist::before { background: transparent; border: 2px dashed var(--hist); width: 14px; height: 0; border-radius: 0; }
+.axis text, .lbl { fill: var(--ink-3); font-family: var(--mono); font-size: 11px; }
+.lbl-ink { fill: var(--ink); font-family: var(--display); font-weight: 700; font-size: 14px; text-transform: uppercase; }
+.gridline { stroke: var(--grid); stroke-width: 1; }
+.zero { stroke: var(--ink-3); stroke-width: 1; }
+.two { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+
+/* elo table */
+.elo-list { display: grid; gap: 3px; font-size: 0.85rem; }
+.elo-row { display: grid; grid-template-columns: 22px 44px 1fr 44px; align-items: center; gap: 8px; }
+.elo-row .bar { height: 14px; background: var(--grid); position: relative; }
+.elo-row .bar i { position: absolute; inset: 0 auto 0 0; background: var(--hist); border-radius: 0 3px 3px 0; }
+.elo-row.hl .bar i { background: var(--c); }
+.elo-row.hl { font-weight: 600; }
+.elo-row .ab { font-family: var(--display); font-weight: 700; }
+
+/* toggle */
+.toggle { display: inline-flex; border: 1px solid var(--ink); }
+.toggle button { font: 700 0.95rem var(--display); text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 14px; background: transparent; color: var(--ink); border: 0; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.toggle button:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--tor); outline-offset: 2px; }
+.courts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.court h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.court h3 small { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-3); font-weight: 400; text-transform: none; letter-spacing: 0; }
+.court .line { fill: none; stroke: var(--ink-3); stroke-width: 1.2; opacity: 0.7; }
+.court .reads { font-size: 0.82rem; color: var(--ink-2); display: grid; gap: 2px; margin-top: 6px; }
+.court .reads b { font-family: var(--mono); font-weight: 500; }
+.scale { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: var(--ink-3); flex-wrap: wrap; }
+.scale .ramp { width: 180px; height: 10px; background: linear-gradient(90deg, var(--cold), var(--mid), var(--hot)); }
+.hexkey { display: inline-flex; gap: 4px; align-items: end; }
+.hexkey svg { width: 60px; height: 18px; }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th { font: 600 0.72rem var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--ink); }
+th:first-child, td:first-child { text-align: left; }
+td { padding: 6px 8px; border-bottom: 1px solid var(--rule); text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+td:first-child { font-family: var(--body); }
+.rook { font: 600 0.62rem var(--mono); letter-spacing: 0.08em; color: var(--ink-3); border: 1px solid var(--rule); padding: 0 4px; margin-left: 6px; vertical-align: 2px; }
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.trio > div { min-width: 0; }
+.trio h3 { border-bottom: 3px solid var(--c); padding-bottom: 4px; margin-bottom: 4px; }
+
+/* scoreboard */
+.board { display: grid; gap: 6px; }
+.game { display: grid; grid-template-columns: 64px 1fr auto 1fr; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--rule); padding: 8px 12px; }
+.game .d { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-3); }
+.game .t { display: flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 1.15rem; text-transform: uppercase; min-width: 0; }
+.game .t.r { justify-content: flex-end; }
+.game .t i { width: 8px; height: 22px; background: var(--c); display: inline-block; }
+.game .s { font-family: var(--mono); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.game .s b { font-weight: 500; }
+.game .lose { color: var(--ink-3); }
+.series { display: flex; flex-wrap: wrap; gap: 10px; }
+.series div { background: var(--panel); border: 1px solid var(--rule); padding: 10px 14px; display: grid; gap: 2px; }
+.series .big { font-family: var(--display); font-weight: 800; font-size: 1.8rem; line-height: 1; }
+
+.takeaways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; counter-reset: t; }
+.takeaways div { border-top: 2px solid var(--ink); padding-top: 10px; display: grid; gap: 6px; }
+.takeaways b { font-family: var(--display); font-size: 1.2rem; text-transform: uppercase; line-height: 1.1; }
+.takeaways p { font-size: 0.95rem; color: var(--ink-2); }
+
+details { font-size: 0.88rem; }
+summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.methods { font-size: 0.88rem; color: var(--ink-2); display: grid; gap: 8px; border-top: 1px solid var(--rule); padding-top: 16px; }
+.methods a { color: var(--ink); }
+
+#tip { position: fixed; pointer-events: none; z-index: 20; background: var(--ink); color: var(--bg); padding: 8px 10px; font-size: 0.8rem; line-height: 1.35; max-width: 240px; opacity: 0; transition: opacity 0.1s; }
+#tip b { font-family: var(--display); font-size: 1rem; text-transform: uppercase; letter-spacing: 0.02em; }
+#tip .num { font-size: 0.78rem; }
+.hit { fill: transparent; cursor: crosshair; }
+
+@media (max-width: 760px) {
+  .cards, .courts, .trio, .takeaways, .two { grid-template-columns: minmax(0, 1fr); }
+  .game { grid-template-columns: 52px 1fr auto 1fr; padding: 8px; gap: 6px; }
+  .game .t { font-size: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) { #tip { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <section class="hero">
+    <div class="eyebrow">WNBA expansion · 2025–2026 · Toronto Tempo desk</div>
+    <h1>The Expansion Class<span>Golden State made year one look easy. Toronto found out how hard it is.</span></h1>
+    <p class="dek">Three new teams in two seasons. One made the playoffs, one was respectable, and one finished last. We compare the 2025 Valkyries, 2026 Tempo and 2026 Fire with Elo ratings, the Four Factors, shot maps and roster-building, measured against the 2006 Sky and 2008 Dream.</p>
+    <div class="cards" id="cards"></div>
+    <div class="byline">Data: sportsdataverse (ESPN play-by-play, box scores, WNBA Stats lineups). Inspired by <a href="https://riseofthevalkyries.substack.com/" target="_blank" rel="noopener">Rise of the Valkyries</a> and <a href="https://neilpaine.substack.com/t/basketball" target="_blank" rel="noopener">Neil Paine</a>.</div>
+  </section>
+
+  <section class="section" id="elo">
+    <header>
+      <div class="eyebrow">01 · Elo through year one</div>
+      <h2>Toronto never found the floor</h2>
+      <p class="lede" id="elo-lede"></p>
+    </header>
+    <div class="two">
+      <div class="figure">
+        <div class="legend" id="elo-legend"></div>
+        <svg id="elo-chart" viewBox="0 0 640 360" role="img" aria-label="Elo rating by game number for five expansion teams"></svg>
+        <div class="cap">Elo after each regular-season game. New teams start at 1300; the league average is 1500. Hover for game-by-game values.</div>
+      </div>
+      <div class="figure">
+        <h3 style="margin-bottom:10px">Where 2026 ended</h3>
+        <div class="elo-list" id="elo-table"></div>
+        <div class="cap">Final 2026 Elo, playoffs included. Golden State, in year two, finished second.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="fingerprint">
+    <header>
+      <div class="eyebrow">02 · Team fingerprint</div>
+      <h2>Same offense, very different defense</h2>
+      <p class="lede">Toronto and Portland both <strong>scored more efficiently than the 2025 Valkyries</strong> (103.0 and 103.5 points per 100 possessions vs 98.8). What made Golden State a playoff team was defense: 3rd in defensive rating and 1st in opponent eFG%. Toronto finished <strong>last in both</strong>.</p>
+    </header>
+    <div class="figure">
+      <div class="legend" id="fp-legend"></div>
+      <svg id="fp-chart" viewBox="0 0 640 430" role="img" aria-label="League rank on ratings and Four Factors for the three expansion teams"></svg>
+      <div class="cap">Position within each team's own season: left = best in the league, right = worst. 2025 had 13 teams, 2026 had 15. Hover a dot for the value and league average.</div>
+      <details style="margin-top:10px"><summary>Show as table</summary><div class="tbl-wrap"><table id="fp-table"></table></div></details>
+    </div>
+  </section>
+
+  <section class="section" id="arc">
+    <header>
+      <div class="eyebrow">03 · The season arc</div>
+      <h2>Portland figured it out. Toronto slid away.</h2>
+      <p class="lede">The two 2026 teams went in opposite directions. Portland bottomed out early, at about −14 over 10 games around game 20, then played close to even for the rest of the year. Toronto was near even through game 18, then fell to about −19 from game 25 on and never recovered. The bars below show every game's final margin.</p>
+    </header>
+    <div class="figure">
+      <div class="legend" id="arc-legend"></div>
+      <svg id="arc-chart" viewBox="0 0 640 300" role="img" aria-label="Rolling ten-game net rating by game number"></svg>
+      <svg id="strip-chart" viewBox="0 0 640 230" role="img" aria-label="Final margin of every game for each team" style="margin-top:14px"></svg>
+      <div class="cap">Top: net rating over the trailing 10 games. Bottom: final margin of each game, with wins above the line and losses below.</div>
+    </div>
+  </section>
+
+  <section class="section" id="shots">
+    <header>
+      <div class="eyebrow">04 · Shot maps</div>
+      <h2>Toronto lived at the rim and died there</h2>
+      <p class="lede" id="shot-lede"></p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+        <div class="toggle" role="group" aria-label="Offense or defense">
+          <button type="button" id="btn-off" aria-pressed="true">Their shots</button>
+          <button type="button" id="btn-def" aria-pressed="false">Opponents' shots</button>
+        </div>
+        <div class="scale"><span>Colder</span><span class="ramp"></span><span>Hotter than league, by zone</span>
+          <span class="hexkey"><svg viewBox="0 0 60 18" aria-hidden="true"><polygon points="6,6 9,7.7 9,11.2 6,13 3,11.2 3,7.7" fill="var(--ink-3)"/><polygon points="24,3 29.2,6 29.2,12 24,15 18.8,12 18.8,6" fill="var(--ink-3)"/><polygon points="48,0 55.8,4.5 55.8,13.5 48,18 40.2,13.5 40.2,4.5" fill="var(--ink-3)"/></svg>size = shot share</span>
+        </div>
+      </div>
+    </header>
+    <div class="courts" id="courts"></div>
+    <div class="cap" style="font-size:0.82rem;color:var(--ink-3)">Each hex is about 2.6 ft wide, and its size shows the share of the team's attempts taken there. Colour is points per shot in that zone compared with league average for the same season. On the "Opponents' shots" view, red means opponents shot hot against this team. Hover a hex for the zone numbers.</div>
+  </section>
+
+  <section class="section" id="roster">
+    <header>
+      <div class="eyebrow">05 · How they were built</div>
+      <h2>Toronto bet on rookies</h2>
+      <p class="lede" id="roster-lede"></p>
+    </header>
+    <div class="figure">
+      <svg id="exp-chart" viewBox="0 0 640 170" role="img" aria-label="Share of minutes by prior WNBA seasons"></svg>
+      <div class="legend" id="exp-legend" style="margin-top:8px;margin-bottom:0"></div>
+    </div>
+    <div class="trio" id="players"></div>
+  </section>
+
+  <section class="section" id="rivalry">
+    <header>
+      <div class="eyebrow">06 · Expansion vs expansion</div>
+      <h2>The newcomers' mini-league</h2>
+      <p class="lede">In 2026, Toronto played Portland three times and Golden State three times. The games between new teams are the cleanest measure of who is ahead in the build.</p>
+    </header>
+    <div class="series" id="series"></div>
+    <div class="board" id="board"></div>
+    <div class="figure">
+      <h3 style="margin-bottom:8px">Close games</h3>
+      <div class="tbl-wrap"><table id="clutch"></table></div>
+      <div class="cap">Clutch = within 5 points at any point in the last 5 minutes.</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <header>
+      <div class="eyebrow">07 · For 2027</div>
+      <h2>What the Tempo need from year two</h2>
+    </header>
+    <div class="takeaways">
+      <div><b>Defense first</b><p>The offense already ranks with this class. Opponents shot an eFG% of 54.7%, the worst in the league, and Toronto was 14th in defensive rebounding. Golden State's year-one formula was a top-3 defense with an average offense.</p></div>
+      <div><b>Protect the paint</b><p>A third of opponent shots came at the rim. Toronto needs a rim deterrent, through the draft or free agency, more than another scorer.</p></div>
+      <div><b>Year two can flip fast</b><p>The Valkyries went from 1472 Elo and 8th to 1631 and 2nd in one offseason. Toronto starts 2027 near 1300 after the offseason regression, so the gap is large but not fixed.</p></div>
+    </div>
+  </section>
+
+  <section class="methods">
+    <h3>Method</h3>
+    <p>Elo uses every WNBA game from 2003 to 2026 in the style of FiveThirtyEight and Neil Paine: K = 20, 80-point home edge, a margin-of-victory multiplier, and 25% regression to 1500 between seasons. New franchises start at 1300. Possessions = FGA − ORB + TOV + 0.44·FTA. The Four Factors are ranked within each season. Shot zones come from ESPN play-by-play coordinates, and free throws are excluded. Roster experience counts prior WNBA seasons with minutes played since 2003. Close-game data comes from play-by-play. Code: <span class="num">06_expansion_class/build.py</span>.</p>
+  </section>
+</div>
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script id="data" type="application/json">{"class":[{"key":"GS","season":2025,"name":"Golden State Valkyries"},{"key":"TOR","season":2026,"name":"Toronto Tempo"},{"key":"POR","season":2026,"name":"Portland Fire"},{"key":"CHI","season":2006,"name":"Chicago Sky"},{"key":"ATL","season":2008,"name":"Atlanta Dream"}],"elo":{"paths":{"GS":[1300,1286.1,1293.2,1310.1,1307.8,1307.0,1303.2,1299.7,1339.8,1353.5,1364.7,1357.4,1371.7,1388.6,1386.0,1390.8,1418.5,1415.5,1411.2,1439.7,1437.3,1433.4,1429.1,1435.9,1413.8,1422.8,1428.7,1436.4,1427.0,1419.7,1429.8,1438.0,1447.3,1464.9,1452.7,1444.1,1439.2,1448.4,1463.5,1474.1,1483.4,1485.5,1480.1,1477.5,1472.3],"TOR":[1300,1294.7,1312.9,1310.2,1328.8,1349.3,1344.6,1320.2,1333.0,1352.7,1347.7,1358.3,1362.5,1360.0,1349.0,1344.0,1351.6,1349.9,1371.6,1362.3,1351.9,1346.5,1337.8,1344.8,1329.7,1320.2,1310.0,1308.9,1302.0,1299.3,1297.2,1289.3,1286.7,1284.7,1282.1,1278.7,1284.4,1279.7,1273.5,1270.6,1261.1,1256.6,1247.1,1241.5,1234.2],"POR":[1300,1284.8,1293.1,1285.5,1289.5,1286.5,1311.0,1328.6,1337.0,1329.0,1350.6,1345.3,1339.1,1332.0,1326.1,1331.2,1327.8,1334.5,1320.0,1304.4,1302.6,1314.7,1310.5,1334.6,1330.6,1358.0,1356.4,1351.9,1348.4,1341.8,1333.7,1341.7,1348.5,1346.2,1352.9,1362.0,1356.3,1349.9,1344.4,1379.9,1372.8,1366.1,1363.5,1351.9,1368.6],"CHI":[1300,1307.0,1300.9,1298.7,1290.1,1287.4,1284.8,1283.2,1277.2,1272.4,1269.0,1267.0,1263.9,1272.1,1268.0,1276.5,1274.6,1271.2,1266.3,1263.1,1261.8,1258.9,1250.7,1247.1,1266.5,1263.4,1254.5,1246.5,1242.2,1238.7,1235.1,1228.4,1252.1],"ATL":[1300,1294.9,1282.6,1280.4,1276.5,1266.3,1260.6,1256.7,1253.0,1250.2,1244.3,1241.5,1236.5,1235.3,1234.1,1229.4,1225.1,1237.4,1255.0,1253.6,1249.1,1264.7,1263.2,1259.3,1253.0,1247.9,1243.4,1237.2,1234.3,1229.7,1227.7,1224.8,1252.8,1251.7]},"table2026":[{"team":"Atlanta Dream","abbr":"ATL","elo":1655},{"team":"Golden State Valkyries","abbr":"GS","elo":1631},{"team":"Minnesota Lynx","abbr":"MIN","elo":1591},{"team":"Indiana Fever","abbr":"IND","elo":1577},{"team":"Las Vegas Aces","abbr":"LV","elo":1575},{"team":"New York Liberty","abbr":"NY","elo":1557},{"team":"Dallas Wings","abbr":"DAL","elo":1522},{"team":"Washington Mystics","abbr":"WSH","elo":1504},{"team":"Phoenix Mercury","abbr":"PHX","elo":1398},{"team":"Los Angeles Sparks","abbr":"LA","elo":1384},{"team":"Portland Fire","abbr":"POR","elo":1369},{"team":"Chicago Sky","abbr":"CHI","elo":1340},{"team":"Seattle Storm","abbr":"SEA","elo":1310},{"team":"Connecticut Sun","abbr":"CON","elo":1303},{"team":"Toronto Tempo","abbr":"TOR","elo":1234}],"end":{"GS":{"end":1472,"rank":8,"of":13},"TOR":{"end":1234,"rank":15,"of":15},"POR":{"end":1369,"rank":11,"of":15},"CHI":{"end":1252,"rank":14,"of":14},"ATL":{"end":1252,"rank":14,"of":14}},"params":{"K":20,"hca":80,"new_team":1300,"carry":0.75}},"fingerprint":{"GS":{"teams":13,"w":23,"l":21,"pace":78.4,"ortg":{"v":98.788,"rank":9,"lg":100.9173},"drtg":{"v":97.6351,"rank":3,"lg":100.9244},"net":{"v":1.1528,"rank":8,"lg":-0.0071},"efg":{"v":0.4815,"rank":10,"lg":0.4996},"tov":{"v":0.18,"rank":10,"lg":0.1725},"orb":{"v":0.2596,"rank":5,"lg":0.2479},"ftr":{"v":0.2299,"rank":4,"lg":0.2131},"opp_efg":{"v":0.4717,"rank":1,"lg":0.4998},"opp_tov":{"v":0.1634,"rank":10,"lg":0.1724},"drb":{"v":0.7597,"rank":3,"lg":0.752},"opp_ftr":{"v":0.2152,"rank":7,"lg":0.2131}},"TOR":{"teams":15,"w":11,"l":33,"pace":83.2,"ortg":{"v":102.9624,"rank":10,"lg":104.7584},"drtg":{"v":113.5208,"rank":15,"lg":104.7322},"net":{"v":-10.5584,"rank":14,"lg":0.0262},"efg":{"v":0.504,"rank":10,"lg":0.5152},"tov":{"v":0.1754,"rank":10,"lg":0.1667},"orb":{"v":0.2613,"rank":5,"lg":0.2547},"ftr":{"v":0.2487,"rank":6,"lg":0.2379},"opp_efg":{"v":0.5472,"rank":15,"lg":0.5152},"opp_tov":{"v":0.1542,"rank":13,"lg":0.1668},"drb":{"v":0.7057,"rank":14,"lg":0.7452},"opp_ftr":{"v":0.2424,"rank":9,"lg":0.238}},"POR":{"teams":15,"w":17,"l":27,"pace":83.3,"ortg":{"v":103.5164,"rank":8,"lg":104.7584},"drtg":{"v":109.302,"rank":14,"lg":104.7322},"net":{"v":-5.7856,"rank":12,"lg":0.0262},"efg":{"v":0.5238,"rank":7,"lg":0.5152},"tov":{"v":0.1814,"rank":14,"lg":0.1667},"orb":{"v":0.2454,"rank":10,"lg":0.2547},"ftr":{"v":0.2222,"rank":10,"lg":0.2379},"opp_efg":{"v":0.533,"rank":12,"lg":0.5152},"opp_tov":{"v":0.1752,"rank":4,"lg":0.1668},"drb":{"v":0.7005,"rank":15,"lg":0.7452},"opp_ftr":{"v":0.2812,"rank":14,"lg":0.238}},"CHI":{"teams":14,"w":5,"l":27,"pace":76.4,"ortg":{"v":90.2558,"rank":14,"lg":96.323},"drtg":{"v":103.5643,"rank":14,"lg":96.388},"net":{"v":-13.3085,"rank":14,"lg":-0.065},"efg":{"v":0.4329,"rank":14,"lg":0.464},"tov":{"v":0.1864,"rank":4,"lg":0.1892},"orb":{"v":0.2906,"rank":8,"lg":0.3024},"ftr":{"v":0.2088,"rank":14,"lg":0.2382},"opp_efg":{"v":0.501,"rank":14,"lg":0.4647},"opp_tov":{"v":0.1948,"rank":5,"lg":0.1893},"drb":{"v":0.6475,"rank":14,"lg":0.6977},"opp_ftr":{"v":0.2541,"rank":10,"lg":0.2387}},"ATL":{"teams":14,"w":4,"l":29,"pace":82.3,"ortg":{"v":90.5447,"rank":13,"lg":95.9287},"drtg":{"v":102.7342,"rank":13,"lg":95.9204},"net":{"v":-12.1894,"rank":14,"lg":0.0083},"efg":{"v":0.4435,"rank":14,"lg":0.46},"tov":{"v":0.1993,"rank":9,"lg":0.1916},"orb":{"v":0.2754,"rank":13,"lg":0.3051},"ftr":{"v":0.2369,"rank":10,"lg":0.2496},"opp_efg":{"v":0.4879,"rank":13,"lg":0.4605},"opp_tov":{"v":0.1947,"rank":7,"lg":0.1917},"drb":{"v":0.6494,"rank":14,"lg":0.695},"opp_ftr":{"v":0.3028,"rank":14,"lg":0.2496}}},"rolling":{"GS":[null,null,null,null,null,null,null,null,null,-2.7,-1.4,-0.1,1.5,4.5,5.8,10.5,10.3,5.6,6.2,4.9,5.1,2.3,0.5,-3.2,-3.5,-6.6,-4.8,-5.8,-8.3,-6.2,-3.3,-1.1,2.7,6.1,4.7,3.1,3.8,11.5,13.4,12.8,11.0,9.1,4.4,2.7],"TOR":[null,null,null,null,null,null,null,null,null,-1.2,1.3,0.5,1.0,-2.4,-5.6,-1.5,0.1,2.2,-1.4,-1.8,-5.0,-7.6,-6.8,-6.4,-6.2,-9.6,-10.8,-18.5,-19.7,-19.0,-19.3,-18.9,-20.6,-19.4,-17.9,-14.2,-14.2,-11.3,-11.9,-14.4,-15.0,-18.0,-18.5,-19.7],"POR":[null,null,null,null,null,null,null,null,null,-3.5,-3.4,-4.5,-4.5,-6.5,-4.7,-11.1,-10.3,-14.4,-15.7,-16.8,-14.1,-14.4,-10.6,-9.2,-7.2,-4.0,-4.2,-3.8,-1.4,-2.2,-0.4,1.9,-0.1,1.0,-0.7,-0.5,-1.2,-1.4,3.2,2.2,-0.4,-3.6,-6.3,-5.8]},"games":{"GS":[{"n":1,"date":"May 16","opp":"LA","home":true,"pf":67,"pa":84},{"n":2,"date":"May 21","opp":"WSH","home":true,"pf":76,"pa":74},{"n":3,"date":"May 23","opp":"LA","home":false,"pf":82,"pa":73},{"n":4,"date":"May 27","opp":"NY","home":false,"pf":67,"pa":95},{"n":5,"date":"May 29","opp":"NY","home":false,"pf":77,"pa":82},{"n":6,"date":"Jun 1","opp":"MIN","home":true,"pf":75,"pa":86},{"n":7,"date":"Jun 5","opp":"PHX","home":false,"pf":77,"pa":86},{"n":8,"date":"Jun 7","opp":"LV","home":true,"pf":95,"pa":68},{"n":9,"date":"Jun 9","opp":"LA","home":false,"pf":89,"pa":81},{"n":10,"date":"Jun 14","opp":"SEA","home":true,"pf":76,"pa":70},{"n":11,"date":"Jun 17","opp":"DAL","home":false,"pf":71,"pa":80},{"n":12,"date":"Jun 19","opp":"IND","home":true,"pf":88,"pa":77},{"n":13,"date":"Jun 22","opp":"CON","home":true,"pf":87,"pa":63},{"n":14,"date":"Jun 25","opp":"NY","home":true,"pf":78,"pa":81},{"n":15,"date":"Jun 27","opp":"CHI","home":true,"pf":83,"pa":78},{"n":16,"date":"Jun 29","opp":"SEA","home":true,"pf":84,"pa":57},{"n":17,"date":"Jul 5","opp":"MIN","home":false,"pf":71,"pa":82},{"n":18,"date":"Jul 7","opp":"ATL","home":false,"pf":81,"pa":90},{"n":19,"date":"Jul 9","opp":"IND","home":false,"pf":80,"pa":61},{"n":20,"date":"Jul 12","opp":"LV","home":false,"pf":102,"pa":104},{"n":21,"date":"Jul 14","opp":"PHX","home":true,"pf":77,"pa":78},{"n":22,"date":"Jul 16","opp":"SEA","home":false,"pf":58,"pa":67},{"n":23,"date":"Jul 25","opp":"DAL","home":true,"pf":86,"pa":76},{"n":24,"date":"Jul 27","opp":"CON","home":false,"pf":64,"pa":95},{"n":25,"date":"Jul 29","opp":"ATL","home":false,"pf":77,"pa":75},{"n":26,"date":"Jul 31","opp":"WSH","home":false,"pf":68,"pa":67},{"n":27,"date":"Aug 1","opp":"CHI","home":false,"pf":73,"pa":66},{"n":28,"date":"Aug 3","opp":"LV","home":false,"pf":77,"pa":101},{"n":29,"date":"Aug 6","opp":"LV","home":true,"pf":72,"pa":78},{"n":30,"date":"Aug 9","opp":"LA","home":true,"pf":72,"pa":59},{"n":31,"date":"Aug 11","opp":"CON","home":true,"pf":74,"pa":57},{"n":32,"date":"Aug 13","opp":"WSH","home":false,"pf":88,"pa":83},{"n":33,"date":"Aug 15","opp":"CHI","home":false,"pf":90,"pa":59},{"n":34,"date":"Aug 17","opp":"ATL","home":true,"pf":63,"pa":79},{"n":35,"date":"Aug 19","opp":"PHX","home":true,"pf":91,"pa":98},{"n":36,"date":"Aug 22","opp":"PHX","home":false,"pf":72,"pa":81},{"n":37,"date":"Aug 24","opp":"DAL","home":false,"pf":90,"pa":81},{"n":38,"date":"Aug 30","opp":"WSH","home":true,"pf":99,"pa":62},{"n":39,"date":"Aug 31","opp":"IND","home":true,"pf":75,"pa":63},{"n":40,"date":"Sep 2","opp":"NY","home":true,"pf":66,"pa":58},{"n":41,"date":"Sep 4","opp":"DAL","home":true,"pf":84,"pa":80},{"n":42,"date":"Sep 6","opp":"MIN","home":true,"pf":72,"pa":78},{"n":43,"date":"Sep 9","opp":"SEA","home":false,"pf":73,"pa":74},{"n":44,"date":"Sep 11","opp":"MIN","home":false,"pf":53,"pa":72}],"TOR":[{"n":1,"date":"May 8","opp":"WSH","home":true,"pf":65,"pa":68},{"n":2,"date":"May 13","opp":"SEA","home":true,"pf":86,"pa":73},{"n":3,"date":"May 15","opp":"LA","home":false,"pf":95,"pa":99},{"n":4,"date":"May 17","opp":"LA","home":false,"pf":106,"pa":96},{"n":5,"date":"May 19","opp":"PHX","home":false,"pf":98,"pa":90},{"n":6,"date":"May 21","opp":"MIN","home":false,"pf":72,"pa":100},{"n":7,"date":"May 23","opp":"POR","home":true,"pf":80,"pa":99},{"n":8,"date":"May 27","opp":"CHI","home":false,"pf":111,"pa":104},{"n":9,"date":"May 30","opp":"SEA","home":true,"pf":93,"pa":72},{"n":10,"date":"Jun 3","opp":"NY","home":false,"pf":82,"pa":97},{"n":11,"date":"Jun 7","opp":"CHI","home":true,"pf":85,"pa":68},{"n":12,"date":"Jun 10","opp":"CON","home":true,"pf":106,"pa":102},{"n":13,"date":"Jun 12","opp":"WSH","home":false,"pf":85,"pa":86},{"n":14,"date":"Jun 14","opp":"ATL","home":true,"pf":77,"pa":102},{"n":15,"date":"Jun 16","opp":"IND","home":false,"pf":91,"pa":113},{"n":16,"date":"Jun 19","opp":"CON","home":false,"pf":101,"pa":97},{"n":17,"date":"Jun 22","opp":"ATL","home":false,"pf":87,"pa":94},{"n":18,"date":"Jun 25","opp":"LA","home":true,"pf":125,"pa":97},{"n":19,"date":"Jun 27","opp":"PHX","home":true,"pf":80,"pa":89},{"n":20,"date":"Jul 5","opp":"DAL","home":true,"pf":76,"pa":89},{"n":21,"date":"Jul 8","opp":"GS","home":true,"pf":75,"pa":83},{"n":22,"date":"Jul 10","opp":"DAL","home":true,"pf":95,"pa":108},{"n":23,"date":"Jul 12","opp":"NY","home":true,"pf":93,"pa":91},{"n":24,"date":"Jul 14","opp":"WSH","home":true,"pf":62,"pa":79},{"n":25,"date":"Jul 17","opp":"ATL","home":true,"pf":92,"pa":111},{"n":26,"date":"Jul 20","opp":"LV","home":true,"pf":83,"pa":109},{"n":27,"date":"Jul 28","opp":"MIN","home":false,"pf":93,"pa":100},{"n":28,"date":"Jul 30","opp":"MIN","home":true,"pf":72,"pa":104},{"n":29,"date":"Aug 2","opp":"GS","home":false,"pf":79,"pa":96},{"n":30,"date":"Aug 4","opp":"GS","home":false,"pf":81,"pa":92},{"n":31,"date":"Aug 6","opp":"POR","home":false,"pf":83,"pa":97},{"n":32,"date":"Aug 10","opp":"ATL","home":false,"pf":95,"pa":107},{"n":33,"date":"Aug 12","opp":"DAL","home":false,"pf":88,"pa":94},{"n":34,"date":"Aug 18","opp":"IND","home":true,"pf":95,"pa":101},{"n":35,"date":"Aug 19","opp":"WSH","home":false,"pf":82,"pa":93},{"n":36,"date":"Aug 21","opp":"POR","home":true,"pf":82,"pa":79},{"n":37,"date":"Aug 23","opp":"LV","home":true,"pf":78,"pa":88},{"n":38,"date":"Aug 26","opp":"SEA","home":false,"pf":78,"pa":90},{"n":39,"date":"Aug 28","opp":"LV","home":false,"pf":73,"pa":93},{"n":40,"date":"Aug 29","opp":"PHX","home":false,"pf":69,"pa":101},{"n":41,"date":"Sep 18","opp":"IND","home":true,"pf":85,"pa":103},{"n":42,"date":"Sep 20","opp":"NY","home":true,"pf":69,"pa":106},{"n":43,"date":"Sep 22","opp":"CHI","home":false,"pf":85,"pa":97},{"n":44,"date":"Sep 24","opp":"CON","home":false,"pf":81,"pa":95}],"POR":[{"n":1,"date":"May 9","opp":"CHI","home":true,"pf":83,"pa":98},{"n":2,"date":"May 12","opp":"NY","home":true,"pf":98,"pa":96},{"n":3,"date":"May 14","opp":"NY","home":true,"pf":82,"pa":100},{"n":4,"date":"May 18","opp":"CON","home":true,"pf":83,"pa":82},{"n":5,"date":"May 20","opp":"IND","home":false,"pf":73,"pa":90},{"n":6,"date":"May 23","opp":"TOR","home":false,"pf":99,"pa":80},{"n":7,"date":"May 25","opp":"NY","home":false,"pf":81,"pa":74},{"n":8,"date":"May 27","opp":"CON","home":true,"pf":71,"pa":61},{"n":9,"date":"May 29","opp":"ATL","home":true,"pf":66,"pa":86},{"n":10,"date":"May 30","opp":"IND","home":true,"pf":100,"pa":84},{"n":11,"date":"Jun 2","opp":"GS","home":false,"pf":77,"pa":95},{"n":12,"date":"Jun 5","opp":"PHX","home":true,"pf":72,"pa":78},{"n":13,"date":"Jun 7","opp":"LA","home":false,"pf":72,"pa":89},{"n":14,"date":"Jun 11","opp":"LV","home":true,"pf":89,"pa":105},{"n":15,"date":"Jun 13","opp":"DAL","home":true,"pf":84,"pa":83},{"n":16,"date":"Jun 15","opp":"MIN","home":false,"pf":74,"pa":107},{"n":17,"date":"Jun 17","opp":"SEA","home":true,"pf":94,"pa":89},{"n":18,"date":"Jun 24","opp":"CHI","home":false,"pf":78,"pa":101},{"n":19,"date":"Jun 26","opp":"CHI","home":false,"pf":94,"pa":124},{"n":20,"date":"Jun 28","opp":"WSH","home":false,"pf":123,"pa":124},{"n":21,"date":"Jul 4","opp":"SEA","home":false,"pf":77,"pa":72},{"n":22,"date":"Jul 9","opp":"LV","home":true,"pf":80,"pa":88},{"n":23,"date":"Jul 11","opp":"ATL","home":false,"pf":102,"pa":92},{"n":24,"date":"Jul 14","opp":"CON","home":false,"pf":87,"pa":90},{"n":25,"date":"Jul 16","opp":"WSH","home":false,"pf":75,"pa":56},{"n":26,"date":"Jul 18","opp":"MIN","home":false,"pf":93,"pa":101},{"n":27,"date":"Jul 22","opp":"DAL","home":true,"pf":97,"pa":101},{"n":28,"date":"Jul 28","opp":"LV","home":false,"pf":83,"pa":98},{"n":29,"date":"Jul 31","opp":"IND","home":true,"pf":98,"pa":112},{"n":30,"date":"Aug 2","opp":"LA","home":true,"pf":101,"pa":106},{"n":31,"date":"Aug 6","opp":"TOR","home":true,"pf":97,"pa":83},{"n":32,"date":"Aug 8","opp":"SEA","home":true,"pf":100,"pa":93},{"n":33,"date":"Aug 12","opp":"MIN","home":true,"pf":81,"pa":85},{"n":34,"date":"Aug 14","opp":"SEA","home":false,"pf":84,"pa":82},{"n":35,"date":"Aug 16","opp":"PHX","home":false,"pf":88,"pa":85},{"n":36,"date":"Aug 21","opp":"TOR","home":false,"pf":79,"pa":82},{"n":37,"date":"Aug 23","opp":"WSH","home":true,"pf":100,"pa":105},{"n":38,"date":"Aug 25","opp":"DAL","home":false,"pf":78,"pa":96},{"n":39,"date":"Aug 28","opp":"ATL","home":false,"pf":101,"pa":83},{"n":40,"date":"Aug 30","opp":"GS","home":true,"pf":69,"pa":86},{"n":41,"date":"Sep 17","opp":"PHX","home":true,"pf":91,"pa":94},{"n":42,"date":"Sep 18","opp":"GS","home":false,"pf":66,"pa":82},{"n":43,"date":"Sep 20","opp":"LA","home":false,"pf":84,"pa":105},{"n":44,"date":"Sep 22","opp":"GS","home":true,"pf":90,"pa":82}]},"h2h":[{"date":"May 23","home":"TOR","away":"POR","hs":80,"as":99},{"date":"Jun 2","home":"GS","away":"POR","hs":95,"as":77},{"date":"Jul 8","home":"TOR","away":"GS","hs":75,"as":83},{"date":"Aug 2","home":"GS","away":"TOR","hs":96,"as":79},{"date":"Aug 4","home":"GS","away":"TOR","hs":92,"as":81},{"date":"Aug 6","home":"POR","away":"TOR","hs":97,"as":83},{"date":"Aug 21","home":"TOR","away":"POR","hs":82,"as":79},{"date":"Aug 30","home":"POR","away":"GS","hs":69,"as":86},{"date":"Sep 18","home":"GS","away":"POR","hs":82,"as":66},{"date":"Sep 22","home":"POR","away":"GS","hs":90,"as":82}],"clutch":{"GS":{"w":12,"l":12,"blown10":3,"comeback10":4},"TOR":{"w":6,"l":8,"blown10":4,"comeback10":3},"POR":{"w":11,"l":9,"blown10":4,"comeback10":5}},"hex":{"GS":{"off":{"total":2847,"hexes":[[0.0,-0.5,6,"Corner3 R"],[0.0,4.0,4,"Arc3 L"],[1.3,-2.75,6,"Corner3 R"],[1.3,1.75,41,"Corner3 L"],[1.3,6.25,10,"Arc3 L"],[1.3,10.75,6,"Arc3 L"],[2.6,-0.5,28,"Corner3 L"],[2.6,4.0,38,"Arc3 L"],[2.6,8.5,15,"Arc3 L"],[2.6,13.0,7,"Arc3 L"],[3.9,1.75,5,"Corner3 L"],[3.9,6.25,6,"Arc3 L"],[3.9,10.75,18,"Arc3 L"],[3.9,15.25,15,"Arc3 L"],[3.9,19.75,2,"Arc3 L"],[5.2,-0.5,3,"Mid R"],[5.2,8.5,2,"Arc3 L"],[5.2,13.0,23,"Arc3 L"],[5.2,17.5,18,"Arc3 L"],[6.5,6.25,2,"Mid L"],[6.5,10.75,2,"Mid L"],[6.5,15.25,25,"Arc3 L"],[6.5,19.75,13,"Arc3 L"],[7.79,-0.5,4,"Mid L"],[7.79,4.0,3,"Mid L"],[7.79,13.0,4,"Mid L"],[7.79,17.5,34,"Arc3 L"],[7.79,22.0,14,"Arc3 L"],[9.09,1.75,2,"Mid L"],[9.09,10.75,5,"Mid L"],[9.09,15.25,2,"Arc3 L"],[9.09,19.75,41,"Arc3 L"],[9.09,24.25,3,"Arc3 L"],[10.39,4.0,4,"Mid L"],[10.39,8.5,3,"Mid L"],[10.39,13.0,3,"Mid L"],[10.39,17.5,8,"Arc3 L"],[10.39,22.0,22,"Arc3 L"],[10.39,26.5,2,"Arc3 C"],[11.69,6.25,2,"Mid L"],[11.69,15.25,2,"Mid L"],[11.69,19.75,12,"Arc3 L"],[11.69,24.25,3,"Arc3 L"],[12.99,-0.5,2,"Mid R"],[12.99,4.0,6,"Mid L"],[12.99,8.5,2,"Mid L"],[12.99,13.0,5,"Mid L"],[12.99,22.0,45,"Arc3 C"],[12.99,26.5,2,"Arc3 C"],[14.29,1.75,6,"Mid L"],[14.29,6.25,3,"Mid L"],[14.29,10.75,2,"Mid L"],[14.29,15.25,3,"Mid L"],[14.29,24.25,18,"Arc3 C"],[15.59,-0.5,3,"Short"],[15.59,4.0,7,"Mid L"],[15.59,8.5,2,"Mid L"],[15.59,13.0,4,"Mid L"],[15.59,17.5,5,"Mid L"],[15.59,22.0,17,"Arc3 C"],[15.59,26.5,3,"Arc3 C"],[16.89,1.75,5,"Short"],[16.89,6.25,2,"Mid L"],[16.89,10.75,2,"Mid L"],[16.89,15.25,2,"Mid C"],[16.89,19.75,3,"Mid C"],[16.89,24.25,20,"Arc3 C"],[18.19,-0.5,3,"Short"],[18.19,4.0,6,"Short"],[18.19,8.5,4,"Mid L"],[18.19,13.0,2,"Mid C"],[18.19,17.5,4,"Mid C"],[18.19,22.0,11,"Arc3 C"],[18.19,26.5,9,"Arc3 C"],[19.49,1.75,9,"Short"],[19.49,6.25,5,"Short"],[19.49,15.25,3,"Mid C"],[19.49,19.75,4,"Mid C"],[19.49,24.25,12,"Arc3 C"],[20.78,-0.5,9,"Short"],[20.78,4.0,105,"Short"],[20.78,8.5,10,"Short"],[20.78,13.0,10,"Mid C"],[20.78,22.0,4,"Mid C"],[20.78,26.5,14,"Arc3 C"],[22.08,1.75,96,"Rim"],[22.08,6.25,46,"Short"],[22.08,10.75,12,"Mid C"],[22.08,15.25,4,"Mid C"],[22.08,19.75,3,"Mid C"],[22.08,24.25,26,"Arc3 C"],[22.08,28.75,2,"Arc3 C"],[23.38,-0.5,8,"Rim"],[23.38,4.0,92,"Short"],[23.38,8.5,17,"Short"],[23.38,13.0,2,"Mid C"],[23.38,17.5,4,"Mid C"],[23.38,26.5,18,"Arc3 C"],[24.68,1.75,84,"Rim"],[24.68,6.25,27,"Short"],[24.68,10.75,16,"Mid C"],[24.68,15.25,7,"Mid C"],[24.68,19.75,6,"Mid C"],[24.68,24.25,15,"Arc3 C"],[24.68,28.75,2,"Arc3 C"],[25.98,-0.5,42,"Rim"],[25.98,4.0,125,"Short"],[25.98,8.5,19,"Short"],[25.98,13.0,5,"Mid C"],[25.98,17.5,8,"Mid C"],[25.98,22.0,5,"Mid C"],[25.98,26.5,13,"Arc3 C"],[25.98,31.0,2,"Arc3 C"],[27.28,1.75,150,"Rim"],[27.28,6.25,44,"Short"],[27.28,10.75,13,"Mid C"],[27.28,15.25,5,"Mid C"],[27.28,19.75,5,"Mid C"],[27.28,24.25,24,"Arc3 C"],[27.28,28.75,3,"Arc3 C"],[28.58,-0.5,9,"Rim"],[28.58,4.0,130,"Short"],[28.58,8.5,7,"Short"],[28.58,13.0,6,"Mid C"],[28.58,17.5,2,"Mid C"],[28.58,22.0,6,"Mid C"],[28.58,26.5,13,"Arc3 C"],[29.88,1.75,40,"Short"],[29.88,6.25,19,"Short"],[29.88,10.75,7,"Mid C"],[29.88,19.75,3,"Mid C"],[29.88,24.25,25,"Arc3 C"],[31.18,4.0,36,"Short"],[31.18,8.5,6,"Short"],[31.18,13.0,6,"Mid C"],[31.18,17.5,4,"Mid C"],[31.18,22.0,4,"Arc3 C"],[31.18,26.5,11,"Arc3 C"],[32.48,1.75,2,"Short"],[32.48,6.25,5,"Mid R"],[32.48,24.25,24,"Arc3 C"],[33.77,4.0,13,"Mid R"],[33.77,8.5,6,"Mid R"],[33.77,13.0,5,"Mid R"],[33.77,22.0,19,"Arc3 C"],[33.77,26.5,4,"Arc3 C"],[35.07,1.75,4,"Mid R"],[35.07,6.25,6,"Mid R"],[35.07,10.75,2,"Mid R"],[35.07,15.25,4,"Mid R"],[35.07,24.25,17,"Arc3 C"],[36.37,-0.5,2,"Mid R"],[36.37,4.0,5,"Mid R"],[36.37,8.5,3,"Mid R"],[36.37,22.0,28,"Arc3 C"],[36.37,26.5,4,"Arc3 C"],[37.67,1.75,6,"Mid R"],[37.67,10.75,4,"Mid R"],[37.67,15.25,2,"Mid R"],[37.67,19.75,8,"Mid R"],[37.67,24.25,15,"Arc3 C"],[38.97,-0.5,3,"Mid R"],[38.97,4.0,9,"Mid R"],[38.97,8.5,5,"Mid R"],[38.97,13.0,3,"Mid R"],[38.97,17.5,2,"Arc3 R"],[38.97,22.0,51,"Arc3 R"],[40.27,-2.75,3,"Mid R"],[40.27,1.75,7,"Mid R"],[40.27,6.25,2,"Mid R"],[40.27,19.75,42,"Arc3 R"],[40.27,24.25,6,"Arc3 R"],[40.27,28.75,2,"Arc3 C"],[41.57,4.0,3,"Mid R"],[41.57,13.0,5,"Mid R"],[41.57,17.5,12,"Arc3 R"],[41.57,22.0,20,"Arc3 R"],[42.87,1.75,2,"Mid R"],[42.87,15.25,26,"Arc3 R"],[42.87,19.75,21,"Arc3 R"],[44.17,-0.5,2,"Mid R"],[44.17,8.5,2,"Mid R"],[44.17,13.0,16,"Arc3 R"],[44.17,17.5,22,"Arc3 R"],[44.17,22.0,5,"Arc3 R"],[45.47,10.75,5,"Arc3 R"],[45.47,15.25,11,"Arc3 R"],[45.47,19.75,2,"Arc3 R"],[46.77,-0.5,15,"Corner3 R"],[46.77,4.0,40,"Corner3 R"],[46.77,8.5,12,"Arc3 R"],[46.77,13.0,13,"Arc3 R"],[46.77,17.5,3,"Arc3 R"],[48.06,-2.75,4,"Corner3 R"],[48.06,1.75,55,"Corner3 R"],[48.06,6.25,13,"Arc3 R"],[48.06,10.75,5,"Arc3 R"],[49.36,-0.5,7,"Corner3 R"],[49.36,4.0,14,"Corner3 R"],[49.36,8.5,3,"Arc3 R"]],"zones":{"Arc3 C":{"n":432,"pps":0.986,"d":-0.028,"freq":0.152,"dfreq":0.035},"Arc3 L":{"n":336,"pps":1.018,"d":0.008,"freq":0.118,"dfreq":0.018},"Arc3 R":{"n":319,"pps":0.978,"d":-0.02,"freq":0.112,"dfreq":0.021},"Corner3 L":{"n":81,"pps":0.889,"d":-0.214,"freq":0.028,"dfreq":0.006},"Corner3 R":{"n":126,"pps":0.976,"d":-0.152,"freq":0.044,"dfreq":0.017},"Mid C":{"n":168,"pps":0.786,"d":-0.031,"freq":0.059,"dfreq":-0.028},"Mid L":{"n":97,"pps":0.701,"d":-0.037,"freq":0.034,"dfreq":-0.013},"Mid R":{"n":129,"pps":0.682,"d":-0.111,"freq":0.045,"dfreq":-0.001},"Rim":{"n":472,"pps":1.225,"d":-0.059,"freq":0.166,"dfreq":-0.082},"Short":{"n":687,"pps":0.894,"d":0.064,"freq":0.241,"dfreq":0.028}}},"def":{"total":2887,"hexes":[[0.0,-0.5,7,"Corner3 L"],[0.0,4.0,13,"Corner3 L"],[1.3,-2.75,6,"Corner3 R"],[1.3,1.75,34,"Corner3 L"],[1.3,6.25,7,"Arc3 L"],[1.3,10.75,2,"Arc3 L"],[2.6,-0.5,20,"Corner3 R"],[2.6,4.0,50,"Corner3 L"],[2.6,8.5,12,"Arc3 L"],[2.6,13.0,8,"Arc3 L"],[2.6,17.5,2,"Arc3 L"],[3.9,1.75,6,"Corner3 L"],[3.9,6.25,7,"Arc3 L"],[3.9,10.75,21,"Arc3 L"],[3.9,15.25,15,"Arc3 L"],[5.2,8.5,4,"Arc3 L"],[5.2,13.0,39,"Arc3 L"],[5.2,17.5,16,"Arc3 L"],[5.2,22.0,2,"Arc3 L"],[6.5,10.75,2,"Mid L"],[6.5,15.25,28,"Arc3 L"],[6.5,19.75,11,"Arc3 L"],[7.79,4.0,2,"Mid L"],[7.79,17.5,38,"Arc3 L"],[7.79,22.0,20,"Arc3 L"],[9.09,1.75,4,"Mid L"],[9.09,6.25,4,"Mid L"],[9.09,10.75,3,"Mid L"],[9.09,15.25,5,"Mid L"],[9.09,19.75,34,"Arc3 L"],[9.09,24.25,2,"Arc3 L"],[10.39,-0.5,3,"Mid R"],[10.39,4.0,2,"Mid L"],[10.39,8.5,2,"Mid L"],[10.39,13.0,2,"Mid L"],[10.39,17.5,3,"Arc3 L"],[10.39,22.0,20,"Arc3 L"],[11.69,1.75,2,"Mid L"],[11.69,6.25,5,"Mid L"],[11.69,10.75,4,"Mid L"],[11.69,19.75,16,"Arc3 L"],[11.69,24.25,2,"Arc3 L"],[12.99,-0.5,4,"Mid L"],[12.99,4.0,8,"Mid L"],[12.99,8.5,4,"Mid L"],[12.99,13.0,10,"Mid L"],[12.99,22.0,43,"Arc3 L"],[12.99,26.5,3,"Arc3 C"],[14.29,1.75,4,"Mid L"],[14.29,6.25,4,"Mid L"],[14.29,10.75,4,"Mid L"],[14.29,15.25,10,"Mid L"],[14.29,24.25,7,"Arc3 C"],[15.59,4.0,12,"Mid L"],[15.59,8.5,4,"Mid L"],[15.59,13.0,4,"Mid L"],[15.59,17.5,2,"Mid C"],[15.59,22.0,18,"Arc3 C"],[15.59,26.5,3,"Arc3 C"],[16.89,1.75,9,"Short"],[16.89,6.25,5,"Short"],[16.89,10.75,5,"Mid L"],[16.89,15.25,9,"Mid C"],[16.89,19.75,5,"Mid C"],[16.89,24.25,15,"Arc3 C"],[18.19,4.0,15,"Short"],[18.19,8.5,5,"Mid L"],[18.19,13.0,8,"Mid C"],[18.19,17.5,11,"Mid C"],[18.19,22.0,6,"Arc3 C"],[18.19,26.5,7,"Arc3 C"],[19.49,1.75,14,"Short"],[19.49,6.25,13,"Short"],[19.49,10.75,10,"Mid C"],[19.49,19.75,5,"Mid C"],[19.49,24.25,15,"Arc3 C"],[20.78,-0.5,5,"Short"],[20.78,4.0,94,"Short"],[20.78,8.5,7,"Short"],[20.78,13.0,13,"Mid C"],[20.78,17.5,2,"Mid C"],[20.78,26.5,4,"Arc3 C"],[22.08,1.75,107,"Rim"],[22.08,6.25,42,"Short"],[22.08,10.75,15,"Mid C"],[22.08,15.25,3,"Mid C"],[22.08,19.75,10,"Mid C"],[22.08,24.25,22,"Arc3 C"],[22.08,28.75,4,"Arc3 C"],[23.38,-0.5,8,"Rim"],[23.38,4.0,70,"Rim"],[23.38,8.5,13,"Short"],[23.38,13.0,14,"Mid C"],[23.38,17.5,12,"Mid C"],[23.38,22.0,3,"Arc3 C"],[23.38,26.5,12,"Arc3 C"],[24.68,1.75,75,"Rim"],[24.68,6.25,29,"Short"],[24.68,10.75,10,"Mid C"],[24.68,15.25,10,"Mid C"],[24.68,19.75,7,"Mid C"],[24.68,24.25,11,"Arc3 C"],[25.98,-0.5,60,"Rim"],[25.98,4.0,122,"Short"],[25.98,8.5,26,"Short"],[25.98,13.0,11,"Mid C"],[25.98,17.5,14,"Mid C"],[25.98,22.0,4,"Arc3 C"],[25.98,26.5,17,"Arc3 C"],[27.28,1.75,130,"Rim"],[27.28,6.25,51,"Short"],[27.28,10.75,17,"Mid C"],[27.28,15.25,3,"Mid C"],[27.28,19.75,8,"Mid C"],[27.28,24.25,24,"Arc3 C"],[27.28,28.75,4,"Arc3 C"],[28.58,-0.5,9,"Short"],[28.58,4.0,102,"Short"],[28.58,8.5,18,"Short"],[28.58,13.0,10,"Mid C"],[28.58,17.5,9,"Mid C"],[28.58,22.0,4,"Arc3 C"],[28.58,26.5,4,"Arc3 C"],[29.88,1.75,42,"Short"],[29.88,6.25,22,"Short"],[29.88,10.75,10,"Mid C"],[29.88,15.25,4,"Mid C"],[29.88,19.75,7,"Mid C"],[29.88,24.25,21,"Arc3 C"],[31.18,4.0,29,"Short"],[31.18,8.5,9,"Short"],[31.18,13.0,11,"Mid R"],[31.18,17.5,10,"Mid C"],[31.18,22.0,4,"Arc3 C"],[31.18,26.5,6,"Arc3 C"],[32.48,1.75,4,"Short"],[32.48,6.25,3,"Short"],[32.48,10.75,7,"Mid R"],[32.48,15.25,5,"Mid C"],[32.48,24.25,16,"Arc3 C"],[33.77,4.0,11,"Mid R"],[33.77,8.5,3,"Mid R"],[33.77,13.0,8,"Mid R"],[33.77,17.5,7,"Mid C"],[33.77,22.0,22,"Arc3 C"],[35.07,1.75,5,"Mid R"],[35.07,6.25,4,"Mid R"],[35.07,10.75,7,"Mid R"],[35.07,15.25,9,"Mid R"],[35.07,19.75,2,"Mid C"],[35.07,24.25,17,"Arc3 C"],[36.37,-0.5,2,"Mid R"],[36.37,4.0,5,"Mid R"],[36.37,8.5,3,"Mid R"],[36.37,13.0,4,"Mid R"],[36.37,22.0,28,"Arc3 C"],[36.37,26.5,2,"Arc3 C"],[37.67,1.75,2,"Mid R"],[37.67,10.75,5,"Mid R"],[37.67,15.25,2,"Mid R"],[37.67,19.75,7,"Arc3 R"],[37.67,24.25,10,"Arc3 C"],[38.97,-0.5,3,"Mid R"],[38.97,4.0,6,"Mid R"],[38.97,8.5,4,"Mid R"],[38.97,13.0,5,"Mid R"],[38.97,17.5,3,"Mid R"],[38.97,22.0,48,"Arc3 R"],[40.27,1.75,5,"Mid R"],[40.27,6.25,4,"Mid R"],[40.27,10.75,3,"Mid R"],[40.27,15.25,2,"Mid R"],[40.27,19.75,34,"Arc3 R"],[40.27,24.25,3,"Arc3 R"],[41.57,4.0,5,"Mid R"],[41.57,8.5,2,"Mid R"],[41.57,17.5,18,"Arc3 R"],[41.57,22.0,10,"Arc3 R"],[42.87,1.75,4,"Mid R"],[42.87,6.25,4,"Mid R"],[42.87,10.75,3,"Mid R"],[42.87,15.25,15,"Arc3 R"],[42.87,19.75,31,"Arc3 R"],[44.17,13.0,16,"Arc3 R"],[44.17,17.5,26,"Arc3 R"],[44.17,22.0,5,"Arc3 R"],[45.47,1.75,2,"Mid R"],[45.47,10.75,5,"Arc3 R"],[45.47,15.25,18,"Arc3 R"],[45.47,19.75,3,"Arc3 R"],[46.77,-0.5,14,"Corner3 R"],[46.77,4.0,16,"Arc3 R"],[46.77,8.5,14,"Arc3 R"],[46.77,13.0,27,"Arc3 R"],[46.77,17.5,4,"Arc3 R"],[48.06,1.75,33,"Corner3 R"],[48.06,6.25,22,"Arc3 R"],[48.06,10.75,7,"Arc3 R"],[48.06,15.25,3,"Arc3 R"],[49.36,-0.5,9,"Corner3 R"],[49.36,4.0,11,"Corner3 R"]],"zones":{"Arc3 C":{"n":354,"pps":0.932,"d":-0.082,"freq":0.123,"dfreq":0.006},"Arc3 L":{"n":364,"pps":0.989,"d":-0.021,"freq":0.126,"dfreq":0.026},"Arc3 R":{"n":324,"pps":0.917,"d":-0.082,"freq":0.112,"dfreq":0.021},"Corner3 L":{"n":83,"pps":1.157,"d":0.054,"freq":0.029,"dfreq":0.007},"Corner3 R":{"n":89,"pps":0.876,"d":-0.251,"freq":0.031,"dfreq":0.003},"Mid C":{"n":277,"pps":0.823,"d":0.006,"freq":0.096,"dfreq":0.009},"Mid L":{"n":121,"pps":0.661,"d":-0.077,"freq":0.042,"dfreq":-0.005},"Mid R":{"n":138,"pps":0.739,"d":-0.054,"freq":0.048,"dfreq":0.001},"Rim":{"n":462,"pps":1.255,"d":-0.028,"freq":0.16,"dfreq":-0.088},"Short":{"n":675,"pps":0.856,"d":0.027,"freq":0.234,"dfreq":0.02}}}},"TOR":{"off":{"total":2980,"hexes":[[0.0,-0.5,4,"Corner3 R"],[0.0,4.0,3,"Arc3 L"],[1.3,-2.75,5,"Corner3 R"],[1.3,1.75,48,"Corner3 L"],[1.3,6.25,16,"Arc3 L"],[2.6,-0.5,32,"Corner3 R"],[2.6,4.0,21,"Arc3 L"],[2.6,8.5,7,"Arc3 L"],[2.6,13.0,4,"Arc3 L"],[3.9,-2.75,4,"Corner3 R"],[3.9,1.75,5,"Corner3 L"],[3.9,6.25,8,"Arc3 L"],[3.9,10.75,11,"Arc3 L"],[3.9,15.25,8,"Arc3 L"],[3.9,19.75,2,"Arc3 L"],[5.2,4.0,2,"Mid L"],[5.2,13.0,33,"Arc3 L"],[5.2,17.5,15,"Arc3 L"],[5.2,22.0,3,"Arc3 L"],[6.5,1.75,4,"Mid L"],[6.5,15.25,16,"Arc3 L"],[6.5,19.75,9,"Arc3 L"],[7.79,-0.5,2,"Mid L"],[7.79,4.0,5,"Mid L"],[7.79,13.0,2,"Mid L"],[7.79,17.5,38,"Arc3 L"],[7.79,22.0,15,"Arc3 L"],[9.09,1.75,2,"Mid L"],[9.09,10.75,2,"Mid L"],[9.09,15.25,4,"Mid L"],[9.09,19.75,48,"Arc3 L"],[9.09,24.25,3,"Arc3 L"],[10.39,4.0,3,"Mid L"],[10.39,17.5,5,"Arc3 L"],[10.39,22.0,25,"Arc3 L"],[10.39,26.5,2,"Arc3 C"],[11.69,1.75,3,"Mid L"],[11.69,6.25,2,"Mid L"],[11.69,15.25,2,"Mid L"],[11.69,19.75,15,"Arc3 L"],[11.69,24.25,5,"Arc3 C"],[11.69,28.75,2,"Arc3 C"],[12.99,-0.5,3,"Mid R"],[12.99,4.0,3,"Mid L"],[12.99,13.0,3,"Mid L"],[12.99,17.5,2,"Mid L"],[12.99,22.0,44,"Arc3 L"],[12.99,26.5,4,"Arc3 C"],[14.29,1.75,10,"Mid L"],[14.29,6.25,3,"Mid L"],[14.29,10.75,4,"Mid L"],[14.29,15.25,4,"Mid L"],[14.29,24.25,22,"Arc3 C"],[14.29,28.75,2,"Arc3 C"],[15.59,-0.5,2,"Short"],[15.59,4.0,2,"Mid L"],[15.59,8.5,3,"Mid L"],[15.59,13.0,7,"Mid L"],[15.59,17.5,2,"Mid C"],[15.59,22.0,17,"Arc3 C"],[16.89,1.75,4,"Short"],[16.89,6.25,6,"Mid L"],[16.89,10.75,3,"Mid L"],[16.89,15.25,4,"Mid L"],[16.89,19.75,2,"Mid C"],[16.89,24.25,26,"Arc3 C"],[18.19,4.0,7,"Short"],[18.19,8.5,2,"Mid L"],[18.19,13.0,7,"Mid C"],[18.19,17.5,7,"Mid C"],[18.19,22.0,15,"Arc3 C"],[18.19,26.5,6,"Arc3 C"],[19.49,1.75,9,"Short"],[19.49,6.25,5,"Short"],[19.49,10.75,8,"Mid C"],[19.49,15.25,5,"Mid C"],[19.49,19.75,4,"Mid C"],[19.49,24.25,12,"Arc3 C"],[19.49,28.75,4,"Arc3 C"],[20.78,-0.5,7,"Rim"],[20.78,4.0,53,"Short"],[20.78,8.5,8,"Short"],[20.78,13.0,10,"Mid C"],[20.78,17.5,7,"Mid C"],[20.78,22.0,5,"Mid C"],[20.78,26.5,6,"Arc3 C"],[22.08,1.75,149,"Rim"],[22.08,6.25,25,"Short"],[22.08,10.75,17,"Mid C"],[22.08,15.25,4,"Mid C"],[22.08,24.25,33,"Arc3 C"],[22.08,28.75,4,"Arc3 C"],[23.38,-0.5,25,"Rim"],[23.38,4.0,75,"Rim"],[23.38,8.5,11,"Short"],[23.38,13.0,4,"Mid C"],[23.38,17.5,5,"Mid C"],[23.38,22.0,2,"Arc3 C"],[23.38,26.5,11,"Arc3 C"],[24.68,1.75,213,"Rim"],[24.68,6.25,34,"Short"],[24.68,10.75,14,"Mid C"],[24.68,15.25,8,"Mid C"],[24.68,19.75,4,"Mid C"],[24.68,24.25,23,"Arc3 C"],[24.68,28.75,2,"Arc3 C"],[25.98,-0.5,113,"Rim"],[25.98,4.0,122,"Short"],[25.98,8.5,27,"Short"],[25.98,13.0,21,"Mid C"],[25.98,17.5,10,"Mid C"],[25.98,22.0,7,"Arc3 C"],[25.98,26.5,13,"Arc3 C"],[25.98,31.0,3,"Arc3 C"],[27.28,1.75,301,"Rim"],[27.28,6.25,34,"Short"],[27.28,10.75,14,"Mid C"],[27.28,15.25,6,"Mid C"],[27.28,19.75,3,"Mid C"],[27.28,24.25,25,"Arc3 C"],[27.28,28.75,3,"Arc3 C"],[28.58,-0.5,6,"Rim"],[28.58,4.0,50,"Short"],[28.58,8.5,6,"Short"],[28.58,13.0,5,"Mid C"],[28.58,17.5,2,"Mid C"],[28.58,22.0,3,"Arc3 C"],[28.58,26.5,9,"Arc3 C"],[29.88,1.75,23,"Short"],[29.88,6.25,7,"Short"],[29.88,10.75,10,"Mid R"],[29.88,15.25,4,"Mid C"],[29.88,19.75,2,"Mid C"],[29.88,24.25,12,"Arc3 C"],[31.18,4.0,21,"Short"],[31.18,8.5,6,"Short"],[31.18,13.0,7,"Mid C"],[31.18,17.5,4,"Mid C"],[31.18,22.0,5,"Mid C"],[31.18,26.5,4,"Arc3 C"],[32.48,1.75,4,"Short"],[32.48,10.75,4,"Mid R"],[32.48,15.25,4,"Mid C"],[32.48,19.75,3,"Mid C"],[32.48,24.25,13,"Arc3 C"],[33.77,4.0,9,"Mid R"],[33.77,8.5,3,"Mid R"],[33.77,13.0,5,"Mid R"],[33.77,17.5,8,"Mid C"],[33.77,22.0,25,"Arc3 C"],[33.77,26.5,4,"Arc3 C"],[35.07,1.75,7,"Short"],[35.07,6.25,2,"Mid R"],[35.07,10.75,5,"Mid R"],[35.07,15.25,8,"Mid R"],[35.07,24.25,14,"Arc3 C"],[35.07,28.75,2,"Arc3 C"],[36.37,-0.5,2,"Mid R"],[36.37,8.5,4,"Mid R"],[36.37,13.0,10,"Mid R"],[36.37,17.5,3,"Mid R"],[36.37,22.0,22,"Arc3 C"],[36.37,26.5,4,"Arc3 C"],[37.67,1.75,3,"Mid R"],[37.67,6.25,2,"Mid R"],[37.67,19.75,5,"Arc3 R"],[37.67,24.25,2,"Arc3 C"],[38.97,4.0,8,"Mid R"],[38.97,8.5,3,"Mid R"],[38.97,13.0,3,"Mid R"],[38.97,17.5,2,"Arc3 R"],[38.97,22.0,35,"Arc3 R"],[38.97,26.5,5,"Arc3 C"],[40.27,1.75,2,"Mid R"],[40.27,6.25,2,"Mid R"],[40.27,19.75,23,"Arc3 R"],[40.27,24.25,8,"Arc3 R"],[40.27,28.75,2,"Arc3 C"],[41.57,4.0,2,"Mid R"],[41.57,13.0,3,"Mid R"],[41.57,17.5,25,"Arc3 R"],[41.57,22.0,13,"Arc3 R"],[42.87,6.25,2,"Mid R"],[42.87,15.25,16,"Arc3 R"],[42.87,19.75,13,"Arc3 R"],[44.17,13.0,20,"Arc3 R"],[44.17,17.5,22,"Arc3 R"],[44.17,22.0,5,"Arc3 R"],[45.47,10.75,6,"Arc3 R"],[45.47,15.25,13,"Arc3 R"],[45.47,19.75,3,"Arc3 R"],[45.47,24.25,2,"Arc3 R"],[46.77,-0.5,29,"Corner3 R"],[46.77,4.0,22,"Corner3 R"],[46.77,8.5,10,"Arc3 R"],[46.77,13.0,24,"Arc3 R"],[48.06,-2.75,5,"Corner3 R"],[48.06,1.75,36,"Corner3 R"],[48.06,6.25,18,"Arc3 R"],[48.06,10.75,11,"Arc3 R"],[49.36,-0.5,7,"Corner3 R"],[49.36,4.0,2,"Arc3 R"]],"zones":{"Arc3 C":{"n":404,"pps":1.032,"d":0.029,"freq":0.136,"dfreq":0.015},"Arc3 L":{"n":322,"pps":0.96,"d":-0.05,"freq":0.108,"dfreq":0.003},"Arc3 R":{"n":286,"pps":1.059,"d":-0.003,"freq":0.096,"dfreq":0.004},"Corner3 L":{"n":78,"pps":1.346,"d":0.25,"freq":0.026,"dfreq":0.004},"Corner3 R":{"n":110,"pps":0.982,"d":-0.091,"freq":0.037,"dfreq":0.007},"Mid C":{"n":224,"pps":0.759,"d":-0.048,"freq":0.075,"dfreq":-0.004},"Mid L":{"n":95,"pps":0.632,"d":-0.14,"freq":0.032,"dfreq":-0.006},"Mid R":{"n":106,"pps":0.698,"d":-0.039,"freq":0.036,"dfreq":-0.003},"Rim":{"n":903,"pps":1.234,"d":-0.078,"freq":0.303,"dfreq":0.031},"Short":{"n":452,"pps":0.796,"d":-0.071,"freq":0.152,"dfreq":-0.051}}},"def":{"total":3089,"hexes":[[0.0,-0.5,6,"Corner3 R"],[0.0,4.0,5,"Arc3 L"],[1.3,-2.75,15,"Corner3 R"],[1.3,1.75,35,"Corner3 L"],[1.3,6.25,10,"Arc3 L"],[2.6,-0.5,33,"Corner3 R"],[2.6,4.0,29,"Arc3 L"],[2.6,8.5,9,"Arc3 L"],[2.6,13.0,4,"Arc3 L"],[3.9,-2.75,3,"Corner3 R"],[3.9,1.75,9,"Corner3 L"],[3.9,6.25,11,"Arc3 L"],[3.9,10.75,22,"Arc3 L"],[3.9,15.25,16,"Arc3 L"],[3.9,19.75,2,"Arc3 L"],[5.2,-0.5,3,"Mid L"],[5.2,4.0,3,"Mid L"],[5.2,8.5,4,"Arc3 L"],[5.2,13.0,45,"Arc3 L"],[5.2,17.5,15,"Arc3 L"],[5.2,22.0,3,"Arc3 L"],[6.5,1.75,2,"Mid L"],[6.5,15.25,16,"Arc3 L"],[6.5,19.75,9,"Arc3 L"],[7.79,4.0,2,"Mid L"],[7.79,13.0,2,"Arc3 L"],[7.79,17.5,33,"Arc3 L"],[7.79,22.0,8,"Arc3 L"],[9.09,6.25,2,"Mid L"],[9.09,10.75,3,"Mid L"],[9.09,15.25,3,"Arc3 L"],[9.09,19.75,41,"Arc3 L"],[9.09,24.25,4,"Arc3 L"],[10.39,-0.5,5,"Mid L"],[10.39,4.0,3,"Mid L"],[10.39,13.0,5,"Mid L"],[10.39,17.5,6,"Arc3 L"],[10.39,22.0,30,"Arc3 L"],[10.39,26.5,4,"Arc3 C"],[11.69,1.75,2,"Mid L"],[11.69,6.25,4,"Mid L"],[11.69,19.75,18,"Arc3 L"],[11.69,24.25,7,"Arc3 C"],[12.99,-0.5,4,"Mid L"],[12.99,4.0,6,"Mid L"],[12.99,8.5,4,"Mid L"],[12.99,13.0,6,"Mid L"],[12.99,17.5,3,"Mid L"],[12.99,22.0,51,"Arc3 L"],[14.29,1.75,5,"Mid L"],[14.29,6.25,4,"Mid L"],[14.29,10.75,5,"Mid L"],[14.29,15.25,2,"Mid L"],[14.29,24.25,18,"Arc3 C"],[15.59,4.0,5,"Mid L"],[15.59,8.5,2,"Mid L"],[15.59,13.0,2,"Mid L"],[15.59,17.5,3,"Mid C"],[15.59,22.0,20,"Arc3 C"],[15.59,26.5,2,"Arc3 C"],[16.89,1.75,7,"Short"],[16.89,6.25,5,"Short"],[16.89,10.75,2,"Mid L"],[16.89,15.25,6,"Mid L"],[16.89,24.25,18,"Arc3 C"],[16.89,28.75,2,"Arc3 C"],[18.19,4.0,12,"Short"],[18.19,8.5,5,"Mid L"],[18.19,13.0,8,"Mid C"],[18.19,17.5,3,"Mid C"],[18.19,22.0,6,"Arc3 C"],[18.19,26.5,2,"Arc3 C"],[19.49,1.75,6,"Short"],[19.49,6.25,8,"Short"],[19.49,10.75,2,"Mid C"],[19.49,19.75,2,"Mid C"],[19.49,24.25,18,"Arc3 C"],[20.78,-0.5,9,"Rim"],[20.78,4.0,47,"Short"],[20.78,8.5,14,"Short"],[20.78,13.0,12,"Mid C"],[20.78,17.5,4,"Mid C"],[20.78,26.5,4,"Arc3 C"],[22.08,1.75,167,"Rim"],[22.08,6.25,30,"Short"],[22.08,10.75,11,"Mid C"],[22.08,15.25,6,"Mid C"],[22.08,19.75,6,"Mid C"],[22.08,24.25,20,"Arc3 C"],[22.08,28.75,3,"Arc3 C"],[23.38,-0.5,31,"Rim"],[23.38,4.0,58,"Rim"],[23.38,8.5,13,"Short"],[23.38,13.0,9,"Mid C"],[23.38,17.5,5,"Mid C"],[23.38,22.0,2,"Mid C"],[23.38,26.5,11,"Arc3 C"],[24.68,1.75,242,"Rim"],[24.68,6.25,25,"Short"],[24.68,10.75,16,"Mid C"],[24.68,15.25,2,"Mid C"],[24.68,19.75,3,"Mid C"],[24.68,24.25,25,"Arc3 C"],[24.68,28.75,2,"Arc3 C"],[25.98,-0.5,140,"Rim"],[25.98,4.0,119,"Rim"],[25.98,8.5,23,"Short"],[25.98,13.0,11,"Mid C"],[25.98,17.5,12,"Mid C"],[25.98,22.0,4,"Mid C"],[25.98,26.5,12,"Arc3 C"],[27.28,1.75,361,"Rim"],[27.28,6.25,39,"Short"],[27.28,10.75,20,"Mid C"],[27.28,15.25,9,"Mid C"],[27.28,19.75,7,"Mid C"],[27.28,24.25,13,"Arc3 C"],[27.28,28.75,5,"Arc3 C"],[28.58,-0.5,15,"Short"],[28.58,4.0,42,"Short"],[28.58,8.5,7,"Short"],[28.58,13.0,9,"Mid C"],[28.58,22.0,3,"Mid C"],[28.58,26.5,8,"Arc3 C"],[29.88,1.75,25,"Short"],[29.88,6.25,12,"Short"],[29.88,10.75,9,"Mid C"],[29.88,15.25,4,"Mid C"],[29.88,19.75,3,"Mid C"],[29.88,24.25,18,"Arc3 C"],[31.18,-0.5,2,"Short"],[31.18,4.0,23,"Short"],[31.18,8.5,7,"Mid R"],[31.18,13.0,14,"Mid C"],[31.18,17.5,6,"Mid C"],[31.18,22.0,7,"Arc3 C"],[31.18,26.5,6,"Arc3 C"],[32.48,1.75,3,"Short"],[32.48,10.75,3,"Mid R"],[32.48,15.25,2,"Mid C"],[32.48,24.25,7,"Arc3 C"],[33.77,-0.5,2,"Short"],[33.77,4.0,5,"Mid R"],[33.77,8.5,5,"Mid R"],[33.77,13.0,4,"Mid R"],[33.77,17.5,5,"Mid C"],[33.77,22.0,10,"Arc3 C"],[33.77,26.5,3,"Arc3 C"],[35.07,1.75,8,"Short"],[35.07,10.75,4,"Mid R"],[35.07,15.25,3,"Mid R"],[35.07,19.75,2,"Mid C"],[35.07,24.25,11,"Arc3 C"],[36.37,-0.5,3,"Mid R"],[36.37,8.5,2,"Mid R"],[36.37,13.0,5,"Mid R"],[36.37,17.5,2,"Mid R"],[36.37,22.0,31,"Arc3 C"],[37.67,19.75,4,"Arc3 R"],[37.67,24.25,6,"Arc3 C"],[38.97,-0.5,3,"Mid R"],[38.97,4.0,3,"Mid R"],[38.97,8.5,3,"Mid R"],[38.97,13.0,2,"Mid R"],[38.97,22.0,34,"Arc3 R"],[38.97,26.5,2,"Arc3 C"],[40.27,1.75,4,"Mid R"],[40.27,10.75,2,"Mid R"],[40.27,19.75,35,"Arc3 R"],[40.27,24.25,7,"Arc3 R"],[41.57,17.5,15,"Arc3 R"],[41.57,22.0,7,"Arc3 R"],[42.87,15.25,20,"Arc3 R"],[42.87,19.75,11,"Arc3 R"],[44.17,-0.5,3,"Mid R"],[44.17,4.0,3,"Mid R"],[44.17,13.0,18,"Arc3 R"],[44.17,17.5,22,"Arc3 R"],[44.17,22.0,4,"Arc3 R"],[45.47,10.75,11,"Arc3 R"],[45.47,15.25,5,"Arc3 R"],[46.77,-0.5,27,"Corner3 R"],[46.77,4.0,23,"Arc3 R"],[46.77,8.5,11,"Arc3 R"],[46.77,13.0,20,"Arc3 R"],[46.77,17.5,4,"Arc3 R"],[48.06,-2.75,7,"Corner3 R"],[48.06,1.75,40,"Corner3 R"],[48.06,6.25,24,"Arc3 R"],[48.06,10.75,9,"Arc3 R"],[49.36,-0.5,10,"Corner3 R"],[49.36,4.0,12,"Arc3 R"],[50.66,1.75,2,"Corner3 R"]],"zones":{"Arc3 C":{"n":348,"pps":1.06,"d":0.057,"freq":0.113,"dfreq":-0.008},"Arc3 L":{"n":348,"pps":1.026,"d":0.016,"freq":0.113,"dfreq":0.008},"Arc3 R":{"n":285,"pps":1.084,"d":0.022,"freq":0.092,"dfreq":0.0},"Corner3 L":{"n":73,"pps":1.027,"d":-0.069,"freq":0.024,"dfreq":0.002},"Corner3 R":{"n":141,"pps":1.213,"d":0.14,"freq":0.046,"dfreq":0.016},"Mid C":{"n":215,"pps":0.856,"d":0.049,"freq":0.07,"dfreq":-0.01},"Mid L":{"n":98,"pps":0.878,"d":0.106,"freq":0.032,"dfreq":-0.006},"Mid R":{"n":91,"pps":0.725,"d":-0.012,"freq":0.029,"dfreq":-0.009},"Rim":{"n":1038,"pps":1.331,"d":0.02,"freq":0.336,"dfreq":0.064},"Short":{"n":452,"pps":0.872,"d":0.004,"freq":0.146,"dfreq":-0.056}}}},"POR":{"off":{"total":2979,"hexes":[[0.0,-0.5,10,"Corner3 R"],[0.0,4.0,4,"Corner3 L"],[1.3,-2.75,5,"Corner3 R"],[1.3,1.75,40,"Corner3 L"],[1.3,6.25,19,"Arc3 L"],[1.3,10.75,3,"Arc3 L"],[2.6,-0.5,39,"Corner3 R"],[2.6,4.0,34,"Corner3 L"],[2.6,8.5,19,"Arc3 L"],[2.6,13.0,6,"Arc3 L"],[3.9,1.75,5,"Corner3 L"],[3.9,6.25,10,"Arc3 L"],[3.9,10.75,20,"Arc3 L"],[3.9,15.25,12,"Arc3 L"],[5.2,-0.5,3,"Mid L"],[5.2,4.0,2,"Mid L"],[5.2,8.5,3,"Arc3 L"],[5.2,13.0,19,"Arc3 L"],[5.2,17.5,17,"Arc3 L"],[6.5,15.25,27,"Arc3 L"],[6.5,19.75,9,"Arc3 L"],[7.79,4.0,2,"Mid L"],[7.79,17.5,36,"Arc3 L"],[7.79,22.0,19,"Arc3 L"],[9.09,1.75,2,"Mid L"],[9.09,15.25,3,"Arc3 L"],[9.09,19.75,45,"Arc3 L"],[9.09,24.25,2,"Arc3 L"],[10.39,-0.5,2,"Mid L"],[10.39,4.0,2,"Mid L"],[10.39,8.5,2,"Mid L"],[10.39,22.0,41,"Arc3 L"],[11.69,19.75,12,"Arc3 L"],[11.69,24.25,9,"Arc3 C"],[12.99,8.5,3,"Mid L"],[12.99,13.0,2,"Mid L"],[12.99,17.5,3,"Mid L"],[12.99,22.0,54,"Arc3 C"],[12.99,26.5,4,"Arc3 C"],[14.29,1.75,3,"Mid L"],[14.29,6.25,2,"Mid L"],[14.29,10.75,2,"Mid L"],[14.29,15.25,3,"Mid L"],[14.29,19.75,3,"Mid C"],[14.29,24.25,19,"Arc3 C"],[15.59,4.0,4,"Mid L"],[15.59,8.5,4,"Mid L"],[15.59,13.0,3,"Mid L"],[15.59,17.5,3,"Mid L"],[15.59,22.0,15,"Arc3 C"],[15.59,26.5,3,"Arc3 C"],[16.89,1.75,6,"Short"],[16.89,6.25,6,"Mid L"],[16.89,10.75,4,"Mid L"],[16.89,15.25,4,"Mid C"],[16.89,19.75,4,"Mid C"],[16.89,24.25,25,"Arc3 C"],[16.89,28.75,3,"Arc3 C"],[18.19,-0.5,4,"Short"],[18.19,4.0,17,"Short"],[18.19,8.5,2,"Mid L"],[18.19,13.0,4,"Mid C"],[18.19,22.0,13,"Arc3 C"],[18.19,26.5,11,"Arc3 C"],[19.49,1.75,13,"Short"],[19.49,6.25,7,"Short"],[19.49,10.75,5,"Mid C"],[19.49,24.25,17,"Arc3 C"],[20.78,-0.5,8,"Rim"],[20.78,4.0,85,"Short"],[20.78,8.5,16,"Short"],[20.78,13.0,12,"Mid C"],[20.78,17.5,3,"Mid C"],[20.78,26.5,13,"Arc3 C"],[22.08,1.75,228,"Rim"],[22.08,6.25,37,"Short"],[22.08,10.75,14,"Mid C"],[22.08,15.25,3,"Mid C"],[22.08,24.25,21,"Arc3 C"],[23.38,-0.5,20,"Rim"],[23.38,4.0,115,"Short"],[23.38,8.5,16,"Short"],[23.38,13.0,9,"Mid C"],[23.38,22.0,2,"Arc3 C"],[23.38,26.5,15,"Arc3 C"],[24.68,1.75,92,"Rim"],[24.68,6.25,30,"Short"],[24.68,10.75,12,"Mid C"],[24.68,15.25,7,"Mid C"],[24.68,24.25,22,"Arc3 C"],[25.98,-0.5,48,"Rim"],[25.98,4.0,119,"Rim"],[25.98,8.5,21,"Short"],[25.98,13.0,6,"Mid C"],[25.98,17.5,6,"Mid C"],[25.98,22.0,2,"Arc3 C"],[25.98,26.5,23,"Arc3 C"],[27.28,1.75,271,"Rim"],[27.28,6.25,33,"Short"],[27.28,10.75,22,"Mid C"],[27.28,15.25,5,"Mid C"],[27.28,24.25,12,"Arc3 C"],[27.28,28.75,2,"Arc3 C"],[28.58,-0.5,7,"Rim"],[28.58,4.0,94,"Short"],[28.58,8.5,8,"Short"],[28.58,13.0,5,"Mid C"],[28.58,22.0,2,"Arc3 C"],[28.58,26.5,8,"Arc3 C"],[29.88,1.75,44,"Short"],[29.88,6.25,20,"Short"],[29.88,10.75,12,"Mid C"],[29.88,19.75,4,"Mid C"],[29.88,24.25,23,"Arc3 C"],[31.18,-0.5,3,"Short"],[31.18,4.0,27,"Short"],[31.18,8.5,7,"Mid C"],[31.18,13.0,7,"Mid C"],[31.18,17.5,2,"Mid C"],[31.18,22.0,4,"Arc3 C"],[31.18,26.5,9,"Arc3 C"],[32.48,1.75,5,"Short"],[32.48,24.25,19,"Arc3 C"],[33.77,4.0,3,"Mid R"],[33.77,8.5,6,"Mid R"],[33.77,13.0,4,"Mid R"],[33.77,17.5,2,"Mid C"],[33.77,22.0,20,"Arc3 C"],[33.77,26.5,3,"Arc3 C"],[35.07,1.75,5,"Mid R"],[35.07,6.25,4,"Mid R"],[35.07,10.75,4,"Mid R"],[35.07,24.25,15,"Arc3 C"],[36.37,4.0,2,"Mid R"],[36.37,17.5,2,"Mid R"],[36.37,22.0,21,"Arc3 C"],[37.67,19.75,7,"Mid R"],[37.67,24.25,3,"Arc3 C"],[37.67,28.75,2,"Arc3 C"],[38.97,13.0,2,"Mid R"],[38.97,22.0,47,"Arc3 R"],[38.97,26.5,2,"Arc3 C"],[40.27,6.25,2,"Mid R"],[40.27,19.75,40,"Arc3 R"],[40.27,24.25,4,"Arc3 R"],[41.57,17.5,17,"Arc3 R"],[41.57,22.0,16,"Arc3 R"],[42.87,15.25,24,"Arc3 R"],[42.87,19.75,18,"Arc3 R"],[44.17,4.0,2,"Mid R"],[44.17,13.0,12,"Arc3 R"],[44.17,17.5,23,"Arc3 R"],[44.17,22.0,5,"Arc3 R"],[45.47,10.75,5,"Arc3 R"],[45.47,15.25,16,"Arc3 R"],[46.77,-0.5,20,"Corner3 R"],[46.77,4.0,29,"Corner3 R"],[46.77,8.5,15,"Arc3 R"],[46.77,13.0,19,"Arc3 R"],[48.06,-2.75,2,"Corner3 R"],[48.06,1.75,42,"Corner3 R"],[48.06,6.25,22,"Arc3 R"],[48.06,10.75,12,"Arc3 R"],[48.06,15.25,3,"Arc3 R"],[49.36,-0.5,5,"Corner3 R"],[49.36,4.0,9,"Arc3 R"]],"zones":{"Arc3 C":{"n":414,"pps":1.007,"d":0.004,"freq":0.139,"dfreq":0.018},"Arc3 L":{"n":361,"pps":0.964,"d":-0.046,"freq":0.121,"dfreq":0.016},"Arc3 R":{"n":326,"pps":1.132,"d":0.069,"freq":0.109,"dfreq":0.017},"Corner3 L":{"n":87,"pps":1.0,"d":-0.096,"freq":0.029,"dfreq":0.008},"Corner3 R":{"n":113,"pps":1.142,"d":0.069,"freq":0.038,"dfreq":0.008},"Mid C":{"n":156,"pps":0.808,"d":0.001,"freq":0.052,"dfreq":-0.027},"Mid L":{"n":61,"pps":0.852,"d":0.08,"freq":0.02,"dfreq":-0.017},"Mid R":{"n":57,"pps":0.772,"d":0.035,"freq":0.019,"dfreq":-0.02},"Rim":{"n":718,"pps":1.29,"d":-0.022,"freq":0.241,"dfreq":-0.031},"Short":{"n":686,"pps":0.921,"d":0.054,"freq":0.23,"dfreq":0.028}}},"def":{"total":2962,"hexes":[[0.0,-0.5,7,"Corner3 R"],[0.0,4.0,5,"Arc3 L"],[1.3,-2.75,8,"Corner3 R"],[1.3,1.75,34,"Corner3 L"],[1.3,6.25,21,"Arc3 L"],[1.3,10.75,4,"Arc3 L"],[2.6,-0.5,35,"Corner3 R"],[2.6,4.0,33,"Arc3 L"],[2.6,8.5,12,"Arc3 L"],[2.6,13.0,5,"Arc3 L"],[3.9,6.25,7,"Arc3 L"],[3.9,10.75,16,"Arc3 L"],[3.9,15.25,10,"Arc3 L"],[5.2,4.0,2,"Mid L"],[5.2,13.0,32,"Arc3 L"],[5.2,17.5,14,"Arc3 L"],[5.2,22.0,4,"Arc3 L"],[6.5,15.25,21,"Arc3 L"],[6.5,19.75,9,"Arc3 L"],[7.79,-0.5,2,"Mid L"],[7.79,8.5,2,"Mid L"],[7.79,17.5,25,"Arc3 L"],[7.79,22.0,9,"Arc3 L"],[9.09,1.75,3,"Mid L"],[9.09,6.25,2,"Mid L"],[9.09,15.25,7,"Arc3 L"],[9.09,19.75,35,"Arc3 L"],[9.09,24.25,4,"Arc3 L"],[10.39,-0.5,2,"Mid L"],[10.39,4.0,2,"Mid L"],[10.39,17.5,4,"Arc3 L"],[10.39,22.0,28,"Arc3 L"],[11.69,1.75,6,"Mid L"],[11.69,19.75,12,"Arc3 L"],[11.69,24.25,5,"Arc3 L"],[12.99,-0.5,3,"Mid L"],[12.99,4.0,4,"Mid L"],[12.99,13.0,7,"Mid L"],[12.99,17.5,2,"Mid L"],[12.99,22.0,57,"Arc3 C"],[14.29,1.75,16,"Mid L"],[14.29,6.25,2,"Mid L"],[14.29,10.75,3,"Mid L"],[14.29,15.25,4,"Mid L"],[14.29,24.25,19,"Arc3 C"],[15.59,-0.5,6,"Short"],[15.59,4.0,4,"Mid L"],[15.59,8.5,2,"Mid L"],[15.59,13.0,5,"Mid L"],[15.59,22.0,23,"Arc3 C"],[15.59,26.5,4,"Arc3 C"],[16.89,1.75,9,"Short"],[16.89,6.25,7,"Mid L"],[16.89,10.75,2,"Mid L"],[16.89,15.25,6,"Mid C"],[16.89,24.25,23,"Arc3 C"],[18.19,4.0,16,"Short"],[18.19,8.5,4,"Mid L"],[18.19,13.0,13,"Mid C"],[18.19,17.5,3,"Mid C"],[18.19,22.0,7,"Arc3 C"],[18.19,26.5,7,"Arc3 C"],[19.49,1.75,12,"Short"],[19.49,6.25,6,"Short"],[19.49,10.75,5,"Mid C"],[19.49,15.25,2,"Mid C"],[19.49,19.75,3,"Mid C"],[19.49,24.25,18,"Arc3 C"],[19.49,28.75,2,"Arc3 C"],[20.78,-0.5,6,"Rim"],[20.78,4.0,83,"Short"],[20.78,8.5,13,"Short"],[20.78,13.0,9,"Mid C"],[20.78,17.5,5,"Mid C"],[20.78,26.5,6,"Arc3 C"],[22.08,1.75,225,"Rim"],[22.08,6.25,26,"Short"],[22.08,10.75,6,"Mid C"],[22.08,15.25,5,"Mid C"],[22.08,19.75,3,"Mid C"],[22.08,24.25,23,"Arc3 C"],[23.38,-0.5,16,"Rim"],[23.38,4.0,90,"Rim"],[23.38,8.5,11,"Short"],[23.38,13.0,9,"Mid C"],[23.38,17.5,4,"Mid C"],[23.38,26.5,13,"Arc3 C"],[24.68,1.75,119,"Rim"],[24.68,6.25,33,"Short"],[24.68,10.75,11,"Mid C"],[24.68,15.25,8,"Mid C"],[24.68,19.75,3,"Mid C"],[24.68,24.25,11,"Arc3 C"],[24.68,28.75,2,"Arc3 C"],[25.98,-0.5,71,"Rim"],[25.98,4.0,117,"Short"],[25.98,8.5,22,"Short"],[25.98,13.0,14,"Mid C"],[25.98,17.5,9,"Mid C"],[25.98,22.0,3,"Mid C"],[25.98,26.5,11,"Arc3 C"],[27.28,1.75,309,"Rim"],[27.28,6.25,27,"Short"],[27.28,10.75,18,"Mid C"],[27.28,15.25,10,"Mid C"],[27.28,19.75,3,"Mid C"],[27.28,24.25,10,"Arc3 C"],[28.58,-0.5,8,"Rim"],[28.58,4.0,85,"Short"],[28.58,8.5,10,"Short"],[28.58,13.0,7,"Mid C"],[28.58,17.5,3,"Mid C"],[28.58,22.0,2,"Arc3 C"],[28.58,26.5,7,"Arc3 C"],[29.88,1.75,33,"Short"],[29.88,6.25,14,"Short"],[29.88,10.75,10,"Mid C"],[29.88,15.25,8,"Mid C"],[29.88,24.25,20,"Arc3 C"],[31.18,4.0,27,"Short"],[31.18,8.5,5,"Mid R"],[31.18,13.0,6,"Mid C"],[31.18,17.5,5,"Mid C"],[31.18,22.0,2,"Arc3 C"],[31.18,26.5,8,"Arc3 C"],[32.48,1.75,4,"Short"],[32.48,6.25,6,"Mid R"],[32.48,10.75,7,"Mid R"],[32.48,24.25,14,"Arc3 C"],[33.77,-0.5,2,"Short"],[33.77,4.0,5,"Mid R"],[33.77,8.5,5,"Mid R"],[33.77,13.0,11,"Mid C"],[33.77,17.5,6,"Mid R"],[33.77,22.0,19,"Arc3 C"],[35.07,1.75,7,"Short"],[35.07,6.25,5,"Mid R"],[35.07,10.75,3,"Mid R"],[35.07,15.25,5,"Mid R"],[35.07,24.25,21,"Arc3 C"],[36.37,4.0,3,"Mid R"],[36.37,8.5,3,"Mid R"],[36.37,13.0,3,"Mid R"],[36.37,22.0,32,"Arc3 C"],[36.37,26.5,3,"Arc3 C"],[37.67,24.25,6,"Arc3 C"],[38.97,-0.5,3,"Mid R"],[38.97,4.0,4,"Mid R"],[38.97,8.5,4,"Mid R"],[38.97,13.0,4,"Mid R"],[38.97,22.0,38,"Arc3 R"],[40.27,1.75,4,"Mid R"],[40.27,6.25,4,"Mid R"],[40.27,15.25,2,"Mid R"],[40.27,19.75,26,"Arc3 R"],[40.27,24.25,2,"Arc3 R"],[41.57,17.5,20,"Arc3 R"],[41.57,22.0,13,"Arc3 R"],[42.87,1.75,5,"Mid R"],[42.87,15.25,14,"Arc3 R"],[42.87,19.75,19,"Arc3 R"],[42.87,24.25,2,"Arc3 R"],[44.17,13.0,13,"Arc3 R"],[44.17,17.5,14,"Arc3 R"],[45.47,1.75,2,"Mid R"],[45.47,10.75,4,"Arc3 R"],[45.47,15.25,10,"Arc3 R"],[46.77,-0.5,17,"Corner3 R"],[46.77,4.0,32,"Arc3 R"],[46.77,8.5,24,"Arc3 R"],[46.77,13.0,26,"Arc3 R"],[46.77,17.5,3,"Arc3 R"],[48.06,-2.75,3,"Corner3 R"],[48.06,1.75,40,"Corner3 R"],[48.06,6.25,23,"Arc3 R"],[48.06,10.75,12,"Arc3 R"],[49.36,4.0,6,"Arc3 R"]],"zones":{"Arc3 C":{"n":374,"pps":0.971,"d":-0.033,"freq":0.126,"dfreq":0.005},"Arc3 L":{"n":320,"pps":1.05,"d":0.04,"freq":0.108,"dfreq":0.003},"Arc3 R":{"n":286,"pps":1.133,"d":0.07,"freq":0.097,"dfreq":0.005},"Corner3 L":{"n":67,"pps":1.209,"d":0.113,"freq":0.023,"dfreq":0.001},"Corner3 R":{"n":109,"pps":1.128,"d":0.056,"freq":0.037,"dfreq":0.007},"Mid C":{"n":199,"pps":0.884,"d":0.078,"freq":0.067,"dfreq":-0.012},"Mid L":{"n":94,"pps":0.766,"d":-0.006,"freq":0.032,"dfreq":-0.006},"Mid R":{"n":100,"pps":0.74,"d":0.003,"freq":0.034,"dfreq":-0.005},"Rim":{"n":809,"pps":1.325,"d":0.014,"freq":0.273,"dfreq":0.001},"Short":{"n":604,"pps":0.907,"d":0.04,"freq":0.204,"dfreq":0.001}}}}},"hex_r":1.5,"experience":{"GS":{"Rookie":0.223,"1-2 yrs":0.197,"3-5 yrs":0.342,"6+ yrs":0.239,"avg_exp":3.7},"TOR":{"Rookie":0.419,"1-2 yrs":0.03,"3-5 yrs":0.228,"6+ yrs":0.323,"avg_exp":3.3},"POR":{"Rookie":0.317,"1-2 yrs":0.237,"3-5 yrs":0.139,"6+ yrs":0.307,"avg_exp":2.9}},"players":{"GS":[{"name":"Veronica Burton","mpg":29.3,"ppg":11.9,"ts":0.561,"pm40":3.0,"exp":3},{"name":"Janelle Salaun","mpg":26.3,"ppg":11.0,"ts":0.523,"pm40":-0.2,"exp":0},{"name":"Temi Fagbenle","mpg":23.1,"ppg":7.2,"ts":0.544,"pm40":0.1,"exp":4},{"name":"Tiffany Hayes","mpg":21.1,"ppg":9.2,"ts":0.557,"pm40":4.0,"exp":12},{"name":"Kate Martin","mpg":15.6,"ppg":5.9,"ts":0.459,"pm40":-1.5,"exp":1},{"name":"Kayla Thornton","mpg":21.4,"ppg":9.9,"ts":0.493,"pm40":1.2,"exp":9}],"TOR":[{"name":"Laura Juskaite","mpg":25.4,"ppg":11.2,"ts":0.583,"pm40":-7.0,"exp":0},{"name":"Marina Mabrey","mpg":21.4,"ppg":15.2,"ts":0.599,"pm40":-7.6,"exp":7},{"name":"Julie Allemand","mpg":23.4,"ppg":5.0,"ts":0.676,"pm40":-6.8,"exp":3},{"name":"Maria Conde","mpg":22.0,"ppg":7.1,"ts":0.485,"pm40":-8.3,"exp":0},{"name":"Kiki Rice","mpg":17.3,"ppg":8.5,"ts":0.589,"pm40":-7.7,"exp":0},{"name":"Isabelle Harrison","mpg":19.0,"ppg":10.2,"ts":0.508,"pm40":-8.8,"exp":8}],"POR":[{"name":"Bridget Carleton","mpg":29.4,"ppg":13.9,"ts":0.559,"pm40":-2.1,"exp":7},{"name":"Emily Engstler","mpg":24.7,"ppg":10.1,"ts":0.567,"pm40":-3.2,"exp":4},{"name":"Carla Leite","mpg":24.8,"ppg":15.3,"ts":0.605,"pm40":-2.8,"exp":1},{"name":"Megan DiLeo","mpg":22.6,"ppg":12.2,"ts":0.645,"pm40":-3.8,"exp":7},{"name":"Nyadiew Puoch","mpg":17.6,"ppg":4.1,"ts":0.448,"pm40":-7.3,"exp":0},{"name":"Sarah Ashlee Barker","mpg":20.7,"ppg":9.0,"ts":0.603,"pm40":-3.2,"exp":1}]}}</script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const NS = "http://www.w3.org/2000/svg";
+const TEAMS = { GS: { name: "Valkyries", full: "Golden State Valkyries", yr: 2025, c: "var(--gs)" },
+                TOR: { name: "Tempo", full: "Toronto Tempo", yr: 2026, c: "var(--tor)" },
+                POR: { name: "Fire", full: "Portland Fire", yr: 2026, c: "var(--por)" } };
+const HIST = { CHI: { name: "Sky '06", yr: 2006 }, ATL: { name: "Dream '08", yr: 2008 } };
+const ORDER = ["GS", "TOR", "POR"];
+const fmt = (v, d = 1) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
+const pct = (v, d = 1) => (100 * v).toFixed(d) + "%";
+
+function el(tag, attrs = {}, parent) {
+  const n = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+function txt(parent, x, y, s, cls = "lbl", extra = {}) { const t = el("text", { x, y, class: cls, ...extra }, parent); t.textContent = s; return t; }
+const scale = (d0, d1, r0, r1) => v => r0 + (v - d0) / (d1 - d0) * (r1 - r0);
+
+const tip = document.getElementById("tip");
+function showTip(html, ev) {
+  tip.innerHTML = html; tip.style.opacity = 1;
+  const x = Math.min(ev.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
+  const y = ev.clientY + 14 + tip.offsetHeight > window.innerHeight ? ev.clientY - tip.offsetHeight - 10 : ev.clientY + 14;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+const hideTip = () => { tip.style.opacity = 0; };
+
+function legend(id, keys, withHist) {
+  const L = document.getElementById(id);
+  L.innerHTML = keys.map(k => `<span class="chip" style="--c:${TEAMS[k].c}">${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}</span>`).join("")
+    + (withHist ? `<span class="chip hist" style="color:var(--ink-3)">Sky '06 · Dream '08</span>` : "");
+}
+
+/* ---------- hero cards ---------- */
+(function cards() {
+  const box = document.getElementById("cards");
+  for (const k of ORDER) {
+    const f = D.fingerprint[k], e = D.elo.end[k], path = D.elo.paths[k];
+    const div = document.createElement("div");
+    div.className = "card"; div.style.setProperty("--c", TEAMS[k].c);
+    div.innerHTML = `<div><div class="team">${TEAMS[k].full}</div><div class="yr">Year one · ${TEAMS[k].yr}</div></div>
+      <div class="rec">${f.w}–${f.l}</div>
+      <dl><dt>Net rating</dt><dd>${fmt(f.net.v)} <span style="color:var(--ink-3)">(${f.net.rank}/${f.teams})</span></dd>
+      <dt>Final Elo</dt><dd>${e.end} <span style="color:var(--ink-3)">(${e.rank}/${e.of})</span></dd>
+      <dt>Close games</dt><dd>${D.clutch[k].w}–${D.clutch[k].l}</dd></dl>`;
+    const s = el("svg", { viewBox: "0 0 200 46", preserveAspectRatio: "none", "aria-hidden": "true" });
+    const x = scale(0, 44, 2, 198), y = scale(1200, 1500, 44, 2);
+    el("line", { x1: 0, x2: 200, y1: y(1300), y2: y(1300), class: "gridline", "stroke-dasharray": "2 3" }, s);
+    el("polyline", { points: path.map((v, i) => `${x(i)},${y(v)}`).join(" "), fill: "none", stroke: TEAMS[k].c, "stroke-width": 2, "vector-effect": "non-scaling-stroke" }, s);
+    el("circle", { cx: x(path.length - 1), cy: y(path.at(-1)), r: 3, fill: TEAMS[k].c }, s);
+    div.appendChild(s);
+    box.appendChild(div);
+  }
+})();
+
+/* ---------- Elo chart ---------- */
+(function eloChart() {
+  const P = D.elo.paths, s = document.getElementById("elo-chart");
+  const W = 640, H = 360, m = { l: 44, r: 82, t: 12, b: 30 };
+  const all = Object.values(P).flat();
+  const lo = Math.floor(Math.min(...all) / 50) * 50, hi = Math.ceil(Math.max(...all) / 50) * 50;
+  const x = scale(0, 44, m.l, W - m.r), y = scale(lo, hi, H - m.b, m.t);
+  for (let v = lo; v <= hi; v += 50) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 1300 ? "zero" : "gridline", "stroke-dasharray": v === 1300 ? "3 3" : "" }, s); txt(s, m.l - 8, y(v) + 4, v, "lbl", { "text-anchor": "end" }); }
+  for (const g of [0, 10, 20, 30, 40]) txt(s, x(g), H - 10, g === 0 ? "start" : "G" + g, "lbl", { "text-anchor": "middle" });
+  const ends = [];
+  for (const k of ["CHI", "ATL"]) {
+    el("polyline", { points: P[k].map((v, i) => `${x(i)},${y(v)}`).join(" "), fill: "none", stroke: "var(--hist)", "stroke-width": 1.5, "stroke-dasharray": "4 3" }, s);
+    ends.push({ k, v: P[k].at(-1), i: P[k].length - 1, label: HIST[k].name, c: "var(--ink-3)" });
+  }
+  for (const k of ORDER) {
+    el("polyline", { points: P[k].map((v, i) => `${x(i)},${y(v)}`).join(" "), fill: "none", stroke: TEAMS[k].c, "stroke-width": 2.5, "stroke-linejoin": "round" }, s);
+    el("circle", { cx: x(P[k].length - 1), cy: y(P[k].at(-1)), r: 4, fill: TEAMS[k].c, stroke: "var(--panel)", "stroke-width": 2 }, s);
+    ends.push({ k, v: P[k].at(-1), i: P[k].length - 1, label: TEAMS[k].name, c: TEAMS[k].c });
+  }
+  // end labels, nudged apart
+  ends.sort((a, b) => y(a.v) - y(b.v));
+  let prev = -99;
+  for (const e of ends) { let yy = Math.max(y(e.v) + 4, prev + 14); prev = yy;
+    txt(s, W - m.r + 8, yy, `${e.label} ${Math.round(e.v)}`, ORDER.includes(e.k) ? "lbl-ink" : "lbl", ORDER.includes(e.k) ? { style: "font-size:13px" } : {}); }
+  const cross = el("line", { y1: m.t, y2: H - m.b, stroke: "var(--ink-3)", "stroke-width": 1, opacity: 0 }, s);
+  const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, class: "hit" }, s);
+  hit.addEventListener("pointermove", ev => {
+    const r = s.getBoundingClientRect(), px = (ev.clientX - r.left) * W / r.width;
+    const g = Math.max(0, Math.min(44, Math.round((px - m.l) / (W - m.l - m.r) * 44)));
+    cross.setAttribute("x1", x(g)); cross.setAttribute("x2", x(g)); cross.setAttribute("opacity", 0.6);
+    const rows = [...ORDER.map(k => [TEAMS[k].name, P[k][g], TEAMS[k].c]), ...["CHI", "ATL"].map(k => [HIST[k].name, P[k][g], "var(--hist)"])]
+      .filter(r => r[1] != null).sort((a, b) => b[1] - a[1])
+      .map(r => `<div><span style="color:${r[2]}">■</span> ${r[0]} <span class="num">${Math.round(r[1])}</span></div>`).join("");
+    showTip(`<b>${g === 0 ? "Before game 1" : "After game " + g}</b>${rows}`, ev);
+  });
+  hit.addEventListener("pointerleave", () => { cross.setAttribute("opacity", 0); hideTip(); });
+  legend("elo-legend", ORDER, true);
+  const e = D.elo.end;
+  document.getElementById("elo-lede").innerHTML = `By Elo, the Tempo ended year one at <strong>${e.TOR.end}</strong>, last in the league and below the 2006 Sky (${e.CHI.end}) and 2008 Dream (${e.ATL.end}). Those teams won 5 and 4 games. Toronto's net rating was actually better than theirs, but this league is deeper and losses to good teams cost more Elo. Portland climbed to <strong>${e.POR.end}</strong>. Golden State reached ${e.GS.end} and made the playoffs.`;
+
+  const tbl = document.getElementById("elo-table"), rows = D.elo.table2026;
+  const max = Math.max(...rows.map(r => r.elo)), min = 1150;
+  tbl.innerHTML = rows.map((r, i) => {
+    const k = r.abbr === "TOR" ? "TOR" : r.abbr === "POR" ? "POR" : r.abbr === "GS" ? "GS" : null;
+    return `<div class="elo-row ${k ? "hl" : ""}" style="${k ? "--c:" + TEAMS[k].c : ""}"><span class="num" style="color:var(--ink-3)">${i + 1}</span><span class="ab">${r.abbr}</span><span class="bar"><i style="width:${(r.elo - min) / (max - min) * 100}%"></i></span><span class="num">${r.elo}</span></div>`;
+  }).join("");
+})();
+
+/* ---------- fingerprint ---------- */
+(function fingerprint() {
+  const s = document.getElementById("fp-chart"), F = D.fingerprint;
+  const rows = [["ortg", "Offensive rating", "pts/100", 1, false], ["drtg", "Defensive rating", "pts/100", 1, false], ["net", "Net rating", "pts/100", 1, false],
+    null, ["efg", "eFG%", "", 1, true], ["tov", "Turnover %", "", 1, true], ["orb", "Off. rebound %", "", 1, true], ["ftr", "FT rate", "FTM/FGA", 3, false],
+    null, ["opp_efg", "Opp. eFG%", "", 1, true], ["opp_tov", "Forced TO %", "", 1, true], ["drb", "Def. rebound %", "", 1, true], ["opp_ftr", "Opp. FT rate", "FTM/FGA", 3, false]];
+  const W = 640, m = { l: 140, r: 20, t: 26 }, rowH = 30;
+  const x = scale(0, 1, m.l + 10, W - m.r - 10);
+  txt(s, x(0), 14, "← best in league", "lbl"); txt(s, x(1), 14, "worst →", "lbl", { "text-anchor": "end" });
+  let yy = m.t + 10;
+  const fmtV = (r, v) => r[4] ? pct(v) : v.toFixed(r[3]);
+  for (const r of rows) {
+    if (!r) { el("line", { x1: 0, x2: W, y1: yy - 4, y2: yy - 4, stroke: "var(--rule)" }, s); yy += 10; continue; }
+    const cy = yy + rowH / 2;
+    txt(s, 0, cy + 4, r[1], "lbl", { style: "font-family:var(--body);font-size:13px;fill:var(--ink)" });
+    el("line", { x1: x(0), x2: x(1), y1: cy, y2: cy, class: "gridline" }, s);
+    const pts = ORDER.map(k => ({ k, p: (F[k][r[0]].rank - 1) / (F[k].teams - 1) }));
+    const seen = {};
+    for (const { k, p } of pts) {
+      const key = p.toFixed(3), off = (seen[key] = (seen[key] ?? -1) + 1);
+      const c = el("circle", { cx: x(p), cy: cy + (off ? (off % 2 ? -7 : 7) : 0), r: 7, fill: TEAMS[k].c, stroke: "var(--panel)", "stroke-width": 2, style: "cursor:pointer" }, s);
+      const f = F[k][r[0]];
+      c.addEventListener("pointermove", ev => showTip(`<b style="color:inherit">${TEAMS[k].name} ${TEAMS[k].yr}</b><div>${r[1]}: <span class="num">${fmtV(r, f.v)}</span></div><div>Rank <span class="num">${f.rank} of ${F[k].teams}</span></div><div>League avg <span class="num">${fmtV(r, f.lg)}</span></div>`, ev));
+      c.addEventListener("pointerleave", hideTip);
+    }
+    yy += rowH;
+  }
+  s.setAttribute("viewBox", `0 0 ${W} ${yy + 6}`);
+  legend("fp-legend", ORDER, false);
+  const t = document.getElementById("fp-table");
+  t.innerHTML = `<tr><th>Metric</th>${ORDER.map(k => `<th>${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}</th>`).join("")}</tr>` +
+    rows.filter(Boolean).map(r => `<tr><td>${r[1]}</td>${ORDER.map(k => `<td>${fmtV(r, F[k][r[0]].v)} <span style="color:var(--ink-3)">#${F[k][r[0]].rank}</span></td>`).join("")}</tr>`).join("");
+})();
+
+/* ---------- season arc ---------- */
+(function arc() {
+  const s = document.getElementById("arc-chart"), R = D.rolling;
+  const W = 640, H = 300, m = { l: 40, r: 70, t: 10, b: 26 };
+  const x = scale(1, 44, m.l, W - m.r), y = scale(-30, 20, H - m.b, m.t);
+  for (let v = -30; v <= 20; v += 10) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 0 ? "zero" : "gridline" }, s); txt(s, m.l - 8, y(v) + 4, v > 0 ? "+" + v : v, "lbl", { "text-anchor": "end" }); }
+  for (const g of [10, 20, 30, 40]) txt(s, x(g), H - 8, "G" + g, "lbl", { "text-anchor": "middle" });
+  const ends = [];
+  for (const k of ORDER) {
+    const pts = R[k].map((v, i) => v == null ? null : `${x(i + 1)},${y(Math.max(-30, Math.min(20, v)))}`).filter(Boolean);
+    el("polyline", { points: pts.join(" "), fill: "none", stroke: TEAMS[k].c, "stroke-width": 2.5, "stroke-linejoin": "round" }, s);
+    const last = R[k].at(-1);
+    el("circle", { cx: x(R[k].length), cy: y(last), r: 4, fill: TEAMS[k].c, stroke: "var(--panel)", "stroke-width": 2 }, s);
+    ends.push({ k, v: last });
+  }
+  ends.sort((a, b) => y(a.v) - y(b.v)); let prev = -99;
+  for (const e of ends) { const yy = Math.max(y(e.v) + 4, prev + 15); prev = yy; txt(s, W - m.r + 8, yy, `${TEAMS[e.k].name} ${fmt(e.v)}`, "lbl-ink", { style: "font-size:13px" }); }
+  const cross = el("line", { y1: m.t, y2: H - m.b, stroke: "var(--ink-3)", opacity: 0 }, s);
+  const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, class: "hit" }, s);
+  hit.addEventListener("pointermove", ev => {
+    const r = s.getBoundingClientRect(), px = (ev.clientX - r.left) * W / r.width;
+    const g = Math.max(10, Math.min(44, Math.round(1 + (px - m.l) / (W - m.l - m.r) * 43)));
+    cross.setAttribute("x1", x(g)); cross.setAttribute("x2", x(g)); cross.setAttribute("opacity", 0.6);
+    showTip(`<b>Games ${g - 9}–${g}</b>` + ORDER.map(k => `<div><span style="color:${TEAMS[k].c}">■</span> ${TEAMS[k].name} <span class="num">${fmt(R[k][g - 1])}</span></div>`).join(""), ev);
+  });
+  hit.addEventListener("pointerleave", () => { cross.setAttribute("opacity", 0); hideTip(); });
+  legend("arc-legend", ORDER, false);
+
+  // margin strips
+  const st = document.getElementById("strip-chart"), G = D.games;
+  const bandH = 70, mx = scale(0, 44, 70, 630), bw = (630 - 70) / 44 - 2, ym = scale(0, 35, 0, bandH / 2 - 2);
+  ORDER.forEach((k, i) => {
+    const cy = i * (bandH + 6) + bandH / 2 + 2;
+    txt(st, 0, cy + 5, TEAMS[k].name, "lbl-ink");
+    el("line", { x1: 70, x2: 630, y1: cy, y2: cy, class: "gridline" }, st);
+    G[k].forEach((g, j) => {
+      const mg = g.pf - g.pa, h = Math.max(1.5, ym(Math.min(35, Math.abs(mg))));
+      const b = el("rect", { x: mx(j) + 1, y: mg > 0 ? cy - h : cy, width: bw, height: h, rx: 1.5, fill: TEAMS[k].c, opacity: mg > 0 ? 1 : 0.38 }, st);
+      const hb = el("rect", { x: mx(j), y: cy - bandH / 2, width: bw + 2, height: bandH, class: "hit", style: "cursor:pointer" }, st);
+      hb.addEventListener("pointermove", ev => showTip(`<b>${TEAMS[k].name} · game ${g.n}</b><div>${g.date} ${g.home ? "vs" : "at"} ${g.opp}</div><div class="num">${g.pf}–${g.pa} (${mg > 0 ? "W" : "L"} ${fmt(mg, 0)})</div>`, ev));
+      hb.addEventListener("pointerleave", hideTip);
+    });
+  });
+})();
+
+/* ---------- shot maps ---------- */
+(function shots() {
+  const H = D.hex, R = D.hex_r, box = document.getElementById("courts");
+  const ZN = z => ({ "Rim": "At the rim (0–4 ft)", "Short": "Short paint (4–10 ft)", "Mid L": "Midrange, left", "Mid C": "Midrange, middle", "Mid R": "Midrange, right",
+    "Corner3 L": "Left corner 3", "Corner3 R": "Right corner 3", "Arc3 L": "Left wing 3", "Arc3 C": "Top of the key 3", "Arc3 R": "Right wing 3" }[z] || z);
+  const S = 10, Y0 = 5.25; // 10 px per foot, baseline at y = -5.25 ft
+  const X = v => v * S, Y = v => (v + Y0) * S;
+  // size reference = 90th-percentile hex share across all panels, so the rim hex doesn't shrink everything else
+  const shares = [];
+  for (const k of ORDER) for (const side of ["off", "def"]) for (const h of H[k][side].hexes) shares.push(h[2] / H[k][side].total);
+  shares.sort((a, b) => a - b);
+  const refShare = shares[Math.floor(shares.length * 0.9)];
+  function color(d) {
+    const t = Math.max(-1, Math.min(1, d / 0.2));
+    return t >= 0 ? `color-mix(in oklab, var(--hot) ${Math.round(t * 100)}%, var(--mid))` : `color-mix(in oklab, var(--cold) ${Math.round(-t * 100)}%, var(--mid))`;
+  }
+  const hexPts = (cx, cy, r) => Array.from({ length: 6 }, (_, i) => { const a = Math.PI / 180 * (60 * i - 90); return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`; }).join(" ");
+  const panels = {};
+  for (const k of ORDER) {
+    const d = document.createElement("div"); d.className = "court";
+    d.innerHTML = `<h3><span class="chip" style="--c:${TEAMS[k].c}">${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}</span><small></small></h3>`;
+    const s = el("svg", { viewBox: `0 0 500 ${Math.round(Y(29))}`, role: "img", "aria-label": `${TEAMS[k].full} shot map` });
+    d.appendChild(s);
+    const reads = document.createElement("div"); reads.className = "reads"; d.appendChild(reads);
+    box.appendChild(d);
+    // court lines
+    const g = el("g", {}, s);
+    el("rect", { x: 0, y: 0, width: 500, height: Y(29), class: "line", style: "opacity:.35" }, g);
+    el("rect", { x: X(17), y: 0, width: X(16), height: Y(13.75), class: "line" }, g);
+    el("path", { d: `M ${X(19)} ${Y(13.75)} A ${6 * S} ${6 * S} 0 0 0 ${X(31)} ${Y(13.75)}`, class: "line" }, g);
+    el("line", { x1: X(22), x2: X(28), y1: Y(-1.25), y2: Y(-1.25), class: "line", style: "stroke-width:2" }, g);
+    el("circle", { cx: X(25), cy: Y(0), r: 0.75 * S, class: "line" }, g);
+    el("path", { d: `M ${X(21)} ${Y(0)} A ${4 * S} ${4 * S} 0 0 0 ${X(29)} ${Y(0)}`, class: "line", style: "opacity:.4" }, g);
+    const cx3 = Math.sqrt(22.15 ** 2 - 9);
+    el("path", { d: `M ${X(25 - cx3)} 0 L ${X(25 - cx3)} ${Y(3)} A ${22.15 * S} ${22.15 * S} 0 0 0 ${X(25 + cx3)} ${Y(3)} L ${X(25 + cx3)} 0`, class: "line" }, g);
+    panels[k] = { s, hexes: el("g", {}, s), reads, small: d.querySelector("small") };
+  }
+  function render(side) {
+    for (const k of ORDER) {
+      const P = panels[k], M = H[k][side];
+      P.hexes.replaceChildren();
+      P.small.textContent = `${M.total.toLocaleString()} FGA`;
+      for (const [hx, hy, n, z] of M.hexes) {
+        const share = n / M.total, r = R * S * 0.98 * Math.sqrt(Math.min(1, share / refShare));
+        if (r < 3) continue;
+        const zone = M.zones[z];
+        const poly = el("polygon", { points: hexPts(X(hx), Y(hy), r), fill: color(zone.d), stroke: "var(--panel)", "stroke-width": 0.6, style: "cursor:pointer" }, P.hexes);
+        poly.addEventListener("pointermove", ev => showTip(`<b>${ZN(z)}</b><div>${TEAMS[k].name} ${side === "off" ? "shooting" : "opponents"}</div>
+          <div class="num">${pct(zone.freq)} of shots (${fmt(100 * zone.dfreq)} pp vs lg)</div><div class="num">${zone.pps.toFixed(2)} pts/shot (${fmt(zone.d, 2)} vs lg)</div><div class="num">${pct(share, 2)} from this hex</div>`, ev));
+        poly.addEventListener("pointerleave", hideTip);
+      }
+      const z = M.zones, rimF = z.Rim.freq, three = ["Corner3 L", "Corner3 R", "Arc3 L", "Arc3 C", "Arc3 R"].reduce((a, q) => a + (z[q]?.freq || 0), 0);
+      const best = Object.entries(z).filter(([, v]) => v.n >= 60).sort((a, b) => (side === "off" ? b[1].d - a[1].d : a[1].d - b[1].d))[0];
+      const worst = Object.entries(z).filter(([, v]) => v.n >= 60).sort((a, b) => (side === "off" ? a[1].d - b[1].d : b[1].d - a[1].d))[0];
+      P.reads.innerHTML = `<div>Rim share <b>${pct(rimF, 0)}</b> · 3PA share <b>${pct(three, 0)}</b></div>
+        <div>${side === "off" ? "Best" : "Best defended"}: ${ZN(best[0])} <b>${fmt(best[1].d, 2)}</b></div>
+        <div>${side === "off" ? "Worst" : "Most exposed"}: ${ZN(worst[0])} <b>${fmt(worst[1].d, 2)}</b></div>`;
+    }
+  }
+  const bOff = document.getElementById("btn-off"), bDef = document.getElementById("btn-def");
+  const set = side => { bOff.setAttribute("aria-pressed", side === "off"); bDef.setAttribute("aria-pressed", side === "def"); render(side); };
+  bOff.onclick = () => set("off"); bDef.onclick = () => set("def");
+  set("off");
+  const o = k => H[k].off.zones.Rim, dz = k => H[k].def.zones.Rim;
+  document.getElementById("shot-lede").innerHTML = `<strong>${pct(o("TOR").freq, 0)}</strong> of Toronto's shots came at the rim, the most in this class (Portland ${pct(o("POR").freq, 0)}, Golden State ${pct(o("GS").freq, 0)}). They finished those shots ${Math.abs(o("TOR").d).toFixed(2)} points per shot worse than league average. On defense they allowed even more: <strong>${pct(dz("TOR").freq, 0)}</strong> of opponent shots came at the rim. Golden State kept opponents to ${pct(dz("GS").freq, 0)}.`;
+})();
+
+/* ---------- roster ---------- */
+(function roster() {
+  const E = D.experience, s = document.getElementById("exp-chart");
+  const B = [["Rookie", "var(--exp1)"], ["1-2 yrs", "var(--exp2)"], ["3-5 yrs", "var(--exp3)"], ["6+ yrs", "var(--exp4)"]];
+  const x = scale(0, 1, 90, 560);
+  ORDER.forEach((k, i) => {
+    const y = 8 + i * 52; let acc = 0;
+    txt(s, 0, y + 22, TEAMS[k].name, "lbl-ink");
+    for (const [b, c] of B) {
+      const v = E[k][b] || 0;
+      const r = el("rect", { x: x(acc) + 1, y, width: Math.max(0, x(acc + v) - x(acc) - 2), height: 34, fill: c, rx: 2 }, s);
+      r.addEventListener("pointermove", ev => showTip(`<b>${TEAMS[k].name}</b><div>${b === "Rookie" ? "Rookies" : b + " of prior WNBA experience"}</div><div class="num">${pct(v)} of minutes</div>`, ev));
+      r.addEventListener("pointerleave", hideTip);
+      if (v > 0.07) txt(s, x(acc + v / 2), y + 22, pct(v, 0), "lbl", { "text-anchor": "middle", style: `fill:${b === "6+ yrs" || b === "3-5 yrs" ? "var(--bg)" : "var(--ink)"};font-size:12px` });
+      acc += v;
+    }
+    txt(s, 570, y + 16, `${E[k].avg_exp}`, "lbl-ink", { style: "font-size:18px" });
+    txt(s, 570, y + 30, "avg yrs", "lbl");
+  });
+  document.getElementById("exp-legend").innerHTML = B.map(([b, c]) => `<span class="chip" style="--c:${c};font-size:.9rem">${b === "Rookie" ? "Rookie" : b + " prior"}</span>`).join("") + `<span style="color:var(--ink-3)">Share of team minutes by prior WNBA seasons played. "Avg yrs" is weighted by minutes.</span>`;
+  document.getElementById("roster-lede").innerHTML = `Rookies played <strong>${pct(E.TOR.Rookie, 0)}</strong> of Toronto's minutes, compared with ${pct(E.POR.Rookie, 0)} in Portland and ${pct(E.GS.Rookie, 0)} in Golden State. Several were international pros new to the WNBA, like Laura Juskaite, Toronto's minutes leader. Toronto had almost no one in the 1–2 year range (${pct(E.TOR["1-2 yrs"], 0)}), so the roster was split between first-years and veterans.`;
+  const box = document.getElementById("players");
+  for (const k of ORDER) {
+    const d = document.createElement("div"); d.style.setProperty("--c", TEAMS[k].c);
+    d.innerHTML = `<h3>${TEAMS[k].full}</h3><div class="tbl-wrap"><table><tr><th>Player</th><th>MPG</th><th>PPG</th><th>TS%</th><th>+/-40</th></tr>` +
+      D.players[k].map(p => `<tr><td>${p.name}${p.exp === 0 ? '<span class="rook">ROOK</span>' : ""}</td><td>${p.mpg}</td><td>${p.ppg}</td><td>${(100 * p.ts).toFixed(1)}</td><td>${fmt(p.pm40)}</td></tr>`).join("") + "</table></div>";
+    box.appendChild(d);
+  }
+})();
+
+/* ---------- rivalry & clutch ---------- */
+(function rivalry() {
+  const games = D.h2h, rec = {};
+  const pairKey = (a, b) => [a, b].sort().join("-");
+  for (const g of games) {
+    const w = g.hs > g.as ? g.home : g.away, k = pairKey(g.home, g.away);
+    rec[k] = rec[k] || { [g.home]: 0, [g.away]: 0 }; rec[k][w]++;
+  }
+  document.getElementById("series").innerHTML = [["TOR", "POR"], ["TOR", "GS"], ["POR", "GS"]].map(([a, b]) => {
+    const r = rec[pairKey(a, b)] || { [a]: 0, [b]: 0 };
+    return `<div><span class="eyebrow">${TEAMS[a].name} vs ${TEAMS[b].name}</span><span class="big num">${r[a] || 0}–${r[b] || 0}</span></div>`;
+  }).join("") + `<div><span class="eyebrow">Note</span><span style="font-size:.85rem;color:var(--ink-2);max-width:26ch">Golden State was in year two in 2026.</span></div>`;
+  document.getElementById("board").innerHTML = games.map(g => {
+    const hw = g.hs > g.as;
+    return `<div class="game"><span class="d">${g.date}</span>
+      <span class="t ${hw ? "lose" : ""}" style="--c:${TEAMS[g.away].c}"><i></i>${TEAMS[g.away].name}</span>
+      <span class="s"><b class="${hw ? "lose" : ""}">${g.as}</b> – <b class="${hw ? "" : "lose"}">${g.hs}</b></span>
+      <span class="t r ${hw ? "" : "lose"}" style="--c:${TEAMS[g.home].c}">@ ${TEAMS[g.home].name}<i></i></span></div>`;
+  }).join("");
+  const C = D.clutch;
+  document.getElementById("clutch").innerHTML = `<tr><th>Team</th><th>Clutch W–L</th><th>Lost after leading 10+</th><th>Won after trailing 10+</th></tr>` +
+    ORDER.map(k => `<tr><td><span class="chip" style="--c:${TEAMS[k].c}">${TEAMS[k].name} ${String(TEAMS[k].yr).slice(2)}</span></td><td>${C[k].w}–${C[k].l}</td><td>${C[k].blown10}</td><td>${C[k].comeback10}</td></tr>`).join("");
+})();
+</script>
+</body>
+</html>
