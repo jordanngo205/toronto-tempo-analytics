@@ -19,7 +19,9 @@ Shared styles live in `docs/assets/site.css`, shared chart helpers in `docs/asse
   so big gaps at the top of the class stay visible.
 - **Charts must be readable:** no labels on top of marks (use `K.declutter` or a key beside the chart), zoom axes to the
   data, and use a log scale when the interesting values bunch at one end.
-- **Every abbreviation is explained** where it's used (BPM, TS%, Game Score…): a glossary, a caption or a header tooltip.
+- **Always light mode.** No dark palette, no `prefers-color-scheme` blocks; `:root` sets `color-scheme: light`.
+- **Every abbreviation is explained** where it's used (BPM, TS%, Game Score…), in a hover tooltip (`title` or the chart
+  tip). The owner doesn't want explainer paragraphs, how-to-read captions, glossaries or method boxes on the page.
 - **Headlines** say what the chart shows ("Toronto was last in four defensive categories"), not slogans.
 
 ## Facts
