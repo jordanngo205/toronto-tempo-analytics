@@ -11,9 +11,12 @@ Shared styles live in `docs/assets/site.css`, shared chart helpers in `docs/asse
 - **Layout, not a template.** Don't stack heading → paragraph → boxed chart on repeat. On desktop each section puts its
   note in a sticky column beside the chart; sections with big grids or side-by-side panels use `class="section wide"`.
   The opening puts the title and intro beside a scoreboard list of key numbers (`.hero > .stat-row`).
-- **Shot charts of many shots** use the dark full court (`K.fullCourt` in kit.js): Tempo attack the right basket,
-  opponents the left, made shots glow, misses are faint dots, positions get `K.wiggle` jitter. Labels go above the
-  court, never on top of the dots.
+- **Shot charts of many shots** use the white full court (`K.fullCourt` in kit.js), not a dark one: Tempo attack the
+  right basket, opponents the left. Made shots are a solid dot with a soft glow in the team's colour (Tempo bordeaux;
+  a Game Center opponent uses its own colour, with a fallback when ESPN's colour is too pale), misses are small grey
+  dots, positions get `K.wiggle` jitter. Labels go above the court, never on top of the dots.
+- **Draft scores** (talent, fit) are standard scores (50 = class average, 10 = one standard deviation), not percentiles,
+  so big gaps at the top of the class stay visible.
 - **Charts must be readable:** no labels on top of marks (use `K.declutter` or a key beside the chart), zoom axes to the
   data, and use a log scale when the interesting values bunch at one end.
 - **Every abbreviation is explained** where it's used (BPM, TS%, Game Score…): a glossary, a caption or a header tooltip.
