@@ -8,7 +8,7 @@
 <link rel="icon" href="../assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=ae30f730">
+<link rel="stylesheet" href="../assets/site.css?v=d68f3619">
 <style>
 .podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .pod { background: var(--panel); border: 1px solid var(--rule); border-top: 6px solid var(--tor); display: grid; grid-template-columns: 96px 1fr; gap: 14px; padding: 14px; align-items: center; min-width: 0; }
@@ -150,14 +150,6 @@
 </section>
 
 <section class="methods">
-  <h3>What the numbers mean</h3>
-  <dl class="glossary">
-    <dt>BPM (box plus-minus)</dt><dd>An estimate of how many points per 100 possessions a player adds compared with an average player, worked out from box-score stats only (points, rebounds, assists, steals, blocks, turnovers, shooting). 0 is average for her league; positive is better. College BPMs run higher than WNBA ones because the gap between the best and worst teams is bigger. The values here come from sportsdataverse's college player value file.</dd>
-    <dt>Defensive BPM</dt><dd>The defensive part of BPM, driven mostly by steals, blocks and defensive rebounds. Box scores see little of the rest of defense, so treat it as a rough guide.</dd>
-    <dt>TS% (true shooting)</dt><dd>Points per shooting attempt, counting threes and free throws: points ÷ (2 × (FGA + 0.44 × FTA)).</dd>
-    <dt>Talent</dt><dd>Half my model's projected WNBA minutes and half sportsdataverse's chance of being drafted (on the log-odds scale, which evens out how skewed those chances are), as a standard score: 50 is the class average and every 10 points is one standard deviation. Players with no 2025-26 season have no draft projection, so their score is estimated from the model part.</dd>
-    <dt>Fit</dt><dd>How well a player's college numbers match Toronto's 2026 weak spots: blocks and defensive rebounds per 40, defensive BPM, height, and (at half weight) steals per 40. Same standard-score scale as talent.</dd>
-  </dl>
   <h3>Method</h3>
   <p><b>Who's eligible:</b> college players whose first season was 2023-24, which makes 2026-27 their senior year, with 400+ minutes in 2025-26. Anyone drafted in 2026 is removed. International prospects and early entrants aren't included, and the 2027 draft order hasn't been set yet.</p>
   <p><b>Talent model:</b> a ridge regression trained on every WNBA draftee from 2018 to 2025. It predicts the square root of WNBA minutes in her first two seasons from her last college season: BPM, defensive BPM, points, rebounds, assists, steals and blocks per 40, true shooting and height. The talent score is half this model and half sportsdataverse's draft probability. <b>Fit:</b> the average z-score of blocks/40, defensive rebounds/40, defensive BPM and height, plus half-weight steals/40. College data covers ESPN-tracked games only, and BPM comes from sportsdataverse's player value file.</p>
@@ -326,7 +318,7 @@ const tbl = document.getElementById("board-tbl"), card = document.getElementById
 function drawBoard() {
   const R = ranked().slice(0, 25);
   if (!selected || !R.find(p => p.id === selected)) selected = R[0]?.id;
-  tbl.innerHTML = `<tr><th>#</th><th>Prospect</th><th>Ht</th><th>PTS</th><th>REB</th><th>BLK</th><th>TS%</th><th title="Box plus-minus: points per 100 possessions added vs an average player, from box-score stats. 0 = average.">BPM</th><th>Talent</th><th>Fit</th><th>Score</th></tr>` +
+  tbl.innerHTML = `<tr><th>#</th><th>Prospect</th><th>Ht</th><th>PTS</th><th>REB</th><th>BLK</th><th title="True shooting: points per shooting attempt, counting threes and free throws. Points ÷ (2 × (FGA + 0.44 × FTA)).">TS%</th><th title="Box plus-minus: points per 100 possessions added vs an average player, from box-score stats. 0 = average.">BPM</th><th title="Half my model's projected WNBA minutes, half sportsdataverse's draft chance, as a standard score: 50 = class average, 10 = one standard deviation.">Talent</th><th title="How well her college numbers match Toronto's weak spots: blocks, defensive rebounds, defensive BPM, height and steals. Same scale as Talent.">Fit</th><th>Score</th></tr>` +
     R.map((p, i) => `<tr data-id="${p.id}" class="${p.id === selected ? "sel" : ""}"><td>${i + 1}</td>
       <td><div class="who">${face(p, "face sm")}<div><b>${p.name}</b><small>${p.school} · ${p.pos}${p.season === 2025 ? " · 2024-25 stats" : ""}</small></div></div></td>
       <td>${ft(p.ht)}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.blk}</td><td>${(100 * p.ts).toFixed(1)}</td><td>${p.bpm}</td>
