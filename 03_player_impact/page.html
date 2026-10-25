@@ -2,28 +2,26 @@
 .heat-wrap { overflow-x: auto; }
 .heat-wrap svg { min-width: 760px; }
 .net-side { display: grid; gap: 10px; align-content: start; }
-.net-side .who { font-family: var(--display); font-weight: 800; font-size: 1.8rem; text-transform: uppercase; line-height: 1; }
+.net-side .who { font-family: var(--display); font-weight: 800; font-size: 1.8rem; line-height: 1; }
 .partner { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; font-size: 0.85rem; border-bottom: 1px solid var(--rule); padding: 4px 0; }
 .partner .num { color: var(--ink-3); }
 .lu { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--rule); }
 .lu .names { display: flex; flex-wrap: wrap; gap: 4px; }
-.lu .names span { font: 600 0.8rem var(--body); background: var(--grid); padding: 2px 7px; }
-.lu .meta { font-size: 0.75rem; color: var(--ink-3); font-family: var(--mono); }
+.lu .names span { font: 600 0.8rem var(--ui); background: var(--grid); padding: 2px 7px; }
+.lu .meta { font-size: 0.78rem; color: var(--ink-3); font-family: var(--ui); font-variant-numeric: tabular-nums; }
 .lu svg { width: 100%; height: 30px; display: block; overflow: visible; }
 @media (max-width: 760px) { .lu { grid-template-columns: minmax(0, 1fr); } }
 </style>
 
 <section class="hero">
-  <div class="eyebrow">Toronto Tempo · 2026 regular season · rotation & lineups</div>
-  <h1>Rotation Lab<span class="sub">Who played, who played together, and how it went.</span></h1>
+  <h1>Rotation Lab<span class="sub">Minutes, pairings and lineups from all 44 games.</span></h1>
   <p class="dek" id="dek"></p>
   <div class="stat-row" id="tiles"></div>
 </section>
 
 <section class="section">
   <header>
-    <div class="eyebrow">01 · The rotation, game by game</div>
-    <h2>Forty-four games, one grid</h2>
+    <h2>Minutes for every player in every game</h2>
     <p class="lede">Each row is a player and each column is a game. Darker cells mean more minutes, and a navy tick on top marks a start. ✕ marks a game missed through injury or illness, and a small dot marks a coach's decision. The bars across the top show each final margin. Hover any cell for the box score line.</p>
   </header>
   <div class="figure">
@@ -34,8 +32,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">02 · Chemistry</div>
-    <h2>Who works together</h2>
+    <h2>Which pairs outscored opponents</h2>
     <p class="lede">Each line connects two players who shared the floor. Thicker lines mean more minutes together. Navy lines mean Toronto outscored opponents with that pair on the court, and bordeaux lines mean it was outscored. Hover or tap a player to see their best and worst partners.</p>
   </header>
   <div class="split">
@@ -47,8 +44,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">03 · Usage vs efficiency</div>
-    <h2>Who carried the offense</h2>
+    <h2>Usage and efficiency across the league</h2>
     <p class="lede">The x-axis is usage, the share of team plays a player ends with a shot, free throws or a turnover while on the court. The y-axis is true shooting. Pick a team to compare it with Toronto.</p>
   </header>
   <div class="figure">
@@ -60,8 +56,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">04 · Five-player lineups</div>
-    <h2>The units that worked, and the ones that didn't</h2>
+    <h2>Five-player lineups ranked by net rating</h2>
     <p class="lede" id="lu-lede"></p>
   </header>
   <div class="figure" id="lineups"></div>
@@ -257,7 +252,7 @@ const last = n => n.split(" ").slice(-1)[0];
   const box = document.getElementById("lineups"), LU = D.lineups;
   // same scale both sides of zero so good and bad bars compare fairly
   const lim = Math.max(...LU.map(l => Math.abs(l.net)));
-  const x = scale(-lim, lim, 10, 250);
+  const x = scale(-lim, lim, 44, 216);  // 44px of space on each side of the 260px chart for the labels
   // one row per lineup: player names on the left, a little SVG bar chart on the right
   box.innerHTML = `<div class="eyebrow" style="margin-bottom:6px">Lineups with 25+ minutes · net rating = points per 100 possessions minus points allowed per 100</div>` + LU.map((l, i) => `
     <div class="lu"><div><div class="names">${l.p.map(n => `<span>${last(n)}</span>`).join("")}</div>
