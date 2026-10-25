@@ -2,11 +2,11 @@
 .podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .pod { background: var(--panel); border: 1px solid var(--rule); border-top: 6px solid var(--tor); display: grid; grid-template-columns: 96px 1fr; gap: 14px; padding: 14px; align-items: center; min-width: 0; }
 .pod .rank { font-family: var(--display); font-weight: 800; font-size: 0.9rem; color: var(--tor); letter-spacing: 0.08em; }
-.pod .nm { font-family: var(--display); font-weight: 800; font-size: 1.6rem; line-height: 1; text-transform: uppercase; }
+.pod .nm { font-family: var(--display); font-weight: 800; font-size: 1.6rem; line-height: 1; }
 .pod .sc { font-size: 0.82rem; color: var(--ink-3); }
 .face { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; object-position: top; background: var(--grid); }
 .face.sm { width: 34px; height: 34px; }
-.slider { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; font: 600 0.85rem var(--display); text-transform: uppercase; letter-spacing: 0.04em; max-width: 620px; }
+.slider { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; font: 600 0.85rem var(--display); letter-spacing: 0.04em; max-width: 620px; }
 .slider input { width: 100%; accent-color: var(--tor); }
 .board-grid { display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 #board-tbl tr { cursor: pointer; }
@@ -14,12 +14,12 @@
 #board-tbl td, #board-tbl th { padding: 6px 5px; font-size: 0.82rem; }
 #board-tbl td { vertical-align: middle; }
 .who { display: flex; align-items: center; gap: 10px; }
-.who b { display: block; font-family: var(--body); font-weight: 600; }
+.who b { display: block; font-family: var(--ui); font-weight: 700; }
 .who small { color: var(--ink-3); font-size: 0.75rem; }
 .mini { display: inline-block; width: 44px; height: 8px; background: var(--grid); vertical-align: middle; position: relative; }
 .mini i { position: absolute; inset: 0 auto 0 0; }
 .card { position: sticky; top: 12px; }
-.card .nm { font-family: var(--display); font-weight: 800; font-size: 2rem; line-height: 1; text-transform: uppercase; }
+.card .nm { font-family: var(--display); font-weight: 800; font-size: 2rem; line-height: 1; }
 .pbar { display: grid; grid-template-columns: 110px 1fr 34px; gap: 8px; align-items: center; font-size: 0.82rem; margin-top: 4px; }
 .pbar .tr { height: 10px; background: var(--grid); position: relative; }
 .pbar .tr i { position: absolute; inset: 0 auto 0 0; background: var(--tor); }
@@ -28,7 +28,6 @@
 </style>
 
 <section class="hero">
-  <div class="eyebrow">Toronto Tempo · 2027 WNBA draft · college class of 2026-27</div>
   <h1>Draft Lab<span class="sub">Who should Toronto take in 2027?</span></h1>
   <p class="dek" id="dek"></p>
   <div class="podium" id="podium"></div>
@@ -37,8 +36,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">01 · What Toronto needs</div>
-    <h2>Last in almost every defensive category</h2>
+    <h2>Toronto was last in four defensive categories</h2>
     <p class="lede" id="needs-lede"></p>
   </header>
   <div class="figure">
@@ -49,8 +47,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">02 · What translates</div>
-    <h2>College defense carries over. College scoring doesn't.</h2>
+    <h2>Defensive numbers predict WNBA minutes better than scoring does</h2>
     <p class="lede" id="tr-lede"></p>
   </header>
   <div class="grid-2">
@@ -69,8 +66,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">03 · How accurate is this?</div>
-    <h2>Tested on draft classes it never saw</h2>
+    <h2>The model, tested on draft classes it never saw</h2>
     <p class="lede" id="acc-lede"></p>
   </header>
   <div class="stat-row" id="acc-tiles"></div>
@@ -95,8 +91,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">04 · The board</div>
-    <h2>Best player available, or best fit?</h2>
+    <h2>The 2027 board</h2>
     <p class="lede">Talent blends my model, which projects WNBA minutes from college numbers, with sportsdataverse's draft projection. Fit measures how much a player helps where Toronto was worst: blocks, defensive rebounds, defensive BPM, height and steals. Both scores are percentiles within this senior class. Click a player to see her full profile.</p>
   </header>
   <div class="controls">
@@ -116,8 +111,7 @@
 
 <section class="section">
   <header>
-    <div class="eyebrow">05 · Talent vs fit</div>
-    <h2>The sweet spot</h2>
+    <h2>Prospects who rate high on both talent and fit</h2>
     <p class="lede" id="sweet-lede"></p>
   </header>
   <div class="figure">
