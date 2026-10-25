@@ -1,8 +1,8 @@
 {
  "expansion-class": {
-  "tor_elo": 1234,
-  "por_elo": 1369,
-  "gs_elo": 1472,
+  "tor_elo": 1219,
+  "por_elo": 1377,
+  "gs_elo": 1486,
   "tor_def_rank": 15
  },
  "shot-lab": {
@@ -21,7 +21,7 @@
   "lead": 0.28395454545454546,
   "runs_for": 35,
   "runs_against": 74,
-  "xwins": 13.399,
+  "xwins": 13.405,
   "wins": 11
  },
  "game-center": {
@@ -29,7 +29,7 @@
   "record": "11-33"
  },
  "draft-lab": {
-  "pool": 647,
-  "top": "Breya Cunningham"
+  "pool": 742,
+  "top": "Clara Strack"
  }
 }
