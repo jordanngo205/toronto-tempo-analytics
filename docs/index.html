@@ -8,7 +8,7 @@
 <link rel="icon" href="assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/site.css?v=5bdfe957">
 <style>
 .home-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; }
 .home-hero img.mark { width: clamp(110px, 18vw, 200px); height: auto; background: var(--plate); border-radius: 16px; padding: 8px; }
@@ -55,7 +55,7 @@
   <p>All data comes from <a href="https://py.sportsdataverse.org/">sportsdataverse</a>: ESPN play-by-play and box scores, plus WNBA Stats lineups. Every page is static HTML with hand-built SVG charts and no chart library. The Python that builds each page is in the <a href="https://github.com/jordanngo205/toronto-tempo-analytics">GitHub repo</a>. The approach follows the film-and-data breakdowns of <a href="https://riseofthevalkyries.substack.com/">Rise of the Valkyries</a> and the Elo work of <a href="https://neilpaine.substack.com/t/basketball">Neil Paine</a>.</p>
 </section>
 <footer class="footer"><span>Built by Jordan Ngo with sportsdataverse (ESPN play-by-play, box scores, WNBA Stats).</span><a href="https://github.com/jordanngo205/toronto-tempo-analytics">Code on GitHub</a><span>Inspired by Rise of the Valkyries and Neil Paine.</span></footer>
-<script id="data" type="application/json">{"expansion-class":{"tor_elo":1219,"por_elo":1377,"gs_elo":1486,"tor_def_rank":15},"shot-lab":{"xpps":1.056,"pps":1.013,"lg_xpps":1.035,"rim":0.303,"opp_rim":0.336},"rotation-lab":{"players":20,"lineups":24,"best":31.3},"game-flow":{"lead":0.28395454545454546,"runs_for":35,"runs_against":74,"xwins":13.405,"wins":11},"game-center":{"games":44,"record":"11-33"},"draft-lab":{"pool":742,"top":"Clara Strack"}}</script>
+<script id="data" type="application/json">{"expansion-class":{"tor_elo":1219,"por_elo":1377,"gs_elo":1486,"tor_def_rank":15},"shot-lab":{"xpps":1.056,"pps":1.013,"lg_xpps":1.035,"rim":0.303,"opp_rim":0.336},"rotation-lab":{"players":20,"lineups":24,"best":31.3},"game-flow":{"lead":0.28395454545454546,"runs_for":35,"runs_against":74,"xwins":13.405,"wins":11},"game-center":{"games":44,"record":"11-33"},"draft-lab":{"pool":742,"top":"JuJu Watkins"}}</script>
 <script>
 // headline numbers that each page's build.py saved (docs/assets/summary.json)
 const S = JSON.parse(document.getElementById("data").textContent);

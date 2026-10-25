@@ -302,7 +302,7 @@ html = (lab.head("The Expansion Class", "Valkyries 2025, Tempo 2026 and Fire 202
         .replace("</script>\n", "</script>\n", 1) + "</body>\n</html>\n")
 out = lab.DOCS / "expansion-class" / "index.html"
 out.parent.mkdir(parents=True, exist_ok=True)
-out.write_text(html)
+out.write_text(lab.versioned(html))
 # print some numbers so I can sanity check them in the terminal
 print("wrote", OUT / "expansion.json", round((OUT / "expansion.json").stat().st_size / 1024), "KB")
 print(json.dumps({k: data["fingerprint"][k]["net"] | {"w": data["fingerprint"][k]["w"]} for k in data["fingerprint"]}, indent=0))

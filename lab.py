@@ -19,6 +19,18 @@ FONTS = ("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700
          "&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap")
 
 
+def version(path):
+    """Short fingerprint of a file's contents. Added to asset links (site.css?v=...) so browsers fetch
+    the new file as soon as it changes instead of mixing a new page with an old cached stylesheet or script."""
+    import hashlib
+    return hashlib.md5((DOCS / path).read_bytes()).hexdigest()[:8]
+
+
+def versioned(html):
+    # add the fingerprint to the shared script tag every page uses
+    return html.replace('src="../assets/kit.js"', f'src="../assets/kit.js?v={version("assets/kit.js")}"')
+
+
 def head(title, description, prefix="../"):
     # the top of every html page. prefix is how to get back to docs/ from the page
     # (pages live one folder down, so "../"; the home page is in docs/ itself, so "")
@@ -32,7 +44,7 @@ def head(title, description, prefix="../"):
 <link rel="icon" href="{prefix}assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="{FONTS}">
-<link rel="stylesheet" href="{prefix}assets/site.css">
+<link rel="stylesheet" href="{prefix}assets/site.css?v={version("assets/site.css")}">
 """
 
 
@@ -71,7 +83,7 @@ def write_home(page_file, data):
             + style + "</style>\n</head>\n<body>\n<div class=\"wrap\">\n" + nav(None, prefix="") + "\n"
             + rest.replace("/*DATA*/", payload).replace("<!--FOOTER-->", FOOTER) + "\n</div>\n</body>\n</html>\n")
     out = DOCS / "index.html"
-    out.write_text(html)
+    out.write_text(versioned(html))
     print("wrote", out.relative_to(ROOT))
 
 
@@ -93,6 +105,6 @@ def write_page(slug, title, description, page_file, data):
     # each page gets its own folder so the URL is nice, e.g. /shot-lab/
     out = DOCS / slug / "index.html"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(html)
+    out.write_text(versioned(html))
     print("wrote", out.relative_to(ROOT), f"{out.stat().st_size // 1024} KB")
     return out
