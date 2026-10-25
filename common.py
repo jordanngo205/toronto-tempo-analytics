@@ -33,11 +33,12 @@ def load(name, season=None, regular=True):
         df = df[df["season_type"].astype(str).isin(["2", "Regular Season"])]
     # ESPN has no headshot for some players (mostly rookies and overseas signings), but WNBA.com does.
     # data/wnba_headshot_ids.json maps those names to their WNBA.com player id, so I fill the gaps from there.
+    # (A full link in that file is used as is: two players only have a photo on FIBA's site.)
     if name == "player_box" and "athlete_headshot_href" in df:
         ids = json.loads((ROOT / "data" / "wnba_headshot_ids.json").read_text())
         miss = df.athlete_headshot_href.isna() & df.athlete_display_name.isin(ids)
         df.loc[miss, "athlete_headshot_href"] = df.loc[miss, "athlete_display_name"].map(
-            lambda n: f"https://cdn.wnba.com/headshots/wnba/latest/260x190/{ids[n]}.png")
+            lambda n: ids[n] if ids[n].startswith("http") else f"https://cdn.wnba.com/headshots/wnba/latest/260x190/{ids[n]}.png")
     return df.reset_index(drop=True)
 
 
