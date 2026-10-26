@@ -99,6 +99,9 @@ const tiles = [
   { slug: "draft-lab", k: "2027 draft", t: "Draft Lab", wide: true,
     p: "Who should Toronto take in 2027? What the team needs, which college numbers actually translate to the WNBA, and an adjustable big board of the senior class.",
     v: S["draft-lab"].pool, l: `College seniors ranked · No. 1 at the default setting: ${S["draft-lab"].top}` },
+  { slug: "posters", k: "Art", t: "Posters", wide: true,
+    p: "Every graphic from the GitHub README in one place: the season circle, rotation ring, shot constellation, Elo race, card set and more.",
+    v: 9, l: "Posters, each linked to its interactive page" },
 ];
 // build the tiles. Each one is a link with a screenshot of the page on top
 document.getElementById("tiles").innerHTML = tiles.map(x => `<a class="tile ${x.wide ? "wide" : ""}" href="${x.slug}/">

@@ -13,7 +13,10 @@ PAGES = [  # slug, nav label
     ("game-flow", "Game Flow"),
     ("game-center", "Game Center"),
     ("draft-lab", "Draft Lab"),
+    ("posters", "Posters"),
 ]
+# the live site's address (link previews need a full URL for the picture)
+SITE = "https://jordanngo205.github.io/toronto-tempo-analytics/"
 # Google Fonts link: Barlow Condensed for headings, Barlow for text, IBM Plex Mono for numbers
 FONTS = ("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800"
          "&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap")
@@ -41,6 +44,12 @@ def head(title, description, prefix="../"):
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{title}</title>
 <meta name="description" content="{description}">
+<!-- link previews (Slack, iMessage, X, LinkedIn...): title, description and the social card picture -->
+<meta property="og:title" content="{title}">
+<meta property="og:description" content="{description}">
+<meta property="og:image" content="{SITE}assets/social.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="{prefix}assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="{FONTS}">

@@ -1,0 +1,36 @@
+<style>
+.poster-banner { display: block; width: 100%; height: auto; border: 1px solid var(--rule); }
+.wall { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.poster { background: var(--panel); border: 1px solid var(--rule); display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+.poster.wide { grid-column: 1 / -1; }
+.poster a.img { display: block; background: #12161d; }
+.poster a.img img { display: block; width: 100%; height: auto; }
+.poster .body { padding: 12px 16px 14px; display: grid; gap: 4px; align-content: start; }
+.poster h2 { font-size: 1.6rem; }
+.poster p { color: var(--ink-2); font-size: 0.92rem; margin: 0; }
+.poster .go { font-size: 0.85rem; font-weight: 600; color: var(--tor); text-decoration: none; }
+.poster .go:hover { text-decoration: underline; }
+@media (max-width: 760px) { .wall { grid-template-columns: minmax(0, 1fr); } }
+</style>
+
+<section class="hero">
+  <h1>Posters<span class="sub">Every Tempo Lab graphic, in one place.</span></h1>
+  <p class="dek">The same pictures as the GitHub README, made from the same data. Click a poster to open it full size, or follow the link under it to the page where you can explore it.</p>
+</section>
+
+<img class="poster-banner" src="../assets/art/banner.png" alt="Tempo Lab banner: each streak is one game">
+
+<section class="wall" id="wall"></section>
+
+<!--FOOTER-->
+<script id="data" type="application/json">/*DATA*/</script>
+<script>
+// [file, title, caption, link, link text, wide] for each poster (from build.py)
+const D = JSON.parse(document.getElementById("data").textContent);
+document.getElementById("wall").innerHTML = D.posters.map(([file, title, cap, link, linkText, wide]) => `
+  <article class="poster ${wide ? "wide" : ""}">
+    <a class="img" href="../assets/art/${file}" target="_blank" rel="noopener"><img src="../assets/art/${file}" alt="${title}" loading="lazy"></a>
+    <div class="body"><h2>${title}</h2><p>${cap}</p>
+      <a class="go" href="${link.startsWith("#") ? "../" + link : "../" + link}">${linkText} →</a></div>
+  </article>`).join("");
+</script>
