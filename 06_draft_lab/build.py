@@ -7,6 +7,7 @@ Writes docs/draft-lab/index.html. Three parts:
   3. The board: every 2026-27 college senior, scored on talent (my model + sportsdataverse's
      draft projection) and on fit (does she fix what Toronto needs?)
 """
+import json
 import re
 import sys
 from pathlib import Path
@@ -18,7 +19,7 @@ import pyarrow.parquet as pq
 # let this file import lab.py and common.py from the main folder
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import lab
-from common import RAW, load, possessions
+from common import RAW, ROOT, load, possessions
 
 TOR = 131935
 
@@ -99,8 +100,8 @@ cs["ts"] = cs.points / (2 * (cs.field_goals_attempted + 0.44 * cs.free_throws_at
 cs["three_rate"] = cs.three_point_field_goals_attempted / cs.field_goals_attempted       # share of shots that are 3s
 cs["mpg"] = cs.minutes / cs.gp
 
-FEATURES = ["box_bpm", "box_obpm", "box_dbpm", "pts40", "reb40", "ast40", "stl40", "blk40", "tov40", "ts", "three_rate", "height"]
-LABELS = {"box_bpm": "Box plus-minus", "box_obpm": "Offensive BPM", "box_dbpm": "Defensive BPM", "pts40": "Points / 40",
+FEATURES = ["mpg", "box_bpm", "box_obpm", "box_dbpm", "pts40", "reb40", "ast40", "stl40", "blk40", "tov40", "ts", "three_rate", "height"]
+LABELS = {"mpg": "Minutes per game", "box_bpm": "Box plus-minus", "box_obpm": "Offensive BPM", "box_dbpm": "Defensive BPM", "pts40": "Points / 40",
           "reb40": "Rebounds / 40", "ast40": "Assists / 40", "stl40": "Steals / 40", "blk40": "Blocks / 40",
           "tov40": "Turnovers / 40", "ts": "True shooting %", "three_rate": "3-point attempt rate", "height": "Height"}
 
@@ -148,7 +149,9 @@ for f in FEATURES:
                       "r_resid": round(float(np.corrcoef(hist.loc[ok, f], hist.loc[ok, "resid"])[0, 1]), 3)})
 
 # my talent model: ridge regression from college numbers to sqrt(WNBA minutes)
-MODEL_F = ["box_bpm", "box_dbpm", "pts40", "reb40", "ast40", "stl40", "blk40", "ts", "height"]
+# minutes per game says how big her college role was. Adding it raised the held-out correlation from 0.569 to 0.594
+# and the top-5 hit rate from 75% to 81% (leave-one-class-out), so it stays in.
+MODEL_F = ["mpg", "box_bpm", "box_dbpm", "pts40", "reb40", "ast40", "stl40", "blk40", "ts", "height"]
 train = hist.dropna(subset=MODEL_F)
 mu, sd = train[MODEL_F].mean(), train[MODEL_F].std()
 X = np.c_[np.ones(len(train)), (train[MODEL_F] - mu) / sd]
@@ -281,6 +284,59 @@ PCT = {"box_bpm": "BPM", "box_dbpm": "Def. BPM", "pts40": "Points/40", "ast40": 
 for col in PCT:
     pool[col + "_pct"] = pool[col].rank(pct=True) * 100
 
+# --- archetype: a plain-words label for what kind of player each prospect is ---------------------------
+# Rules use percentiles within this senior class (pc = 0-100), checked in order; the first one that fits wins.
+pc = lambda col: pool[col].rank(pct=True) * 100
+P_ = {c: pc(c) for c in ["pts40", "ast40", "stl40", "blk40", "dreb40", "box_dbpm"]}
+
+
+def archetype(i, r):
+    """Every label that fits, most important first; the page shows the first two."""
+    pos = r.pos if isinstance(r.pos, str) else ""
+    big = pos in ("F", "C") and r.height >= 74  # forwards and centers 6'2" and up
+    three, tags = r.three_rate, []
+    pbh = P_["ast40"][i] >= 75 and P_["pts40"][i] >= 75 and not big
+    if pbh:
+        tags.append("Primary ball handler & scorer")
+    if P_["pts40"][i] >= 85 and not pbh:
+        tags.append("Scoring big" if big else "Shot creator")
+    if P_["blk40"][i] >= 85 and big:
+        tags.append("Rim protector")
+    if P_["ast40"][i] >= 85 and not pbh:
+        tags.append("Floor general")
+    if big and three >= 0.30:
+        tags.append("Stretch big")
+    if P_["dreb40"][i] >= 85 and pos in ("F", "C"):
+        tags.append("Glass cleaner")
+    if not big and three >= 0.40 and (P_["stl40"][i] >= 70 or P_["box_dbpm"][i] >= 70):
+        tags.append("3 & D")
+    if P_["stl40"][i] >= 92:
+        tags.append("Defensive pest")
+    if three < 0.10 and P_["pts40"][i] >= 60:
+        tags.append("Interior scorer")
+    if three >= 0.45 and "3 & D" not in tags:
+        tags.append("Shooter")
+    return " · ".join(tags[:2]) if tags else "Role player"
+
+
+pool["arch"] = [archetype(i, r) for i, r in pool.iterrows()]
+# --- model rank vs consensus rank ---------------------------------------------------------------------
+# model rank = my model alone (projected WNBA minutes); consensus rank = sportsdataverse's projected draft pick
+pool["model_rank"] = pool.proj_min.rank(ascending=False, method="min").astype(int)
+pool["cons_rank"] = pool.projected_pick.rank(method="min")  # NaN when there's no projection
+# players the model likes more than consensus: in the model's top 30, and 6+ spots higher than consensus.
+# These are the late-round targets.
+likes = pool[(pool.model_rank <= 30) & (pool.cons_rank - pool.model_rank >= 6)].assign(gap=lambda d: d.cons_rank - d.model_rank)
+likes = [{"name": r["name"], "school": r.school, "img": r.headshot if isinstance(r.headshot, str) else "", "arch": r.arch,
+          "pos": r.pos if isinstance(r.pos, str) else "", "m": int(r.model_rank), "c": int(r.cons_rank), "pick": round(float(r.projected_pick), 1),
+          "pmin": round(float(r.proj_min))} for _, r in likes.sort_values("gap", ascending=False).head(12).iterrows()]
+# my own board: names in data/my_board.json, best first (empty until I fill it in)
+mb = ROOT / "data" / "my_board.json"
+my_board = json.loads(mb.read_text()) if mb.exists() else []
+print(pool.arch.str.split(" · ").str[0].value_counts().to_string())
+print(pool.sort_values("talent", ascending=False).head(15)[["name", "arch", "model_rank", "cons_rank"]].to_string())
+print("likes", [(x["name"], x["m"], x["c"]) for x in likes])
+
 board = pool.sort_values("talent", ascending=False).head(60)  # page shows the top of these after weighting
 prospects = [{
     "id": r.athlete_id, "name": r["name"], "school": r.school, "logo": r.school_logo if isinstance(r.school_logo, str) else "",
@@ -293,6 +349,7 @@ prospects = [{
     "dp": None if pd.isna(r.draft_prob) else round(float(r.draft_prob), 3), "pick": None if pd.isna(r.projected_pick) else round(float(r.projected_pick), 1),
     "season": int(r.season), "tr": int(r.talent_rank), "fr": int(r.fit_rank),  # which college season the numbers come from (2026 = 2025-26)
     "pmin": round(float(r.proj_min)), "talent": round(float(r.talent), 1), "fit": round(float(r.fit), 1),
+    "arch": r.arch, "mr": int(r.model_rank), "cr": None if pd.isna(r.cons_rank) else int(r.cons_rank),
     "pct": [round(float(r[col + "_pct"])) for col in PCT],
 } for _, r in board.iterrows()]
 
@@ -304,7 +361,8 @@ hist_pts = [{"n": r["name"], "y": int(r.year), "pick": int(r.pick), "rd": int(r.
 data = {"needs": needs, "translate": translate, "hist": hist_pts, "prospects": prospects,
         "model": {"r": round(model_r, 3), "n": int(len(train)), "features": [LABELS[f] for f in MODEL_F],
                   "weights": [round(float(b), 3) for b in beta[1:]]},
-        "pool_n": int(len(pool)), "pct_labels": list(PCT.values()), "validation": validation}
+        "pool_n": int(len(pool)), "pct_labels": list(PCT.values()), "validation": validation,
+        "likes": likes, "my_board": my_board}
 # the No. 1 at the page's default setting (60% talent, 40% fit) for the home page tile
 top_default = max(prospects, key=lambda p: 0.6 * p["talent"] + 0.4 * p["fit"])["name"] if prospects else None
 lab.summary("draft-lab", {"pool": int(len(pool)), "top": top_default})
