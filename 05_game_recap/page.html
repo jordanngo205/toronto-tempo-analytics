@@ -40,6 +40,16 @@ td.hl { font-weight: 600; color: var(--tor); }
 .night-head, .night-sum { display: flex; justify-content: space-between; gap: 12px; font-size: 0.9rem; }
 .night-head span { display: inline-flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 1.15rem; }
 .night svg { display: block; width: 100%; height: auto; }
+:root { --manure: #c98a1b; }  /* amber for the long-two "manure line" */
+.zt { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.zt th, .zt td { padding: 5px 8px; text-align: center; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+.zt th { font: 700 0.75rem var(--display); text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-3); }
+.zt tr th:first-child { text-align: left; color: var(--ink); }
+.zt-team { display: inline-flex; align-items: center; gap: 6px; }
+.zt td b { display: block; font-size: 0.95rem; }
+.zt td small { color: var(--ink-3); }
+.zt .l2 { background: color-mix(in oklab, var(--manure) 12%, var(--panel)); }
+.zd { margin-left: 3px; font-size: 0.7rem; } .zd.up { color: var(--tor); } .zd.dn { color: var(--tor-2); }
 .recap-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 #linescore .mrow td { border-top: 1px solid var(--ink); font-weight: 600; }
 #linescore td.key { outline: 2px solid currentColor; outline-offset: -3px; }
@@ -161,7 +171,7 @@ td.hl { font-weight: 600; color: var(--tor); }
       <button type="button" data-v="1" aria-pressed="false">1st half</button>
       <button type="button" data-v="2" aria-pressed="false">2nd half</button>
     </div>
-    <span class="cap" style="margin:0">glowing dot = made, in the team's colour · small grey dot = missed · hover any shot for the shooter and time</span>
+    <span class="cap" style="margin:0">glowing dot = made · grey dot = missed · amber glow = long 2 within 2 ft of the arc · ▲▼ = Toronto took 5+ points more or less of that shot than its season average</span>
   </div>
   <div id="courts"></div>
 </section>
@@ -490,34 +500,61 @@ function flowChart() {
 }
 
 // two shot charts side by side: Tempo on the left, opponent on the right
+// which zone a shot is in: x = 0-50 ft across, y = feet out from the basket, three = 1 for a 3-point try.
+// "long2" is a two taken within 2 ft of the 3-point line (the "manure line": a long two that's nearly a three)
+const ZONES = [["rim", "Rim", "0–4 ft"], ["paint", "Paint", "4–10 ft"], ["mid", "Midrange", "10 ft+ twos"],
+  ["long2", "Long 2 💩", "within 2 ft of the arc"], ["c3", "Corner 3", ""], ["ab3", "Above-break 3", ""]];
+function zoneOf(x, y, three) {
+  const dx = x - 25, d = Math.hypot(dx, y);
+  if (three) return y <= 3 ? "c3" : "ab3";
+  if (d < 4) return "rim";
+  if (d < 10) return "paint";
+  // how far inside the line: the corner line is straight (21.95 ft from the middle), the rest is a 22.15 ft arc
+  const gap = y <= 3 ? 21.95 - Math.abs(dx) : 22.15 - d;
+  return gap <= 2 && d >= 15 ? "long2" : "mid";
+}
+// Toronto's season share of attempts in each zone, to say whether a game had more or fewer of a shot than usual
+const SEASON_MIX = (() => {
+  const all = G.flatMap(g => g.shots.filter(q => q[4] === 0 && q[1] <= 44));
+  return Object.fromEntries(ZONES.map(([k]) => [k, all.filter(q => zoneOf(q[0], q[1], q[3]) === k).length / all.length]));
+})();
+
 function courts() {
-  // one full court on a dark background: Toronto shoots at the right basket, the opponent at the left.
-  // Made shots glow in the team colour, misses are small faint dots.
+  // one full court: Toronto shoots at the right basket, the opponent at the left.
+  // Made shots glow in the team colour, misses are small grey dots, long twos get an amber glow.
   const box = document.getElementById("courts"), g = cur;
-  box.innerHTML = `<div class="night"><div class="night-head"><span>${K.logo(g.opp)} ${g.opp_name}</span><span>Toronto Tempo ${K.logo("TOR")}</span></div>
-    <svg id="fc" role="img" aria-label="Every shot of the game on a full court"></svg>
-    <div class="night-sum"><span id="cs1"></span><span id="cs0"></span></div></div>`;
-  const s = document.getElementById("fc"), C = K.fullCourt(s);
-  const shots = g.shots.filter(q => half === "all" || (half === "1" ? q[6] < 1200 : q[6] >= 1200));
-  const glow = K.el("g", { filter: "url(#glow)", opacity: 0.45 }, s), cores = K.el("g", {}, s), hits = K.el("g", {}, s);
+  const shots = g.shots.filter(q => q[1] <= 44 && (half === "all" || (half === "1" ? q[6] < 1200 : q[6] >= 1200)));
   const COL = ["var(--tor)", g.opp_color];  // Tempo bordeaux, the opponent's own colour
-  for (const [x, y, made, three, side, who, t] of shots) {
-    if (y > 44) continue;  // skip the odd heave from past half court
-    const [cx, cy] = C.place(x, y, side);
+  // zone table above the court: makes/attempts and share of the team's attempts
+  const row = side => {
+    const mine = shots.filter(q => q[4] === side);
+    const cells = ZONES.map(([k]) => {
+      const z = mine.filter(q => zoneOf(q[0], q[1], q[3]) === k), share = mine.length ? z.length / mine.length : 0;
+      // Toronto only: arrow when this game's share is 5+ points off the season share
+      const diff = share - SEASON_MIX[k], arrow = side === 0 && Math.abs(diff) >= 0.05 && z.length + mine.length > 0
+        ? `<span class="zd ${diff > 0 ? "up" : "dn"}" title="Season share ${pct(SEASON_MIX[k], 0)}">${diff > 0 ? "▲" : "▼"}</span>` : "";
+      return `<td class="${k === "long2" ? "l2" : ""}"><b class="num">${z.filter(q => q[2]).length}/${z.length}</b><small class="num">${pct(share, 0)}${arrow}</small></td>`;
+    }).join("");
+    return `<tr><th><span class="zt-team">${K.logo(side ? g.opp : "TOR")} ${side ? g.opp : "TOR"}</span></th>${cells}<td><b class="num">${mine.filter(q => q[2]).length}/${mine.length}</b><small>FG</small></td></tr>`;
+  };
+  box.innerHTML = `<div class="night"><div class="tbl-wrap"><table class="zt"><tr><th></th>${ZONES.map(([k, n, sub]) => `<th class="${k === "long2" ? "l2" : ""}" title="${sub}">${n}</th>`).join("")}<th>All</th></tr>${row(0)}${row(1)}</table></div>
+    <div class="night-head"><span>${K.logo(g.opp)} ${g.opp_name}</span><span>Toronto Tempo ${K.logo("TOR")}</span></div>
+    <svg id="fc" role="img" aria-label="Every shot of the game on a full court"></svg></div>`;
+  const s = document.getElementById("fc"), C = K.fullCourt(s);
+  const amber = K.el("g", { filter: "url(#glow)", opacity: 0.55 }, s);
+  const glow = K.el("g", { filter: "url(#glow)", opacity: 0.45 }, s), cores = K.el("g", {}, s), hits = K.el("g", {}, s);
+  shots.forEach(([x, y, made, three, side, who, t], i) => {
+    const [cx, cy] = C.place(x + K.wiggle(i), y + K.wiggle(i + 99), side), long2 = zoneOf(x, y, three) === "long2";
+    if (long2) el("circle", { cx, cy, r: 13, fill: "var(--manure)" }, amber);  // the manure line glows amber, made or missed
     if (made) {
       // a soft halo plus a solid dot, both in the team colour
       el("circle", { cx, cy, r: 11, fill: COL[side] }, glow);
       el("circle", { cx, cy, r: 4.5, fill: COL[side], stroke: "var(--panel)", "stroke-width": 1 }, cores);
     } else {
-      el("circle", { cx, cy, r: 2.8, fill: "var(--ink-3)", opacity: 0.45 }, cores);
+      el("circle", { cx, cy, r: long2 ? 3.4 : 2.8, fill: long2 ? "var(--manure)" : "var(--ink-3)", opacity: long2 ? 0.9 : 0.45 }, cores);
     }
     const hitc = el("circle", { cx, cy, r: 10, class: "hit" }, hits);
-    hover(hitc, `<b>${g.names[who] || ""}</b><div class="num">${made ? "Made" : "Missed"} ${three ? "3" : "2"} · ${mmss(t)}</div>`);
-  }
-  // FG, 3P and rim (within 4 ft) for each side, under its own end of the court
-  [0, 1].forEach(side => {
-    const mine = shots.filter(q => q[4] === side), fg3 = mine.filter(q => q[3]), rim = mine.filter(q => Math.hypot(q[0] - 25, q[1]) < 4);
-    document.getElementById("cs" + side).innerHTML = `<span class="num" style="color:${COL[side]}">FG ${mine.filter(q => q[2]).length}/${mine.length} · 3P ${fg3.filter(q => q[2]).length}/${fg3.length} · rim ${rim.filter(q => q[2]).length}/${rim.length}</span>`;
+    hover(hitc, `<b>${g.names[who] || ""}</b><div class="num">${made ? "Made" : "Missed"} ${three ? "3" : "2"} · ${ZONES.find(z => z[0] === zoneOf(x, y, three))[1]} · ${mmss(t)}</div>`);
   });
 }
 
