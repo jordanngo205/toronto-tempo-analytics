@@ -75,7 +75,7 @@ Each card's mini shot chart comes from that player's own 2026 shots: hex size sh
 
 <img src="readme_art/out/big-board.png" alt="The 2027 big board: Toronto's top 10 college seniors" width="100%">
 
-The [**Draft Lab**](https://jordanngo205.github.io/toronto-tempo-analytics/draft-lab/) starts with what broke: Toronto was last in defensive rating, opponent eFG%, opponent shots at the rim and blocks. Then it follows every WNBA draftee from 2018 to 2025 back to college to see what actually translates. After you account for draft slot, box plus-minus, defensive BPM and steals still predicted WNBA minutes. College scoring didn't. Every 2026-27 senior is scored on **talent** (a ridge model plus sportsdataverse's draft projection) and **fit** (blocks, defensive rebounding, defensive BPM, size). A slider lets you trade one for the other.
+The [**Draft Lab**](https://jordanngo205.github.io/toronto-tempo-analytics/draft-lab/) starts with what broke: Toronto was last in defensive rating, opponent eFG%, opponent shots at the rim and blocks. Then it follows every WNBA draftee from 2018 to 2025 back to college to see what actually translates. After you account for draft slot, box plus-minus, defensive BPM and steals still predicted WNBA minutes. College scoring didn't. Every 2026-27 senior is scored on **talent** (a ridge model plus sportsdataverse's draft projection) and **fit** (blocks, defensive rebounding, defensive BPM, size). A slider lets you trade one for the other, a toggle switches to the consensus order, each prospect gets an archetype ("3 & D", "Rim protector"...), and a list flags the players the model likes more than consensus: the late-round targets.
 
 ---
 
