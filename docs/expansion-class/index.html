@@ -14,7 +14,7 @@
 <link rel="icon" href="../assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=d68f3619">
+<link rel="stylesheet" href="../assets/site.css?v=6d4e777e">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -217,6 +217,7 @@ summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-s
     <div class="figure">
       <div class="legend" id="luck-legend"></div>
       <svg id="luck-chart" viewBox="0 0 640 260" role="img" aria-label="How many wins Toronto got in 100,000 simulated seasons"></svg>
+      <details class="math" id="luck-math"></details>
     </div>
   </section>
 
@@ -303,6 +304,7 @@ summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-s
       <h3 id="po-h">2027 playoff chances if the ratings carry over</h3>
       <div class="po" id="po"></div>
       <p class="muted" id="po-note" style="font-size:.85rem;margin:10px 0 0"></p>
+      <details class="math" id="po-math"></details>
     </div>
   </section>
 
@@ -761,6 +763,26 @@ const hover = (node, html) => { node.addEventListener("pointermove", ev => showT
     return `<div class="po-row ${k ? "hl" : ""}" style="${k ? "--c:" + TEAMS[k].c : ""}" title="Starts 2027 at ${r.start} Elo · about ${r.wins} wins in ${P.games}">
       <span class="ab"><img src="../assets/logos/${r.t.toLowerCase()}_sm.png" alt="" style="width:16px;height:16px"> ${r.t}</span><span class="tr"><i style="width:${r.playoffs * 100}%"></i></span><span class="num">${pct(r.playoffs, 0)}</span></div>`; }).join("");
   document.getElementById("po-note").textContent = `Each team starts 2027 at 60% of its final 2026 Elo plus 40% of the league average, the same step Elo takes between every season. Toronto starts ${rank === T.length ? "last" : rank + "th"}, at ${tor.start}. Teams drift from their starting rating during a season (about ${P.sd} Elo points, judged from 2004-2026), so every simulated season gets a random shift. Each team plays every other team 3 times, and the top ${P.spots} by wins make it. The draft, free agency and health aren't in it: this is the chance if Toronto's roster quality stays where 2026 left it.`;
+})();
+
+/* "The math" boxes: Elo, the season replay and the 2027 simulation */
+(function () {
+  const E = D.elo.params, L = D.sim.luck, P = D.sim.playoffs;
+  const elo = `<div class="f">P(win) = 1 / (1 + 10^(−(my Elo − their Elo ± ${E.hca}) / 400))      (+${E.hca} at home, −${E.hca} away)
+new Elo = old Elo + ${E.K} × MOV × (result − P(win))                 (result = 1 for a win, 0 for a loss)
+MOV = (|margin| + 3)^0.8 / (7.5 + 0.006 × Elo edge of the winner)
+next season starts at ${E.carry} × final Elo + ${(1 - E.carry).toFixed(1)} × 1500; new teams start at ${E.new_team}</div>`;
+  document.getElementById("luck-math").innerHTML = `<summary>The math</summary>${elo}
+    <div class="f">wins in one simulated season = Σ (1 if random number < P(win) for game i, else 0)    for i = 1 … ${L.games}
+share of seasons with ${L.real} or fewer wins = count / 100,000</div>
+    <p>"Game-by-game" uses each game's P(win) as Elo had it before that game. "Preseason" uses every team's rating at its first game of the season for all ${L.games} games, never updated. The Elo settings were tuned on 2004–2023 games and tested on 2024–2026 (Brier score 0.2105; always guessing 50% scores 0.25).</p>`;
+  document.getElementById("po-math").innerHTML = `<summary>The math</summary>
+    <div class="f">2027 start = ${E.carry} × final 2026 Elo + ${(1 - E.carry).toFixed(1)} × 1500
+season strength = 2027 start + random shift ~ Normal(0, ${P.sd}²)
+each game: P(win) from the Elo formula with the two season strengths, home team picked at random
+playoff chance = share of 100,000 seasons finishing in the top ${P.spots} by wins (${P.games} games each)</div>
+    ${elo}
+    <p>The ${P.sd}-point shift is the standard deviation of how far each team's average rating during a season landed from where Elo started it, 2004–2026.</p>`;
 })();
 </script>
 </body>
