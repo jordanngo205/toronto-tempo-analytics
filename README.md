@@ -33,10 +33,10 @@ The Tempo, the 2026 Portland Fire and the 2025 Golden State Valkyries all starte
 
 <table>
 <tr>
-<td width="55%"><img src="readme_art/out/season-circle.png" alt="Every Tempo game arranged in a circle"></td>
+<td width="55%"><a href="https://jordanngo205.github.io/toronto-tempo-analytics/#season"><img src="readme_art/out/season-circle.png" alt="Every Tempo game arranged in a circle"></a></td>
 <td width="45%">
 
-**44 games, one picture.** Each bar is one game and points toward the winner: in toward the Tempo logo for a win, out toward the opponent's logo for a loss. Longer bar = bigger margin.
+**44 games, one picture.** Each bar is one game and points toward the winner: in toward the Tempo logo for a win, out toward the opponent's logo for a loss. Longer bar = bigger margin. On the [live version](https://jordanngo205.github.io/toronto-tempo-analytics/#season), every bar links to that game's recap and box score.
 
 - **9 of the 11 wins** came in May and June (top right).
 - After beating New York on July 12, Toronto won only once more: **82–79 over Portland** on August 21.
@@ -55,7 +55,7 @@ The Tempo, the 2026 Portland Fire and the 2025 Golden State Valkyries all starte
 </tr>
 <tr>
 <td><sub><b>Unknown Pressures.</b> Every game's score margin from tip-off to the final buzzer, stacked like the Joy Division album cover. Peaks mean Toronto was leading, and the 11 pink lines are wins. Most of the pink is near the top, in May and June.</sub></td>
-<td><sub><b>The rotation ring.</b> Each ring is a player and each slice is a game. Laura Juskaite, the innermost ring, played all 44 games. Brittney Sykes played only 17, and the ✕ marks show how much of the roster spent the season injured.</sub></td>
+<td><sub><b>The rotation ring.</b> Each ring is a player and each slice is a game. Laura Juskaite, the innermost ring, played all 44 games. Brittney Sykes played only 17, and the ✕ marks show how much of the roster spent the season injured. Blue on the inner and outer rings marks the 11 wins.</sub></td>
 </tr>
 </table>
 
@@ -65,9 +65,9 @@ The Tempo, the 2026 Portland Fire and the 2025 Golden State Valkyries all starte
 
 Each card's mini shot chart comes from that player's own 2026 shots: hex size shows where she shoots, and darker means more makes.
 
-<img src="readme_art/out/shot-fans.png" alt="Shot fans: direction and distance of every shot for eight Tempo players" width="100%">
+<img src="readme_art/out/shot-fans.png" alt="Who should take which shots: shot fans for eight Tempo players, coloured by points per shot vs the WNBA" width="100%">
 
-**Shot fans** open from the basket. Each petal is a direction, its length is the share of a player's shots taken that way, and the colour shows the distance. Kia Nurse's fan is mostly blue, because 72% of her shots were threes. Nyara Sabally took nearly half of her shots at the rim.
+**Who should take which shots.** Each fan opens from the basket. Petal length is how often she shoots from there, and colour is points per shot compared with the WNBA from the same spot. Marina Mabrey's corner threes (1.38 points a shot) are worth taking more often. Maria Conde scored just 0.74 points a shot at the rim, 0.57 below the league. The samples behind some notes are small (20-35 shots), so treat them as leads to check on film.
 
 ---
 
