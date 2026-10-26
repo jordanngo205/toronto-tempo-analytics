@@ -95,6 +95,7 @@
   <div class="figure">
     <div class="legend"><span class="chip" style="--c:var(--hist)">Expected FG% (how hard her shots were)</span><span class="chip" style="--c:var(--tor)">Actual FG%</span></div>
     <svg id="df" viewBox="0 0 640 400" role="img" aria-label="Expected and actual field-goal percentage for each Tempo shooter"></svg>
+    <details class="math" id="df-math"></details>
   </div>
 </section>
 
@@ -381,6 +382,21 @@ draw();  // first draw when the page loads
   document.getElementById("df-lede").innerHTML = `Every shot gets a make chance from its distance, shot type and whether it was a three, fitted on all ${T.shots.toLocaleString()} WNBA shots of 2026. Each shot's chance comes from a model that never saw that game.
     The grey dot is the FG% an average WNBA player would have shot on her shots; the bordeaux dot is what she made. <strong>${hardest.n}</strong> took the hardest shots (expected ${pct(hardest.x, 1)}).
     The model knows shot type as well as location, but location does most of the work: it's only a little sharper than zone averages (log loss ${T.model} vs ${T.zone}).`;
+})();
+
+/* "The math" for make probability */
+(function () {
+  const T = D.xfg_test;
+  document.getElementById("df-math").innerHTML = `<summary>The math</summary>
+    <div class="f">P(make) = 1 / (1 + e^(−z))
+z = b0 + b(distance band) + b(shot type) + b3 × three + b4 × corner three
+
+distance bands (ft): 0-1, 1-2, 2-3, 3-4, 4-6, 6-8, 8-10, 10-13, 13-16, 16-19, 19-22, 22-24, 24-26, 26+
+shot types: layup, dunk, alley-oop, putback/tip, floater, hook, pull-up, step-back, fadeaway/turnaround, jump shot
+
+expected FG% = average P(make) over her shots
+vs expected  = actual FG% − expected FG%   (in percentage points)</div>
+    <p>A logistic regression fitted on all ${T.shots.toLocaleString()} WNBA field-goal attempts of 2026. Games were split into 5 groups and each group was predicted by a model fitted on the other 4, so no shot's chance comes from a model that saw it. Log loss ${T.model} vs ${T.zone} using zone averages only and 0.689 with no information (lower is better).</p>`;
 })();
 
 /* 02b what every shot is worth (rings) */

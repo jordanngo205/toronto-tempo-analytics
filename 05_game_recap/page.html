@@ -147,6 +147,11 @@ td.hl { font-weight: 600; color: var(--tor); }
     <svg id="gs-card" role="img" aria-label="Game Score breakdown by player"></svg>
     <div class="gs-legend" id="gs-legend"></div>
   </div>
+  <details class="math"><summary>The math</summary>
+    <div class="f">Game Score = PTS + 0.4 × FGM − 0.7 × FGA − 0.4 × (FTA − FTM)
+           + 0.7 × OREB + 0.3 × DREB + STL + 0.7 × AST + 0.7 × BLK − 0.4 × PF − TOV</div>
+    <p>John Hollinger's Game Score: one number for a player's box score, on roughly the same scale as points. Hollinger put about 10 at an average game and 40 at an outstanding one. The bars split it into shooting (points and shot attempts), rebounding, playmaking, defense, turnovers and fouls.</p>
+  </details>
 </section>
 
 <section class="section">
@@ -164,6 +169,7 @@ td.hl { font-weight: 600; color: var(--tor); }
   <div class="figure">
     <svg id="wpc" viewBox="0 0 640 300" role="img" aria-label="Toronto's chance to win through the game"></svg>
     <div class="wp-swings" id="wp-swings"></div>
+    <details class="math" id="wp-math"></details>
   </div>
 </section>
 
@@ -466,6 +472,22 @@ function leaders() {
     ? "" : `<div class="cap">Player of the game: <b>${potg[0]}</b> (${potg.at(-1)}), Game Score ${potg[16]}: ${potg[3]} pts, ${potg[4]} reb, ${potg[5]} ast.</div>`;
   document.getElementById("leaders").innerHTML = col("tor", "TOR", "Toronto Tempo") + col("opp", g.opp, g.opp_name) + extra;
 }
+
+// "The math" box for win probability: the formula with the fitted numbers and the test result
+(function () {
+  const M = D.wp_math, term = v => `${v < 0 ? "−" : "+"} ${Math.abs(v)}`;  // "+ -0.05" reads badly, so write the sign out
+  document.getElementById("wp-math").innerHTML = `<summary>The math</summary>
+    <p>A logistic regression trained on every play of the 2025 season, then refit on 2025 and 2026 for this page.</p>
+    <div class="f">P(home team wins) = 1 / (1 + e^(−z))
+
+z = ${M.b0 < 0 ? "−" : ""}${Math.abs(M.b0)} ${term(M.b1)} × margin / √(minutes left + 1)
+          ${term(M.b2)} × logit(pregame odds) × (seconds left / 2400)
+          ${term(M.b3)} × margin</div>
+    <dl><dt>margin</dt><dd>home score minus away score after the play</dd>
+      <dt>pregame odds</dt><dd>Elo's chance before tip-off: 1 / (1 + 10^(−(home Elo + 60 − away Elo) / 400)); logit(p) = ln(p / (1 − p))</dd>
+      <dt>win chance added</dt><dd>P after the play minus P with the old score at the same moment, so the clock running isn't credited to anyone</dd></dl>
+    <p>Tested on ${M.games} games from 2026 that it never saw (${M.plays.toLocaleString()} plays): log loss ${M.logloss} vs ${M.logloss_pregame_only} for the pregame odds alone, Brier score ${M.brier}. Lower is better for both; always guessing 50% scores 0.693 and 0.25.</p>`;
+})();
 
 // Toronto's win chance after every play (from winprob.py), with the three biggest swings marked
 function wpChart() {

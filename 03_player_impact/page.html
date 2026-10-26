@@ -54,6 +54,7 @@
     <div class="figure"><h3>Game Score lost to injury, per game</h3><div class="inj-bars" id="inj-bars"></div></div>
     <div class="figure"><h3>Toronto's injuries</h3><div class="inj-list" id="inj-list"></div></div>
   </div>
+  <details class="math" id="inj-math"></details>
 </section>
 
 <section class="section">
@@ -392,6 +393,16 @@ const last = n => n.split(" ").slice(-1)[0];
   if (top.t !== "TOR") document.getElementById("inj-head").textContent = "How much each team lost to injury";
   document.getElementById("inj-lede").innerHTML = `Toronto had players out injured for <strong>${I.league.find(r => r.t === "TOR").games} player-games</strong>, worth <strong>${T.gs_pg} points of Game Score every night</strong>${top.t === "TOR" ? `, the most in the league (${next.t} was next at ${next.gs_pg})` : ""}. Each missing game is counted at that player's average Game Score, so losing a starter counts more than losing the 12th player.
     Across every 2026 game, each point of missing Game Score cost about <strong>${I.slope.toFixed(2)} points of final margin</strong> (90% range ${I.slope_lo.toFixed(2)}–${I.slope_hi.toFixed(2)}). Add Toronto's back and the average margin goes from ${T.mar} to ${T.mar_healthy}, worth about <strong>${Math.round(T.healthy)} wins instead of ${T.wins}</strong> (range ${Math.round(T.healthy_lo)}–${Math.round(T.healthy_hi)}). Injuries explain part of the season, not all of it: a healthy Toronto still projects well below .500.`;
+  document.getElementById("inj-math").innerHTML = `<summary>The math</summary>
+    <div class="f">Game Score lost in a game = Σ (average Game Score of each player out injured)
+
+home margin = home strength − away strength + home edge + β × (Game Score lost by away team − lost by home team) + noise
+β = ${I.slope.toFixed(3)}  (90% range ${I.slope_lo.toFixed(3)} to ${I.slope_hi.toFixed(3)} = β ± 1.645 standard errors)
+
+healthy margin = real margin + β × Game Score Toronto lost that game
+P(win if healthy) = Φ(healthy margin / ${I.sd})        Φ = normal curve, ${I.sd} = typical miss of the fit in points
+expected healthy wins = Σ P(win if healthy) over all ${I.tor.games} games</div>
+    <p>Fitted by least squares on every 2026 game, one row per game. "Out injured" means a box-score did-not-play with an injury or illness reason; coach's decisions and personal reasons don't count.</p>`;
   const max = Math.max(...I.league.map(r => r.gs_pg));
   document.getElementById("inj-bars").innerHTML = I.league.map(r => `<div class="inj-bar ${r.t === "TOR" ? "tor" : ""}" title="${r.games} player-games, ${r.mins.toLocaleString()} minutes">
     <span class="ab">${K.logo(r.t)} ${r.t}</span><span class="tr"><i style="width:${r.gs_pg / max * 100}%"></i></span><span class="num">${r.gs_pg.toFixed(1)}</span></div>`).join("");

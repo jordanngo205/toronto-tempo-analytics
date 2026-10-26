@@ -107,7 +107,7 @@ def compute(season=2026):
            "mar": round(float(tt.mar.mean()), 1), "mar_healthy": round(float((tt.mar - slope * tt.lost).mean()), 1),
            "healthy": round(healthy(slope), 1), "healthy_lo": round(healthy(hi), 1), "healthy_hi": round(healthy(lo), 1)}
     return {"league": league, "players": players, "tor": tor,
-            "slope": round(float(-slope), 3), "slope_lo": round(float(-hi), 3), "slope_hi": round(float(-lo), 3)}
+            "slope": round(float(-slope), 3), "slope_lo": round(float(-hi), 3), "slope_hi": round(float(-lo), 3), "sd": round(sd, 1)}
 
 
 if __name__ == "__main__":

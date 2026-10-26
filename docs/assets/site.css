@@ -163,3 +163,11 @@ summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-s
   .section:not(:has(> header)) > * { grid-column: 1; }
   .section:not(:has(> header)) > :not(:first-child) { margin-top: 16px; }
 }
+
+/* "The math": a collapsed box under a chart with the formula behind it */
+.math { margin-top: 12px; border-top: 1px solid var(--rule); padding-top: 8px; font-size: 0.85rem; color: var(--ink-2); }
+.math summary { cursor: pointer; font: 700 0.8rem var(--display); text-transform: uppercase; letter-spacing: 0.08em; color: var(--tor); }
+.math .f { font-family: var(--mono); font-size: 0.8rem; background: var(--grid); color: var(--ink); padding: 10px 12px; margin: 8px 0; overflow-x: auto; white-space: pre; line-height: 1.6; }
+.math dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 12px; margin: 6px 0; }
+.math dt { font-family: var(--mono); font-size: 0.78rem; color: var(--ink); }
+.math dd { margin: 0; }

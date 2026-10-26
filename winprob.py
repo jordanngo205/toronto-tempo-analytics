@@ -78,6 +78,13 @@ def model():
     return _model
 
 
+def coefs():
+    """The fitted numbers, for the formula shown on the page."""
+    m = model()
+    return {"b0": round(float(m.intercept_[0]), 3), "b1": round(float(m.coef_[0][0]), 3),
+            "b2": round(float(m.coef_[0][1]), 3), "b3": round(float(m.coef_[0][2]), 3)}
+
+
 def game(gp, tor_home):
     """Win probability for one game's plays (gp from plays()), from Toronto's side.
     Returns the plays with columns wp (Toronto's chance after the play) and wpa (change for the team that made the play)."""

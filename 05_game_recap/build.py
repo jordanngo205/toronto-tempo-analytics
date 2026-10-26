@@ -284,6 +284,8 @@ def top_scorer(g):
 # [game number, opponent, points for, points against, date, home (1/0), opponent's full name, top scorer, her points]
 season = [[g["n"], g["opp"], g["pf"], g["pa"], g["short"], int(g["home"]), g["opp_name"], *top_scorer(g)] for g in games]
 lab.summary("game-center", {"games": len(games), "record": games[-1]["rec"], "season": season})
-data = {"games": games, "aw_keys": AWARD_KEYS}
+# fitted numbers and the held-out test for "The math" box under the win probability chart
+wp_math = {**winprob.coefs(), **{k: v for k, v in winprob.test().items() if k != "calibration"}}
+data = {"games": games, "aw_keys": AWARD_KEYS, "wp_math": wp_math}
 lab.write_page("game-center", "Game Center", "A full recap for every Toronto Tempo game of 2026: game flow, shot charts, key battles and box scores.",
                Path(__file__).parent / "page.html", data)
