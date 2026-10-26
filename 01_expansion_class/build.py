@@ -21,6 +21,7 @@ import pyarrow.parquet as pq
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import elo
 import lab
+import simulate
 from common import RAW, possessions
 
 OUT = Path(__file__).parent
@@ -335,6 +336,8 @@ data = {
     "class": [{"key": k, "season": s, "name": n} for k, _, s, n in CLASS],
     "elo": {"paths": elo_paths, "table2026": elo_2026, "end": first_season_bar,
             "params": elo.PARAMS, "turns": turns},
+    # season simulations (see simulate.py): was 11-33 bad luck, and the 2027 playoff chance
+    "sim": {"luck": simulate.luck(elo_log), "playoffs": simulate.playoffs(elo_log, {int(k): v for k, v in names.team_abbreviation.items()})},
     "fingerprint": fingerprint, "rolling": rolling, "games": games_out, "h2h": h2h, "clutch": clutch,
     "hex": hexmaps, "hex_r": R, "experience": experience, "players": players,
 }
