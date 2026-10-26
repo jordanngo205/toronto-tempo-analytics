@@ -87,6 +87,17 @@
   </div>
 </section>
 
+<section class="section">
+  <header>
+    <h2 id="df-head">Who took the hard shots</h2>
+    <p class="lede" id="df-lede"></p>
+  </header>
+  <div class="figure">
+    <div class="legend"><span class="chip" style="--c:var(--hist)">Expected FG% (how hard her shots were)</span><span class="chip" style="--c:var(--tor)">Actual FG%</span></div>
+    <svg id="df" viewBox="0 0 640 400" role="img" aria-label="Expected and actual field-goal percentage for each Tempo shooter"></svg>
+  </div>
+</section>
+
 <section class="section wide">
   <header>
     <h2 id="wr-head">What every shot is worth</h2>
@@ -200,7 +211,7 @@ function draw() {
     const glow = el("g", { filter: "url(#glow)", opacity: 0.35 }, svg), cores = el("g", {}, svg);
     const big = tor.length + opp.length < 600;  // bigger dots when there are only a few hundred shots
     [[tor, 0], [opp, 1]].forEach(([list, side]) => {
-      list.forEach(([x, y, made], i) => {
+      list.forEach(([x, y, made, three, who, xfg], i) => {
         if (y > 44) return;
         // wiggle each shot a little so whole-foot locations don't form a grid
         const [cx, cy] = F.place(x + K.wiggle(i * 2 + side), y + K.wiggle(i * 2 + 1 + side * 7), side);
@@ -211,6 +222,8 @@ function draw() {
         } else {
           el("circle", { cx, cy, r: big ? 2.4 : 1.2, fill: "var(--ink-3)", opacity: 0.4 }, cores);
         }
+        // with only a few hundred shots on the court, each one gets a tooltip with its make chance
+        if (big) hover(el("circle", { cx, cy, r: 7, class: "hit" }, svg), `<b>${made ? "Made" : "Missed"} ${three ? "3" : "2"}</b><div class="num">Make chance ${xfg}% for a shot like this</div>`);
       });
     });
     // which end is which goes in a strip above the court (not on top of the dots)
@@ -340,6 +353,34 @@ draw();  // first draw when the page loads
   // count how many Tempo shooters are below the line for the paragraph above the chart
   const tq = Q.filter(q => q.t === "TOR"), below = tq.filter(q => q.pps < q.x).length;
   document.getElementById("qm-lede").innerHTML = `<strong>${below} of Toronto's ${tq.length}</strong> high-volume shooters made less than their shot locations predict. Marina Mabrey was the clear exception, and Nyara Sabally the only other one above the line. Harrison, Conde, Sykes and Nurse all had normal shot locations and finished well below expected.`;
+})();
+
+/* 02c who took the hard shots: expected FG% from the make-probability model vs actual FG% */
+(function () {
+  const R = D.difficulty, s = document.getElementById("df"), T = D.xfg_test;
+  const W = 640, rowH = 36, m = { l: 150, r: 70, t: 30 }, H = m.t + R.length * rowH + 30;
+  s.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const lo = Math.floor(Math.min(...R.flatMap(r => [r.x, r.fg])) * 20) / 20, hi = Math.ceil(Math.max(...R.flatMap(r => [r.x, r.fg])) * 20) / 20;
+  const x = scale(lo, hi, m.l, W - m.r);
+  for (let v = lo; v <= hi + 1e-9; v += 0.05) { el("line", { x1: x(v), x2: x(v), y1: m.t - 8, y2: H - 26, class: "gridline" }, s); txt(s, x(v), 16, pct(v, 0), "lbl", { "text-anchor": "middle" }); }
+  txt(s, W - m.r + 8, 16, "made vs expected", "lbl");
+  R.forEach((r, i) => {
+    const cy = m.t + i * rowH + rowH / 2, d = r.fg - r.x;
+    txt(s, m.l - 12, cy + 5, r.n, "lbl-body", { "text-anchor": "end" });
+    el("line", { x1: x(r.x), x2: x(r.fg), y1: cy, y2: cy, stroke: d >= 0 ? "var(--tor)" : "var(--ink-3)", "stroke-width": 3 }, s);
+    el("circle", { cx: x(r.x), cy, r: 6, fill: "var(--hist)", stroke: "var(--panel)", "stroke-width": 2 }, s);
+    el("circle", { cx: x(r.fg), cy, r: 7, fill: "var(--tor)", stroke: "var(--panel)", "stroke-width": 2 }, s);
+    txt(s, W - m.r + 8, cy + 5, `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)}`, "lbl-ink", { style: `fill:${d >= 0 ? "var(--tor)" : "var(--ink-2)"}` });
+    const hit = el("rect", { x: 0, y: cy - rowH / 2, width: W, height: rowH, class: "hit" }, s);
+    hover(hit, `<b>${r.n}</b><div class="num">${r.fga} shots · expected ${pct(r.x, 1)} · made ${pct(r.fg, 1)}</div>`);
+  });
+  const above = R.filter(r => r.fg > r.x), hardest = [...R].sort((a, b) => a.x - b.x)[0];
+  document.getElementById("df-head").textContent = above.length
+    ? `${above.length} of ${R.length} Tempo shooters beat the difficulty of their shots`
+    : `No Tempo shooter beat the difficulty of her shots`;
+  document.getElementById("df-lede").innerHTML = `Every shot gets a make chance from its distance, shot type and whether it was a three, fitted on all ${T.shots.toLocaleString()} WNBA shots of 2026. Each shot's chance comes from a model that never saw that game.
+    The grey dot is the FG% an average WNBA player would have shot on her shots; the bordeaux dot is what she made. <strong>${hardest.n}</strong> took the hardest shots (expected ${pct(hardest.x, 1)}).
+    The model knows shot type as well as location, but location does most of the work: it's only a little sharper than zone averages (log loss ${T.model} vs ${T.zone}).`;
 })();
 
 /* 02b what every shot is worth (rings) */

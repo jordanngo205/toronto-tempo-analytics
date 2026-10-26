@@ -10,6 +10,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GroupKFold
 
 # let this file import lab.py and common.py from the main folder
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -67,6 +69,31 @@ shots["family"] = shots.type_text.map(family)
 lg_zone = shots.groupby("zone").pts.mean()
 # expected points for every shot = what the average WNBA shot from that zone is worth
 shots["xpts"] = shots.zone.map(lg_zone)
+# --- make probability for every shot ---------------------------------------------------------------
+# A logistic regression on distance (in bands), shot type family, three or two, and corner three.
+# Each shot's chance comes from a model fitted WITHOUT that shot's game (5 groups of games), so it's a fair
+# "how often does this shot go in" number and not the model remembering the answer.
+EDGES = [0, 1, 2, 3, 4, 6, 8, 10, 13, 16, 19, 22, 24, 26, 30]
+
+
+def shot_features(df):
+    band = pd.cut(df.dist, EDGES, right=False, labels=False).fillna(len(EDGES) - 2).astype(int)
+    return pd.concat([pd.get_dummies(band, prefix="d"), pd.get_dummies(df.family, prefix="f"),
+                      pd.DataFrame({"three": df.three.astype(int), "corner": df.zone.str.startswith("Corner3").astype(int)}, index=df.index)],
+                     axis=1).astype(float)
+
+
+Xs, ys = shot_features(shots), shots.made.astype(int).to_numpy()
+shots["xfg"] = 0.0
+xfg_zone = np.zeros(len(shots))  # same test with zone averages only, to see if the model actually helps
+for tr, te in GroupKFold(5).split(Xs, ys, shots.game_id):
+    fitted = LogisticRegression(C=1.0, max_iter=2000).fit(Xs.iloc[tr], ys[tr])
+    shots.iloc[te, shots.columns.get_loc("xfg")] = fitted.predict_proba(Xs.iloc[te])[:, 1]
+    xfg_zone[te] = shots.iloc[te].zone.map(shots.iloc[tr].groupby("zone").made.mean()).fillna(shots.made.mean()).to_numpy()
+logloss = lambda q: float(-np.mean(ys * np.log(q) + (1 - ys) * np.log(1 - q)))
+xfg_test = {"model": round(logloss(shots.xfg.to_numpy()), 4), "zone": round(logloss(xfg_zone), 4), "shots": int(len(shots))}
+print("make probability test", xfg_test)
+
 in_tor = (shots.home_team_id == TOR) | (shots.away_team_id == TOR)  # shots taken in Tempo games
 lg = shots
 
@@ -109,9 +136,13 @@ views["League"] = profile(lg)
 # (-2 means a Tempo player with fewer than 60 shots)
 names = list(players.index)
 dots = [[round(r.coordinate_x_raw, 1), round(r.coordinate_y_raw, 1), int(r.made), int(r.three),
-         names.index(r.athlete_name_1) if r.athlete_name_1 in names else -2] for r in tor_shots.itertuples()]
-opp_dots = [[round(r.coordinate_x_raw, 1), round(r.coordinate_y_raw, 1), int(r.made), int(r.three), -1]
+         names.index(r.athlete_name_1) if r.athlete_name_1 in names else -2, round(r.xfg * 100)] for r in tor_shots.itertuples()]
+opp_dots = [[round(r.coordinate_x_raw, 1), round(r.coordinate_y_raw, 1), int(r.made), int(r.three), -1, round(r.xfg * 100)]
             for r in opp_shots.itertuples()]
+# how hard were each Tempo shooter's shots? expected FG% (average make chance) vs actual FG%
+difficulty = [{"n": n, "fga": int(len(s_)), "x": round(float(s_.xfg.mean()), 3), "fg": round(float(s_.made.mean()), 3)}
+              for n, s_ in tor_shots[tor_shots.athlete_name_1.isin(names)].groupby("athlete_name_1")]
+difficulty.sort(key=lambda r: r["fg"] - r["x"], reverse=True)
 
 # league shot quality vs shot making (players with 150+ FGA)
 abbr = load("team_box", 2026).drop_duplicates("team_id").set_index("team_id").team_abbreviation
@@ -236,6 +267,7 @@ for side in ("def", "off"):
 
 # everything the page needs
 data = {"outcomes": outcomes, "views": views, "players": names, "dots": dots, "opp_dots": opp_dots, "quality": quality,
+        "difficulty": difficulty, "xfg_test": xfg_test, "lg_fg": round(float(shots.made.mean()), 3),
         "dist": dist, "worth": worth, "hex_r": R, "families": [f for f, _ in FAMILIES]}
 # headline numbers for the home page
 lab.summary("shot-lab", {"xpps": views["Tempo"]["xpps"], "pps": views["Tempo"]["pps"], "lg_xpps": views["League"]["xpps"],
