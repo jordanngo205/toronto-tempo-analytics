@@ -379,7 +379,7 @@ draw();  // first draw when the page loads
   const lo = Math.floor(Math.min(...R.flatMap(r => [r.x, r.fg])) * 20) / 20, hi = Math.ceil(Math.max(...R.flatMap(r => [r.x, r.fg])) * 20) / 20;
   const x = scale(lo, hi, m.l, W - m.r);
   for (let v = lo; v <= hi + 1e-9; v += 0.05) { el("line", { x1: x(v), x2: x(v), y1: m.t - 8, y2: H - 26, class: "gridline" }, s); txt(s, x(v), 16, pct(v, 0), "lbl", { "text-anchor": "middle" }); }
-  txt(s, W - m.r + 8, 16, "made vs expected", "lbl");
+  txt(s, W - 4, 16, "vs expected", "lbl", { "text-anchor": "end" });
   R.forEach((r, i) => {
     const cy = m.t + i * rowH + rowH / 2, d = r.fg - r.x;
     txt(s, m.l - 12, cy + 5, r.n, "lbl-body", { "text-anchor": "end" });
