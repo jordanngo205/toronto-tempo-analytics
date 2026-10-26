@@ -170,7 +170,15 @@ summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-s
     <div class="byline">Data: sportsdataverse (ESPN play-by-play, box scores, WNBA Stats lineups). Inspired by <a href="https://riseofthevalkyries.substack.com/" target="_blank" rel="noopener">Rise of the Valkyries</a> and <a href="https://neilpaine.substack.com/t/basketball" target="_blank" rel="noopener">Neil Paine</a>.</div>
   </section>
 
-  <section class="section wide" id="elo">
+  <section class="section wide">
+  <header>
+    <h2>Tempo by the numbers</h2>
+    <p class="lede">Year one in eight numbers.</p>
+  </header>
+  <figure class="art"><a href="../assets/art/by-the-numbers.png" target="_blank" rel="noopener"><img src="../assets/art/by-the-numbers.png" alt="Tempo by the numbers poster" loading="lazy"></a></figure>
+</section>
+
+<section class="section wide" id="elo">
     <header>
       <h2>Toronto never found the floor</h2>
       <p class="lede" id="elo-lede"></p>
@@ -190,7 +198,15 @@ summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-s
     </div>
   </section>
 
-  <section class="section" id="luck">
+  <section class="section wide">
+  <header>
+    <h2>The Elo race, game by game</h2>
+    <p class="lede">Valkyries '25, Tempo '26 and Fire '26, animated from opening night to the last game.</p>
+  </header>
+  <figure class="art"><a href="../assets/art/elo-race.gif" target="_blank" rel="noopener"><img src="../assets/art/elo-race.gif" alt="Animated Elo race between the three expansion teams" loading="lazy"></a></figure>
+</section>
+
+<section class="section" id="luck">
     <header>
       <h2 id="luck-h">Was 11-33 bad luck?</h2>
       <p class="lede" id="luck-lede"></p>
@@ -198,7 +214,7 @@ summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-s
     <div class="figure">
       <div class="legend" id="luck-legend"></div>
       <svg id="luck-chart" viewBox="0 0 640 260" role="img" aria-label="How many wins Toronto got in 100,000 simulated seasons"></svg>
-      <details class="math" id="luck-math"></details>
+      <div class="math" id="luck-math"></div>
     </div>
   </section>
 
@@ -285,7 +301,7 @@ summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-s
       <h3 id="po-h">2027 playoff chances if the ratings carry over</h3>
       <div class="po" id="po"></div>
       <p class="muted" id="po-note" style="font-size:.85rem;margin:10px 0 0"></p>
-      <details class="math" id="po-math"></details>
+      <div class="math" id="po-math"></div>
     </div>
   </section>
 
@@ -753,16 +769,18 @@ const hover = (node, html) => { node.addEventListener("pointermove", ev => showT
 new Elo = old Elo + ${E.K} × MOV × (result − P(win))                 (result = 1 for a win, 0 for a loss)
 MOV = (|margin| + 3)^0.8 / (7.5 + 0.006 × Elo edge of the winner)
 next season starts at ${E.carry} × final Elo + ${(1 - E.carry).toFixed(1)} × 1500; new teams start at ${E.new_team}</div>`;
-  document.getElementById("luck-math").innerHTML = `<summary>The math</summary>${elo}
-    <div class="f">wins in one simulated season = Σ (1 if random number < P(win) for game i, else 0)    for i = 1 … ${L.games}
-share of seasons with ${L.real} or fewer wins = count / 100,000</div>
-    <p>"Game-by-game" uses each game's P(win) as Elo had it before that game. "Preseason" uses every team's rating at its first game of the season for all ${L.games} games, never updated. The Elo settings were tuned on 2004–2023 games and tested on 2024–2026 (Brier score 0.2105; always guessing 50% scores 0.25).</p>`;
-  document.getElementById("po-math").innerHTML = `<summary>The math</summary>
-    <div class="f">2027 start = ${E.carry} × final 2026 Elo + ${(1 - E.carry).toFixed(1)} × 1500
-season strength = 2027 start + random shift ~ Normal(0, ${P.sd}²)
-each game: P(win) from the Elo formula with the two season strengths, home team picked at random
-playoff chance = share of 100,000 seasons finishing in the top ${P.spots} by wins (${P.games} games each)</div>
-    ${elo}
-    <p>The ${P.sd}-point shift is the standard deviation of how far each team's average rating during a season landed from where Elo started it, 2004–2026.</p>`;
+  document.getElementById("luck-math").innerHTML = `<h3>How the replay works</h3>
+    <p>Each game is treated as a weighted coin flip. If Elo gave Toronto a 30% chance in a game, the computer draws a random number and counts a win 30% of the time. Flip all ${L.games} games and you get one possible season. Do that 100,000 times and you can see how often a season as bad as 11-33 happens.</p>
+    <div class="mathbox"><div class="mb-label">The replay</div>$$\\text{wins} = \\sum_{i=1}^{${L.games}} \\mathbf{1}\\big[\\,u_i < p_i\\,\\big], \\qquad u_i \\sim \\text{Uniform}(0, 1)$$
+$$P(\\text{wins} \\le ${L.real}) \\approx \\frac{\\#\\{\\text{seasons with } ${L.real} \\text{ or fewer wins}\\}}{100{,}000} = ${(L.game.le_real * 100).toFixed(0)}\\%$$<p class="mb-note">p<sub>i</sub> = Toronto's chance in game i (as Elo had it before that game, or from opening-night ratings for the preseason version), u<sub>i</sub> = a random number between 0 and 1.</p></div>
+    <div class="mathbox"><div class="mb-label">Elo, the ratings behind the odds</div>$$P(\\text{win}) = \\frac{1}{1 + 10^{-(R_{\\text{me}} - R_{\\text{opp}} \\pm ${E.hca})/400}}$$
+$$R_{\\text{new}} = R_{\\text{old}} + ${E.K} \\times \\underbrace{\\frac{(|\\text{margin}| + 3)^{0.8}}{7.5 + 0.006\\,\\Delta R_{\\text{winner}}}}_{\\text{bigger wins move it more}} \\times (W - P)$$
+$$R_{\\text{next season}} = ${E.carry}\\,R_{\\text{end}} + ${(1 - E.carry).toFixed(1)} \\times 1500$$<p class="mb-note">R = Elo rating, ±${E.hca} = home court edge, W = 1 for a win and 0 for a loss, ΔR = the winner's rating edge. New teams start at ${E.new_team}.</p></div>
+    <p>The Elo settings were tuned on 2004–2023 games and tested on 2024–2026 (Brier score 0.2105; always guessing 50% scores 0.25).</p>`;
+  document.getElementById("po-math").innerHTML = `<h3>How the 2027 chances are worked out</h3>
+    <p>Every team starts 2027 near where it finished 2026, pulled part of the way back to average, which is what Elo does every off-season. Teams then improve or slip during a season, so each simulated season gives every team a random nudge before the games are played out as weighted coin flips. A team's playoff chance is how often it lands in the top ${P.spots}.</p>
+    <div class="mathbox"><div class="mb-label">The simulation</div>$$R_{2027} = ${E.carry}\\,R_{2026} + ${(1 - E.carry).toFixed(1)} \\times 1500$$
+$$R_{\\text{season}} = R_{2027} + \\varepsilon, \\qquad \\varepsilon \\sim \\mathcal{N}\\big(0,\\ ${P.sd}^2\\big)$$
+$$P(\\text{playoffs}) = \\frac{\\#\\{\\text{seasons finishing in the top } ${P.spots}\\}}{100{,}000}$$<p class="mb-note">ε = the random nudge; ${P.sd} Elo points is how far teams' average in-season rating landed from where Elo started them, 2004–2026. Every team plays every other team 3 times (${P.games} games), each game using the Elo win formula from the section above.</p></div>`;
 })();
 </script>

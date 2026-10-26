@@ -40,6 +40,14 @@
 
 <section class="section wide">
   <header>
+    <h2>Every shot of 2026</h2>
+    <p class="lede">Each dot is one field-goal attempt from a Tempo game and the glowing dots are makes. Toronto attacks the right basket, opponents the left.</p>
+  </header>
+  <figure class="art"><a href="../assets/art/constellation.png" target="_blank" rel="noopener"><img src="../assets/art/constellation.png" alt="Every shot of 2026 on a full court" loading="lazy"></a></figure>
+</section>
+
+<section class="section wide">
+  <header>
     <h2>Pick a shooter</h2>
   </header>
   <div class="picker" id="picker" role="group" aria-label="Choose a shooter"></div>
@@ -95,8 +103,16 @@
   <div class="figure">
     <div class="legend"><span class="chip" style="--c:var(--hist)">Expected FG% (how hard her shots were)</span><span class="chip" style="--c:var(--tor)">Actual FG%</span></div>
     <svg id="df" viewBox="0 0 640 400" role="img" aria-label="Expected and actual field-goal percentage for each Tempo shooter"></svg>
-    <details class="math" id="df-math"></details>
+    <div class="math" id="df-math"></div>
   </div>
+</section>
+
+<section class="section wide">
+  <header>
+    <h2>Who should take which shots</h2>
+    <p class="lede">Each fan opens from the basket. Petal length is how often she shoots from there, colour is points per shot against the WNBA from the same spot, and each card names one shot to take more of and one to take less of.</p>
+  </header>
+  <figure class="art"><a href="../assets/art/shot-fans.png" target="_blank" rel="noopener"><img src="../assets/art/shot-fans.png" alt="Shot fans for eight Tempo players" loading="lazy"></a></figure>
 </section>
 
 <section class="section wide">
@@ -387,16 +403,11 @@ draw();  // first draw when the page loads
 /* "The math" for make probability */
 (function () {
   const T = D.xfg_test;
-  document.getElementById("df-math").innerHTML = `<summary>The math</summary>
-    <div class="f">P(make) = 1 / (1 + e^(−z))
-z = b0 + b(distance band) + b(shot type) + b3 × three + b4 × corner three
-
-distance bands (ft): 0-1, 1-2, 2-3, 3-4, 4-6, 6-8, 8-10, 10-13, 13-16, 16-19, 19-22, 22-24, 24-26, 26+
-shot types: layup, dunk, alley-oop, putback/tip, floater, hook, pull-up, step-back, fadeaway/turnaround, jump shot
-
-expected FG% = average P(make) over her shots
-vs expected  = actual FG% − expected FG%   (in percentage points)</div>
-    <p>A logistic regression fitted on all ${T.shots.toLocaleString()} WNBA field-goal attempts of 2026. Games were split into 5 groups and each group was predicted by a model fitted on the other 4, so no shot's chance comes from a model that saw it. Log loss ${T.model} vs ${T.zone} using zone averages only and 0.689 with no information (lower is better).</p>`;
+  document.getElementById("df-math").innerHTML = `<h3>How the make chance is worked out</h3>
+    <p>Every shot gets a chance of going in based on how far out it was, what kind of shot it was (layup, pull-up, floater…) and whether it was a three, learned from every WNBA shot this season. Average those chances over a player's shots and you get the FG% an average WNBA player would have shot on them. Compare that with what she actually made.</p>
+    <div class="mathbox"><div class="mb-label">The model</div>$$P(\\text{make}) = \\frac{1}{1 + e^{-z}}, \\qquad z = \\beta_0 + \\underbrace{\\beta_{\\text{distance}}}_{\\text{14 bands}} + \\underbrace{\\beta_{\\text{shot type}}}_{\\text{10 types}} + \\beta_3\\,\\text{three} + \\beta_4\\,\\text{corner three}$$
+$$\\text{expected FG\\%} = \\frac{1}{n}\\sum_{k=1}^{n} P(\\text{make})_k \\qquad\\qquad \\text{vs expected} = \\text{FG\\%} - \\text{expected FG\\%}$$<p class="mb-note">Distance bands (ft): 0-1, 1-2, 2-3, 3-4, 4-6, 6-8, 8-10, 10-13, 13-16, 16-19, 19-22, 22-24, 24-26, 26+. Shot types: layup, dunk, alley-oop, putback/tip, floater, hook, pull-up, step-back, fadeaway/turnaround, jump shot. n = her number of shots.</p></div>
+    <p>Fitted on all ${T.shots.toLocaleString()} WNBA field-goal attempts of 2026. Games were split into 5 groups and each group was predicted by a model fitted on the other 4, so no shot's chance comes from a model that saw it. Log loss ${T.model} vs ${T.zone} using zone averages only and 0.689 with no information (lower is better).</p>`;
 })();
 
 /* 02b what every shot is worth (rings) */
