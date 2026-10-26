@@ -32,6 +32,9 @@
   .tile.wide .thumb { border-right: 0; border-bottom: 1px solid var(--rule); aspect-ratio: 16 / 10; min-height: 0; }
   .home-hero { grid-template-columns: minmax(0, 1fr); }
 }
+.season-fig svg { display: block; width: 100%; max-width: 720px; margin: 0 auto; height: auto; }
+.season-fig a line.bar { transition: stroke-width 0.1s; }
+.season-fig a:hover line.bar, .season-fig a:focus line.bar { stroke-width: 14; }
 @media (prefers-reduced-motion: reduce) { .tile { transition: none; } .tile:hover { transform: none; } }
 </style>
 </head>
@@ -50,12 +53,20 @@
 
 <section class="tiles" id="tiles"></section>
 
+<section class="section wide" id="season">
+  <header><h2>The season in a circle</h2></header>
+  <div class="figure season-fig">
+    <svg id="circle" viewBox="0 0 800 800" role="img" aria-label="Every Tempo game around a circle; click a bar for that game's box score"></svg>
+    <div class="cap">Clockwise from opening night. Each bar points toward the winner: in toward Toronto for a win, out toward the opponent for a loss. Longer bar = bigger margin. Click any bar for that game's recap and box score.</div>
+  </div>
+</section>
+
 <section class="methods">
   <h3>About</h3>
   <p>All data comes from <a href="https://py.sportsdataverse.org/">sportsdataverse</a>: ESPN play-by-play and box scores, plus WNBA Stats lineups. Every page is static HTML with hand-built SVG charts and no chart library. The Python that builds each page is in the <a href="https://github.com/jordanngo205/toronto-tempo-analytics">GitHub repo</a>. The approach follows the film-and-data breakdowns of <a href="https://riseofthevalkyries.substack.com/">Rise of the Valkyries</a> and the Elo work of <a href="https://neilpaine.substack.com/t/basketball">Neil Paine</a>.</p>
 </section>
 <footer class="footer"><span>Built by Jordan Ngo with sportsdataverse (ESPN play-by-play, box scores, WNBA Stats).</span><a href="https://github.com/jordanngo205/toronto-tempo-analytics">Code on GitHub</a><span>Inspired by Rise of the Valkyries and Neil Paine.</span></footer>
-<script id="data" type="application/json">{"expansion-class":{"tor_elo":1219,"por_elo":1377,"gs_elo":1486,"tor_def_rank":15},"shot-lab":{"xpps":1.056,"pps":1.013,"lg_xpps":1.035,"rim":0.303,"opp_rim":0.336},"rotation-lab":{"players":20,"lineups":24,"best":31.3},"game-flow":{"lead":0.28395454545454546,"runs_for":35,"runs_against":74,"xwins":13.405,"wins":11},"game-center":{"games":44,"record":"11-33"},"draft-lab":{"pool":742,"top":"JuJu Watkins"}}</script>
+<script id="data" type="application/json">{"expansion-class":{"tor_elo":1219,"por_elo":1377,"gs_elo":1486,"tor_def_rank":15},"shot-lab":{"xpps":1.056,"pps":1.013,"lg_xpps":1.035,"rim":0.303,"opp_rim":0.336},"rotation-lab":{"players":20,"lineups":24,"best":31.3},"game-flow":{"lead":0.28395454545454546,"runs_for":35,"runs_against":74,"xwins":13.405,"wins":11},"game-center":{"games":44,"record":"11-33","season":[[1,"WSH",65,68,"May 8"],[2,"SEA",86,73,"May 13"],[3,"LA",95,99,"May 15"],[4,"LA",106,96,"May 17"],[5,"PHX",98,90,"May 19"],[6,"MIN",72,100,"May 21"],[7,"POR",80,99,"May 23"],[8,"CHI",111,104,"May 27"],[9,"SEA",93,72,"May 30"],[10,"NY",82,97,"Jun 3"],[11,"CHI",85,68,"Jun 7"],[12,"CON",106,102,"Jun 10"],[13,"WSH",85,86,"Jun 12"],[14,"ATL",77,102,"Jun 14"],[15,"IND",91,113,"Jun 16"],[16,"CON",101,97,"Jun 19"],[17,"ATL",87,94,"Jun 22"],[18,"LA",125,97,"Jun 25"],[19,"PHX",80,89,"Jun 27"],[20,"DAL",76,89,"Jul 5"],[21,"GS",75,83,"Jul 8"],[22,"DAL",95,108,"Jul 10"],[23,"NY",93,91,"Jul 12"],[24,"WSH",62,79,"Jul 14"],[25,"ATL",92,111,"Jul 17"],[26,"LV",83,109,"Jul 20"],[27,"MIN",93,100,"Jul 28"],[28,"MIN",72,104,"Jul 30"],[29,"GS",79,96,"Aug 2"],[30,"GS",81,92,"Aug 4"],[31,"POR",83,97,"Aug 6"],[32,"ATL",95,107,"Aug 10"],[33,"DAL",88,94,"Aug 12"],[34,"IND",95,101,"Aug 18"],[35,"WSH",82,93,"Aug 19"],[36,"POR",82,79,"Aug 21"],[37,"LV",78,88,"Aug 23"],[38,"SEA",78,90,"Aug 26"],[39,"LV",73,93,"Aug 28"],[40,"PHX",69,101,"Aug 29"],[41,"IND",85,103,"Sep 18"],[42,"NY",69,106,"Sep 20"],[43,"CHI",85,97,"Sep 22"],[44,"CON",81,95,"Sep 24"]]},"draft-lab":{"pool":742,"top":"JuJu Watkins"}}</script>
 <script>
 // headline numbers that each page's build.py saved (docs/assets/summary.json)
 const S = JSON.parse(document.getElementById("data").textContent);
@@ -87,6 +98,42 @@ document.getElementById("tiles").innerHTML = tiles.map(x => `<a class="tile ${x.
   <div class="thumb"><img src="assets/shots/${x.slug}.png" alt="${x.t} preview" loading="lazy"></div>
   <div class="body"><h2>${x.t}</h2><p>${x.p}</p>
   <div class="stat"><span class="v">${x.v}</span><span class="k" style="color:var(--ink-3)">${x.l}</span></div></div></a>`).join("");
+// the season circle: one bar per game, each one a link to that game in Game Center
+(function () {
+  const svg = document.getElementById("circle"), G = g.season, n = G.length, NS = "http://www.w3.org/2000/svg";
+  const C = 400, base = 175, k = 3.3;  // centre, radius of the "zero" circle, pixels per point of margin
+  const mk = (tag, attrs, parent = svg) => { const e = document.createElementNS(NS, tag); for (const a in attrs) e.setAttribute(a, attrs[a]); parent.appendChild(e); return e; };
+  const at = (i, r) => { const a = (-90 + (i + 0.5) * 360 / n) * Math.PI / 180; return [C + r * Math.cos(a), C + r * Math.sin(a)]; };
+  // guide rings at -20, -10, +10, +20 points, and the zero ring
+  for (const m of [-20, -10, 10, 20]) mk("circle", { cx: C, cy: C, r: base + m * k, fill: "none", stroke: "var(--grid)", "stroke-dasharray": "3 4" });
+  mk("circle", { cx: C, cy: C, r: base, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.2 });
+  G.forEach(([num, opp, pf, pa, date], i) => {
+    const mar = pf - pa, win = mar > 0;
+    const [x0, y0] = at(i, base), [x1, y1] = at(i, base - Math.max(-35, Math.min(35, mar)) * k);
+    const a = mk("a", { href: `game-center/#g${num}` });
+    mk("title", {}, a).textContent = `Game ${num} · ${date} · ${win ? "W" : "L"} ${pf}-${pa} vs ${opp} · open the box score`;
+    mk("line", { x1: x0, y1: y0, x2: x1, y2: y1, stroke: win ? "var(--good)" : "var(--bad)", "stroke-width": 9, "stroke-linecap": "round", class: "bar" }, a);
+    // a wide invisible line on top so the bar is easy to click
+    mk("line", { x1: x0, y1: y0, x2: at(i, 330)[0], y2: at(i, 330)[1], stroke: "transparent", "stroke-width": 16 }, a);
+    // opponent logo on the outside
+    const [lx, ly] = at(i, 312);
+    mk("image", { href: `assets/logos/${opp.toLowerCase()}_sm.png`, x: lx - 11, y: ly - 11, width: 22, height: 22 }, a);
+  });
+  // months: an arc over each month's games with a big label
+  const months = {};
+  G.forEach((q, i) => { const m = q[4].split(" ")[0].toUpperCase(); (months[m] = months[m] || []).push(i); });
+  Object.entries(months).forEach(([m, idx], j) => {
+    const i0 = idx[0], i1 = idx.at(-1), r = 340;
+    const a0 = (-90 + i0 * 360 / n + 1) * Math.PI / 180, a1 = (-90 + (i1 + 1) * 360 / n - 1) * Math.PI / 180;
+    mk("path", { d: `M ${C + r * Math.cos(a0)} ${C + r * Math.sin(a0)} A ${r} ${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${C + r * Math.cos(a1)} ${C + r * Math.sin(a1)}`, fill: "none", stroke: "var(--tor)", "stroke-width": 2.5, opacity: 0.6 });
+    const am = (a0 + a1) / 2, t = mk("text", { x: C + 368 * Math.cos(am), y: C + 368 * Math.sin(am) + 7, "text-anchor": "middle", style: "font:800 22px var(--display);fill:var(--tor);letter-spacing:1px" });
+    t.textContent = j === 0 ? `${m} ▸` : m;
+  });
+  // the record in the middle
+  mk("image", { href: "assets/logos/tor_sm.png", x: C - 40, y: C - 78, width: 80, height: 80 });
+  const rec = mk("text", { x: C, y: C + 48, "text-anchor": "middle", style: "font:800 64px var(--display);fill:var(--ink)" });
+  rec.textContent = g.record;
+})();
 </script>
 
 </div>
