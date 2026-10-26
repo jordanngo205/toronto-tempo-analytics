@@ -40,6 +40,7 @@
 .who small { display: block; line-height: 1.3; }
 .arch { display: block; font: 700 0.7rem var(--display); text-transform: uppercase; letter-spacing: 0.05em; color: var(--tor); margin-top: 2px; }
 .likes { display: grid; }
+.like-row .why { display: block; font-size: 0.78rem; color: var(--ink-2); margin-top: 2px; }
 .like-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--rule); }
 .like-row b { display: block; } .like-row small { color: var(--ink-3); }
 .like-ranks { display: flex; gap: 14px; align-items: center; font-size: 0.72rem; color: var(--ink-3); text-transform: uppercase; }
@@ -137,6 +138,7 @@
 <section class="section">
   <header>
     <h2 id="likes-head">Players the model likes more than consensus</h2>
+    <p class="lede" id="likes-lede"></p>
   </header>
   <div class="figure"><div class="likes" id="likes"></div></div>
 </section>
@@ -367,7 +369,10 @@ document.getElementById("order-mine").hidden = !D.my_board.length;
 /* 04b players the model likes more than consensus (late-round targets) */
 (function () {
   const L = D.likes;
-  document.getElementById("likes").innerHTML = L.map(q => `<div class="like-row">${face(q, "face sm")}<div style="min-width:0"><b>${q.name}</b><small>${q.school} · ${q.pos}</small><span class="arch">${q.arch}</span></div>
+  document.getElementById("likes-lede").innerHTML = `<strong>Model #</strong> is where my model alone ranks her among all ${D.pool_n} seniors, by projected WNBA minutes.
+    <strong>Consensus #</strong> is where she ranks by sportsdataverse's projected draft pick. These ${L.length} players are in the model's top ${D.likes_top} and at least ${D.likes_gap} spots higher than consensus, so they may still be available later than the model thinks they should be. These are the late-round targets.
+    The model is less accurate than where teams actually draft players (correlation with real minutes ${D.validation.r.college.toFixed(2)} vs ${D.validation.r.slot.toFixed(2)} on past classes), so treat these as players worth a closer look, not a verdict. Under each name: her two best stats among the ones the model uses, as a percentile of the class.`;
+  document.getElementById("likes").innerHTML = L.map(q => `<div class="like-row">${face(q, "face sm")}<div style="min-width:0"><b>${q.name}</b><small>${q.school} · ${q.pos}</small><span class="arch">${q.arch}</span><span class="why">${q.why.map(([k, v]) => `${k} ${v}th pct`).join(" · ")}</span></div>
     <div class="like-ranks"><span><b class="num">#${q.m}</b>model</span><span><b class="num">#${q.c}</b>consensus</span><span class="muted num" title="Sportsdataverse's projected pick">pick ~${Math.round(q.pick)}</span></div></div>`).join("");
 })();
 

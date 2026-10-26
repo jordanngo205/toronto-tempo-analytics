@@ -278,6 +278,7 @@ pool["fit"] = 50 + 10 * fit_z
 pool["talent_rank"] = pool.talent.rank(ascending=False, method="min").astype(int)
 pool["fit_rank"] = pool.fit.rank(ascending=False, method="min").astype(int)
 
+
 # percentile of each prospect on key stats compared with the whole senior class (for the prospect card)
 PCT = {"box_bpm": "BPM", "box_dbpm": "Def. BPM", "pts40": "Points/40", "ast40": "Assists/40", "stl40": "Steals/40",
        "blk40": "Blocks/40", "dreb40": "Def. reb/40", "ts": "True shooting", "height": "Height"}
@@ -329,7 +330,10 @@ pool["cons_rank"] = pool.projected_pick.rank(method="min")  # NaN when there's n
 likes = pool[(pool.model_rank <= 30) & (pool.cons_rank - pool.model_rank >= 6)].assign(gap=lambda d: d.cons_rank - d.model_rank)
 likes = [{"name": r["name"], "school": r.school, "img": r.headshot if isinstance(r.headshot, str) else "", "arch": r.arch,
           "pos": r.pos if isinstance(r.pos, str) else "", "m": int(r.model_rank), "c": int(r.cons_rank), "pick": round(float(r.projected_pick), 1),
-          "pmin": round(float(r.proj_min))} for _, r in likes.sort_values("gap", ascending=False).head(12).iterrows()]
+          "pmin": round(float(r.proj_min)),
+          # why the model likes her: her two best percentiles among the stats the model uses
+          "why": [[PCT[c], round(float(r[c + "_pct"]))] for c in sorted(["box_bpm", "box_dbpm", "pts40", "ast40", "stl40", "blk40", "ts", "height"],
+                                                                       key=lambda c: -r[c + "_pct"])[:2]]} for _, r in likes.sort_values("gap", ascending=False).head(12).iterrows()]
 # my own board: names in data/my_board.json, best first (empty until I fill it in)
 mb = ROOT / "data" / "my_board.json"
 my_board = json.loads(mb.read_text()) if mb.exists() else []
@@ -362,7 +366,7 @@ data = {"needs": needs, "translate": translate, "hist": hist_pts, "prospects": p
         "model": {"r": round(model_r, 3), "n": int(len(train)), "features": [LABELS[f] for f in MODEL_F],
                   "weights": [round(float(b), 3) for b in beta[1:]]},
         "pool_n": int(len(pool)), "pct_labels": list(PCT.values()), "validation": validation,
-        "likes": likes, "my_board": my_board}
+        "likes": likes, "my_board": my_board, "likes_gap": 6, "likes_top": 30}
 # the No. 1 at the page's default setting (60% talent, 40% fit) for the home page tile
 top_default = max(prospects, key=lambda p: 0.6 * p["talent"] + 0.4 * p["fit"])["name"] if prospects else None
 lab.summary("draft-lab", {"pool": int(len(pool)), "top": top_default})
