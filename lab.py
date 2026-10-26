@@ -13,7 +13,7 @@ PAGES = [  # slug, nav label
     ("game-flow", "Game Flow"),
     ("game-center", "Game Center"),
     ("draft-lab", "Draft Lab"),
-    ("posters", "Posters"),
+    ("players", "Players"),
 ]
 # the live site's address (link previews need a full URL for the picture)
 SITE = "https://jordanngo205.github.io/toronto-tempo-analytics/"
@@ -54,6 +54,11 @@ def head(title, description, prefix="../"):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="{FONTS}">
 <link rel="stylesheet" href="{prefix}assets/site.css?v={version("assets/site.css")}">
+<!-- KaTeX turns the $$...$$ formulas in the "How it's worked out" panels into typeset math -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {{delimiters: [{{left: '$$', right: '$$', display: true}}]}})"></script>
 """
 
 

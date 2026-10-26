@@ -112,7 +112,7 @@ flowchart LR
 
 - **Python** pulls the data, does all the math, and saves the results as JSON inside each page.
 - **JavaScript** draws every chart as SVG by hand, without a chart library. The shared helpers are in [`docs/assets/kit.js`](docs/assets/kit.js).
-- **Every graphic here is also on the site**, on the [Posters page](https://jordanngo205.github.io/toronto-tempo-analytics/posters/), each linked to the page where you can explore it.
+- **Every graphic here is also on the site**, on the page it belongs to, and the card set has its own [Players page](https://jordanngo205.github.io/toronto-tempo-analytics/players/) with a card for every player.
 - **The README graphics** are built from the same data by [`readme_art/make_art.py`](readme_art/make_art.py): the banner, by-the-numbers poster, Elo race GIF, shot constellation, season ring, Unknown Pressures ridgeline, rotation ring, card set and shot fans. Each one is a small HTML poster screenshotted with headless Chrome, except the GIF, which matplotlib renders.
 - Everything uses the official team colours: Tempo bordeaux and navy, Valkyries violet and Fire pink.
 

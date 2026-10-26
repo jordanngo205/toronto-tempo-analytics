@@ -1,0 +1,76 @@
+<style>
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 22px; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; display: grid; grid-template-rows: auto 1fr; box-shadow: 0 10px 26px rgba(20, 10, 16, 0.12); }
+/* top half: Tempo bordeaux with speed lines, big faded jersey number and the photo */
+.card .top { position: relative; height: 230px; overflow: hidden; background: linear-gradient(160deg, var(--tor), #3d0d1f); }
+.card .num-bg { position: absolute; right: 6px; top: 0; font: 800 150px/0.85 var(--display); color: rgba(255, 255, 255, 0.12); }
+.card .streak { position: absolute; left: 0; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.18); }
+.card .photo { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); height: 200px; width: auto; max-width: none; }
+.card .mark { position: absolute; left: 14px; top: 12px; width: 46px; filter: brightness(0) invert(1); }
+.card .fade { position: absolute; inset: auto 0 0 0; height: 56px; background: linear-gradient(transparent, rgba(20, 10, 16, 0.85)); }
+.card .id { position: absolute; left: 16px; bottom: 10px; color: #fff; font: 700 0.8rem var(--mono); letter-spacing: 0.1em; }
+.card .body { padding: 12px 16px 14px; display: grid; gap: 2px; align-content: start; }
+.card .tag { font: 600 0.72rem var(--mono); letter-spacing: 0.1em; color: var(--tor); text-transform: uppercase; }
+.card h2 { font-size: 1.8rem; line-height: 1; }
+.card .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 2px solid var(--ink); margin-top: 8px; }
+.card .stats div { padding-top: 6px; }
+.card .stats b { display: block; font: 800 1.5rem/1 var(--display); }
+.card .stats span { font: 500 0.7rem var(--mono); color: var(--ink-3); }
+.card svg { display: block; width: 100%; height: auto; margin-top: 8px; }
+.card .foot { font: 400 0.72rem var(--mono); color: var(--ink-3); }
+.cards-key { font-size: 0.85rem; color: var(--ink-3); margin-bottom: 14px; }
+</style>
+
+<section class="hero">
+  <h1>Players<span class="sub">The 2026 Tempo card set.</span></h1>
+  <p class="dek" id="dek"></p>
+</section>
+
+<section>
+  <p class="cards-key">Hex = where she shoots (bigger = more shots) · darker = more of them went in · cards in order of minutes played</p>
+  <div class="cards" id="cards"></div>
+</section>
+
+<!--FOOTER-->
+<script id="data" type="application/json">/*DATA*/</script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent), C = D.cards;
+document.getElementById("dek").textContent = `${C.length} players suited up for Toronto in 2026. One card each: photo, the numbers that matter and a mini chart of every shot she took.`;
+
+// mini hex shot chart for one player (same idea as the README cards): hex area = share of her shots, colour = FG% there
+function miniHex(h) {
+  const Wd = 300, k = Wd / 50, R = D.hex_r, Hh = 33 * k;
+  const big = Math.max(1, ...h.map(q => q[2]));
+  const c3 = Math.sqrt(22.15 ** 2 - 9);
+  // court lines: paint, rim and the three-point line
+  let out = `<rect x="${17 * k}" y="0" width="${16 * k}" height="${19 * k}" fill="none" stroke="var(--rule)"/>
+    <circle cx="${25 * k}" cy="${5.25 * k}" r="${0.75 * k}" fill="none" stroke="var(--rule)"/>
+    <path d="M ${(25 - c3) * k} 0 L ${(25 - c3) * k} ${8.25 * k} A ${22.15 * k} ${22.15 * k} 0 0 0 ${(25 + c3) * k} ${8.25 * k} L ${(25 + c3) * k} 0" fill="none" stroke="var(--rule)"/>`;
+  for (const [hx, hy, n, m] of h) {
+    const r = R * k * 0.95 * Math.sqrt(n / big);
+    if (r < 1.5) continue;
+    const pts = Array.from({ length: 6 }, (_, j) => { const a = (60 * j - 90) * Math.PI / 180; return `${(hx * k + r * Math.cos(a)).toFixed(1)},${((hy + 5.25) * k + r * Math.sin(a)).toFixed(1)}`; }).join(" ");
+    out += `<polygon points="${pts}" fill="color-mix(in oklab, var(--tor) ${Math.round(25 + 75 * m / n)}%, var(--tor-soft))"><title>${m}/${n} from here</title></polygon>`;
+  }
+  return `<svg viewBox="0 0 ${Wd} ${Hh.toFixed(0)}" role="img" aria-label="Mini shot chart">${out}</svg>`;
+}
+
+document.getElementById("cards").innerHTML = C.map((p, i) => `<article class="card">
+  <div class="top">
+    <div class="num-bg">${p.jersey}</div>
+    ${[0, 1, 2, 3, 4].map(j => `<div class="streak" style="top:${30 + j * 20}px;width:${90 + (j * 37) % 80}px"></div>`).join("")}
+    ${p.img ? `<img class="photo" src="${p.img}" alt="${p.n}" loading="lazy" onerror="this.remove()">` : ""}
+    <img class="mark" src="../assets/logos/tor_sm.png" alt="">
+    <div class="fade"></div>
+    <div class="id">#${p.jersey}${p.pos ? " · " + p.pos : ""}</div>
+  </div>
+  <div class="body">
+    <div class="tag">${p.tags.join(" · ")}</div>
+    <h2>${p.n}</h2>
+    <div class="stats"><div><b>${p.ppg.toFixed(1)}</b><span>PPG</span></div><div><b>${p.rpg.toFixed(1)}</b><span>RPG</span></div><div><b>${p.apg.toFixed(1)}</b><span>APG</span></div>
+      <div title="True shooting: points per shooting attempt, counting threes and free throws"><b>${p.ts == null ? "–" : (p.ts * 100).toFixed(1)}</b><span>TS%</span></div></div>
+    ${p.shots ? miniHex(p.hex) : `<p class="foot" style="margin:10px 0">No shots charted.</p>`}
+    <div class="foot">${p.gp} games · ${p.mpg} min · ${p.shots} shots charted · ${String(i + 1).padStart(2, "0")}/${String(C.length).padStart(2, "0")}</div>
+  </div>
+</article>`).join("");
+</script>
