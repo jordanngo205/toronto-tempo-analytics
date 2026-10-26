@@ -22,6 +22,8 @@ Shared styles live in `docs/assets/site.css`, shared chart helpers in `docs/asse
 - **Always light mode.** No dark palette, no `prefers-color-scheme` blocks; `:root` sets `color-scheme: light`.
 - **Every abbreviation is explained** where it's used (BPM, TS%, Game Score…), in a hover tooltip (`title` or the chart
   tip). The owner doesn't want explainer paragraphs, how-to-read captions, glossaries or method boxes on the page.
+- **Formulas** for models and probabilities go in a collapsed `<details class="math">` box ("The math") under the chart,
+  with fitted numbers filled in from the build's data, never typed by hand.
 - **Headlines** say what the chart shows ("Toronto was last in four defensive categories"), not slogans.
 
 ## Facts
