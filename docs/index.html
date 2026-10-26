@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tempo Lab</title>
 <meta name="description" content="Toronto Tempo analytics: expansion-year Elo, shot charts, rotations, game flow and recaps for every 2026 game.">
+<!-- link previews (Slack, iMessage, X, LinkedIn...): title, description and the social card picture -->
+<meta property="og:title" content="Tempo Lab">
+<meta property="og:description" content="Toronto Tempo analytics: expansion-year Elo, shot charts, rotations, game flow and recaps for every 2026 game.">
+<meta property="og:image" content="https://jordanngo205.github.io/toronto-tempo-analytics/assets/social.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -60,7 +66,7 @@
 </head>
 <body>
 <div class="wrap">
-<nav class="nav" aria-label="Tempo Lab"><a class="brand" href=""><img src="assets/logos/tor_sm.png" alt="">Tempo Lab</a><div class="links"><a href="expansion-class/">Expansion Class</a><a href="shot-lab/">Shot Lab</a><a href="rotation-lab/">Rotation Lab</a><a href="game-flow/">Game Flow</a><a href="game-center/">Game Center</a><a href="draft-lab/">Draft Lab</a></div></nav>
+<nav class="nav" aria-label="Tempo Lab"><a class="brand" href=""><img src="assets/logos/tor_sm.png" alt="">Tempo Lab</a><div class="links"><a href="expansion-class/">Expansion Class</a><a href="shot-lab/">Shot Lab</a><a href="rotation-lab/">Rotation Lab</a><a href="game-flow/">Game Flow</a><a href="game-center/">Game Center</a><a href="draft-lab/">Draft Lab</a><a href="posters/">Posters</a></div></nav>
 
 
 <section class="hero home-hero">
@@ -115,6 +121,9 @@ const tiles = [
   { slug: "draft-lab", k: "2027 draft", t: "Draft Lab", wide: true,
     p: "Who should Toronto take in 2027? What the team needs, which college numbers actually translate to the WNBA, and an adjustable big board of the senior class.",
     v: S["draft-lab"].pool, l: `College seniors ranked · No. 1 at the default setting: ${S["draft-lab"].top}` },
+  { slug: "posters", k: "Art", t: "Posters", wide: true,
+    p: "Every graphic from the GitHub README in one place: the season circle, rotation ring, shot constellation, Elo race, card set and more.",
+    v: 9, l: "Posters, each linked to its interactive page" },
 ];
 // build the tiles. Each one is a link with a screenshot of the page on top
 document.getElementById("tiles").innerHTML = tiles.map(x => `<a class="tile ${x.wide ? "wide" : ""}" href="${x.slug}/">
