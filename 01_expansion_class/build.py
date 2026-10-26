@@ -254,6 +254,35 @@ for key, tid, season, _ in MODERN:
                           "dfreq": round(v.d_freq, 3)} for k, v in z.iterrows()},
         }
 
+# --- why the two turning points happened -------------------------------------------------------------
+def team_games(tid, season):
+    # regular-season games in date order, with the opponent's Elo before the game
+    r = tb[(tb.team_id == tid) & (tb.season == season) & (tb.season_type == "2")][["game_id", "opponent_team_id"]].reset_index(drop=True)
+    pre = elo_log.set_index(["game_id", "team_id"]).pre
+    r["opp_elo"] = [pre.get((g, o)) for g, o in zip(r.game_id, r.opponent_team_id)]
+    return r
+
+
+lo_, hi_ = turns["gs"]["from"], turns["gs"]["to"]
+# 1) schedule in Golden State's run vs the same game numbers for Toronto and Portland
+turns["gs"]["opp"] = {k: round(float(team_games(tid, s).opp_elo.iloc[lo_ - 1:hi_].mean())) for k, tid, s, _ in CLASS[:3]}
+# 2) Toronto before/after its peak: opponents' Elo, and how often the four biggest-minute players all played
+tg = team_games(131935, 2026)
+pk = turns["tor"]["peak"]
+turns["tor"]["opp1"], turns["tor"]["opp2"] = round(float(tg.opp_elo.iloc[:pk].mean())), round(float(tg.opp_elo.iloc[pk:].mean()))
+pbt = read("player_box")
+pbt = pbt[(pbt.team_id.astype(int) == 131935) & (pbt.season == 2026)].copy()
+pbt["minutes"] = pd.to_numeric(pbt.minutes, errors="coerce").fillna(0)
+core = pbt.groupby("athlete_display_name").minutes.sum().sort_values(ascending=False).head(4).index.tolist()
+games_of = {n: set(pbt[(pbt.athlete_display_name == n) & (pbt.minutes > 0)].game_id) for n in core}
+all4 = [all(g in games_of[n] for n in core) for g in tg.game_id]
+turns["tor"]["core"] = [n.split()[-1] for n in core]
+turns["tor"]["all4_1"], turns["tor"]["all4_2"] = int(sum(all4[:pk])), int(sum(all4[pk:]))
+turns["tor"]["n2"] = int(len(tg) - pk)
+# games each core player missed after the peak
+turns["tor"]["missed"] = {n.split()[-1]: int(sum(g not in games_of[n] for g in tg.game_id.iloc[pk:])) for n in core}
+print("why", turns)
+
 # --- roster experience & top players -----------------------------------------------
 pb_hist = read("player_box_hist")
 pb_now = read("player_box")

@@ -168,6 +168,7 @@ summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-s
     <header>
       <h2>Toronto never found the floor</h2>
       <p class="lede" id="elo-lede"></p>
+      <p class="lede" id="elo-why"></p>
     </header>
     <div class="two">
       <div class="figure">
@@ -405,6 +406,11 @@ function legend(id, keys, withHist) {
   // paragraph above the chart, filled in with the real numbers
   const e = D.elo.end;
   document.getElementById("elo-lede").innerHTML = `By Elo, the Tempo ended year one at <strong>${e.TOR.end}</strong>, last in the league and below the 2006 Sky (${e.CHI.end}) and 2008 Dream (${e.ATL.end}). Those teams won 5 and 4 games. Toronto's net rating was actually better than theirs, but this league is deeper and losses to good teams cost more Elo. Portland climbed to <strong>${e.POR.end}</strong>. Golden State reached ${e.GS.end} and made the playoffs.`;
+
+  // why the two turning points on the chart happened (all numbers from the build)
+  const TW = D.elo.turns, mis = Object.entries(TW.tor.missed).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  document.getElementById("elo-why").innerHTML = `<strong>Golden State pulled away in games ${TW.gs.from}–${TW.gs.to}</strong>: ${TW.gs.w}-${TW.gs.l}, winning by ${TW.gs.mar} points a game with ${TW.gs.big} wins by 20+. Their opponents weren't easy (average Elo ${TW.gs.opp.GS}, vs ${TW.gs.opp.TOR} for Toronto's games ${TW.gs.from}–${TW.gs.to}), but Elo rewards margin, so blowouts move a rating fast.
+    <strong>Toronto's slide started after game ${TW.tor.peak}</strong>, at ${TW.tor.w1}-${TW.tor.l1}. The schedule got tougher (opponents averaged ${TW.tor.opp2} Elo after, up from ${TW.tor.opp1}), and the rotation thinned out: ${mis.map(([n, v]) => `${n} missed ${v}`).join(", ")} of the last ${TW.tor.n2} games. Toronto went ${TW.tor.w2}-${TW.tor.l2} the rest of the way and lost by ${-TW.tor.m2} a game.`;
 
   // right side: final 2026 Elo for every team as bars (bars start at 1150 so the differences show)
   const tbl = document.getElementById("elo-table"), rows = D.elo.table2026;
