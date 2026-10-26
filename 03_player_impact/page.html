@@ -16,6 +16,16 @@
 .multiples h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 1rem; margin-bottom: 4px; }
 .multiples h3 small { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-3); font-weight: 400; text-transform: none; letter-spacing: 0; }
 @media (max-width: 900px) { .multiples { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.inj-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.inj-bars { display: grid; gap: 4px; }
+.inj-bar { display: grid; grid-template-columns: 52px minmax(0, 1fr) 44px; gap: 8px; align-items: center; font-size: 0.85rem; }
+.inj-bar .ab { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 0.75rem; }
+.inj-bar .tr { height: 14px; background: var(--grid); } .inj-bar .tr i { display: block; height: 100%; background: var(--hist); }
+.inj-bar.tor .tr i { background: var(--tor); } .inj-bar.tor { font-weight: 700; }
+.inj-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--rule); font-size: 0.85rem; }
+.inj-row b { display: block; } .inj-row small { color: var(--ink-3); }
+.inj-row .g { font: 800 1.3rem var(--display); text-align: right; } .inj-row .g small { display: block; font: 400 0.7rem var(--body); }
+@media (max-width: 760px) { .inj-grid { grid-template-columns: minmax(0, 1fr); } }
 </style>
 
 <section class="hero">
@@ -32,6 +42,17 @@
   <div class="figure">
     <div class="heat-wrap"><svg id="heat" role="img" aria-label="Minutes played by each player in each game"></svg></div>
     <div class="scale" style="margin-top:8px"><span>0 min</span><span class="ramp" style="background:linear-gradient(90deg,var(--grid),var(--tor))"></span><span>40 min</span></div>
+  </div>
+</section>
+
+<section class="section wide">
+  <header>
+    <h2 id="inj-head">No team lost more to injury</h2>
+    <p class="lede" id="inj-lede"></p>
+  </header>
+  <div class="inj-grid">
+    <div class="figure"><h3>Game Score lost to injury, per game</h3><div class="inj-bars" id="inj-bars"></div></div>
+    <div class="figure"><h3>Toronto's injuries</h3><div class="inj-list" id="inj-list"></div></div>
   </div>
 </section>
 
@@ -362,5 +383,19 @@ const last = n => n.split(" ").slice(-1)[0];
   const best = LU[0], worst = LU[LU.length - 1], most = [...LU].sort((a, b) => b.min - a.min)[0];
   // the paragraph also mentions which players from the best lineup missed lots of games
   document.getElementById("lu-lede").innerHTML = `The most-used unit (${most.p.map(last).join(", ")}) played just ${Math.round(most.min)} minutes all season and was outscored by ${Math.abs(most.net).toFixed(1)} per 100. The best one, ${best.p.map(last).join(", ")}, finished <strong>${fmt(best.net)}</strong> in ${Math.round(best.min)} minutes. ${best.p.filter(n => P[n] && P[n].gp < 25).map(n => `${last(n)} played only ${P[n].gp} games`).join(" and ") || "It was used sparingly"}, so the group rarely got a chance.`;
+})();
+
+/* injuries */
+(function () {
+  const I = D.injury, T = I.tor, top = I.league[0], next = I.league[1];
+  // headline from the data: only claim "no team lost more" if Toronto really is first
+  if (top.t !== "TOR") document.getElementById("inj-head").textContent = "How much each team lost to injury";
+  document.getElementById("inj-lede").innerHTML = `Toronto had players out injured for <strong>${I.league.find(r => r.t === "TOR").games} player-games</strong>, worth <strong>${T.gs_pg} points of Game Score every night</strong>${top.t === "TOR" ? `, the most in the league (${next.t} was next at ${next.gs_pg})` : ""}. Each missing game is counted at that player's average Game Score, so losing a starter counts more than losing the 12th player.
+    Across every 2026 game, each point of missing Game Score cost about <strong>${I.slope.toFixed(2)} points of final margin</strong> (90% range ${I.slope_lo.toFixed(2)}–${I.slope_hi.toFixed(2)}). Add Toronto's back and the average margin goes from ${T.mar} to ${T.mar_healthy}, worth about <strong>${Math.round(T.healthy)} wins instead of ${T.wins}</strong> (range ${Math.round(T.healthy_lo)}–${Math.round(T.healthy_hi)}). Injuries explain part of the season, not all of it: a healthy Toronto still projects well below .500.`;
+  const max = Math.max(...I.league.map(r => r.gs_pg));
+  document.getElementById("inj-bars").innerHTML = I.league.map(r => `<div class="inj-bar ${r.t === "TOR" ? "tor" : ""}" title="${r.games} player-games, ${r.mins.toLocaleString()} minutes">
+    <span class="ab">${K.logo(r.t)} ${r.t}</span><span class="tr"><i style="width:${r.gs_pg / max * 100}%"></i></span><span class="num">${r.gs_pg.toFixed(1)}</span></div>`).join("");
+  document.getElementById("inj-list").innerHTML = I.players.map(q => `<div class="inj-row"><div><b>${q.n}</b><small>${q.why.join(" · ")} · ${q.gs.toFixed(1)} Game Score, ${q.mpg} min when playing</small></div>
+    <div class="g">${q.games}<small>games out</small></div></div>`).join("");
 })();
 </script>

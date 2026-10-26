@@ -15,6 +15,7 @@ import pandas as pd
 
 # let this file import lab.py and common.py from the main folder
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import injuries
 import lab
 import stints
 from common import load
@@ -120,8 +121,11 @@ lineups = sorted([l for l in rows if l["min"] >= 25], key=lambda l: -l["net"])
 # --- stints: does production fade the longer a player stays on? (see stints.py) ------------------
 stint = stints.build(2026)
 
+# --- injuries: how much they cost Toronto compared with the league (see injuries.py) -------------
+injury = injuries.compute(2026)
+
 # everything the page needs
-data = {"stint": stint, "games": game_list, "roster": list(roster.index), "grid": grid, "players": players, "league": league,
+data = {"injury": injury, "stint": stint, "games": game_list, "roster": list(roster.index), "grid": grid, "players": players, "league": league,
         "lg_ts": round(lg_ts, 4), "pairs": pair_list, "lineups": lineups}
 # count different starting fives: for each game, the sorted set of players who started
 starts = {tuple(sorted(n for n in roster.index if grid[n][i] and grid[n][i][0] != "dnp" and grid[n][i][1] == 1))
