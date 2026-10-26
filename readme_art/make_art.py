@@ -144,9 +144,9 @@ def banner():
 # ---------------------------------------------------------------------------
 
 def season_ring():
-    S = 1200          # picture width
-    HT = 1380         # picture height (taller so the title sits above the ring)
-    cx, cy = S / 2, 770
+    S = 1320          # picture width (room for the month labels outside the logos)
+    HT = 1500         # picture height (taller so the title sits above the ring)
+    cx, cy = S / 2, 830
     base = 285      # radius of the "zero" circle
     scale = 4.0     # pixels per point of margin (a 35-point loss reaches 425 px, inside the score labels at 470)
     parts = []
@@ -173,16 +173,23 @@ def season_ring():
         tx, ty = cx + 470 * np.cos(a), cy + 470 * np.sin(a)
         parts.append(f'<text x="{tx:.1f}" y="{ty + 4:.1f}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" '
                      f'fill="{"#c9d4ea" if g.margin > 0 else "#8a91a0"}">{g.team_score}-{g.opponent_team_score}</text>')
-    # month labels inside the ring, placed at each month's first game
-    seen = set()
-    for i, g in games.iterrows():
-        mon = g.game_date.strftime("%b").upper()
-        if mon in seen:
-            continue
-        seen.add(mon)
-        a = np.radians(-90 + i * 360 / n)
-        mx, my = cx + 574 * np.cos(a), cy + 574 * np.sin(a)
-        parts.append(f'<text x="{mx:.1f}" y="{my + 5:.1f}" text-anchor="middle" font-family="IBM Plex Mono" font-size="14" font-weight="500" fill="#d0587c">{mon}</text>')
+    # months: a thin arc outside the logos covering each month's games, with a big label in the middle,
+    # so it's obvious where the season starts and which way it goes
+    months = games.groupby(games.game_date.dt.strftime("%b").str.upper(), sort=False).apply(lambda d: (d.index.min(), d.index.max()))
+    for k, (mon, (i0, i1)) in enumerate(months.items()):
+        a0, a1 = np.radians(-90 + i0 * 360 / n + 1), np.radians(-90 + (i1 + 1) * 360 / n - 1)
+        ra = 560
+        big = int((a1 - a0) > np.pi)
+        parts.append(f'<path d="M {cx + ra * np.cos(a0):.1f} {cy + ra * np.sin(a0):.1f} A {ra} {ra} 0 {big} 1 {cx + ra * np.cos(a1):.1f} {cy + ra * np.sin(a1):.1f}" '
+                     f'fill="none" stroke="#d0587c" stroke-width="3" opacity="0.7"/>')
+        am = (a0 + a1) / 2
+        mx, my = cx + 602 * np.cos(am), cy + 602 * np.sin(am)
+        parts.append(f'<text x="{mx:.1f}" y="{my + 10:.1f}" text-anchor="middle" font-family="Barlow Condensed" font-size="30" font-weight="800" fill="#f0a0b8" letter-spacing="1">{mon}</text>')
+    # start marker: a small arrow at opening night pointing clockwise
+    a_s = np.radians(-90 + 0.15 * 360 / n)
+    sx, sy = cx + 560 * np.cos(a_s), cy + 560 * np.sin(a_s)
+    parts.append(f'<path d="M {sx - 6:.1f} {sy - 9:.1f} L {sx + 8:.1f} {sy:.1f} L {sx - 6:.1f} {sy + 9:.1f} Z" fill="#f0a0b8"/>')
+    parts.append(f'<text x="{sx - 14:.1f}" y="{sy + 5:.1f}" text-anchor="end" font-family="IBM Plex Mono" font-size="14" fill="#f0a0b8">START</text>')
     avg = games.margin.mean()
     html = f"""
     <div style="width:{S}px;height:{HT}px;background:#12161d;position:relative;font-family:Barlow,sans-serif;color:#eef0f4">
@@ -527,6 +534,15 @@ def rotation_ring():
         return (f"M {p[0][0]:.1f} {p[0][1]:.1f} A {r_out} {r_out} 0 0 1 {p[1][0]:.1f} {p[1][1]:.1f} "
                 f"L {p[2][0]:.1f} {p[2][1]:.1f} A {r_in} {r_in} 0 0 0 {p[3][0]:.1f} {p[3][1]:.1f} Z")
 
+    # wins and losses: a solid ring outside and a thin ring inside the players (blue = win, dark = loss),
+    # so each game's result frames its whole slice
+    r_last = r0 + len(order) * ring
+    for i, g in games.iterrows():
+        a0 = gap_deg / 2 + i * span + 0.6
+        a1 = a0 + span - 1.2
+        col = "#7e9bd0" if g.margin > 0 else "#2f3540"
+        parts.append(f'<path d="{wedge(r_last + 8, r_last + 24, a0, a1)}" fill="{col}"/>')
+        parts.append(f'<path d="{wedge(r0 - 14, r0 - 6, a0, a1)}" fill="{col}"/>')
     for j, name in enumerate(order):
         r_in = r0 + j * ring
         r_out = r_in + ring - 3
@@ -552,17 +568,16 @@ def rotation_ring():
         ny = cy - (r_in + r_out) / 2 + 4
         parts.append(f'<text x="{cx}" y="{ny:.1f}" text-anchor="middle" font-family="Barlow Condensed" font-weight="700" '
                      f'font-size="13" fill="#d7dbe2" letter-spacing="0.5">{name.split()[-1].upper()}</text>')
-    # month labels around the outside
-    seen = set()
-    for i, g in games.iterrows():
-        mon = g.game_date.strftime("%b").upper()
-        if mon in seen:
-            continue
-        seen.add(mon)
-        a = np.radians(gap_deg / 2 + i * span - 90)
-        rr = r0 + len(order) * ring + 26
-        parts.append(f'<text x="{cx + rr * np.cos(a):.1f}" y="{cy + rr * np.sin(a) + 5:.1f}" text-anchor="middle" '
-                     f'font-family="IBM Plex Mono" font-size="15" fill="#ff6b95">{mon}</text>')
+    # month labels around the outside, big, in the middle of each month's games
+    months = games.groupby(games.game_date.dt.strftime("%b").str.upper(), sort=False).apply(lambda d: (d.index.min(), d.index.max()))
+    for mon, (i0, i1) in months.items():
+        a = np.radians(gap_deg / 2 + (i0 + i1 + 1) / 2 * span - 90)
+        rr = r_last + 58
+        parts.append(f'<text x="{cx + rr * np.cos(a):.1f}" y="{cy + rr * np.sin(a) + 10:.1f}" text-anchor="middle" '
+                     f'font-family="Barlow Condensed" font-weight="800" font-size="30" letter-spacing="1" fill="#ff8fb0">{mon}</text>')
+    # start marker at opening night (just right of the names gap)
+    a_s = np.radians(gap_deg / 2 - 90)
+    parts.append(f'<text x="{cx + (r_last + 15) * np.cos(a_s) + 6:.1f}" y="{cy + (r_last + 15) * np.sin(a_s) - 14:.1f}" font-family="IBM Plex Mono" font-size="14" fill="#f0a0b8">START ▸</text>')
     lineups = summary["rotation-lab"]["lineups"]
     html = f"""
     <div style="width:{S}px;height:{S + 80}px;background:#0f1217;position:relative;color:#eef0f4;font-family:Barlow,sans-serif">
@@ -575,6 +590,9 @@ def rotation_ring():
         <div style="font:800 50px 'Barlow Condensed';text-transform:uppercase">The rotation ring</div>
         <div style="font:400 17px Barlow;color:#b7bdc9;max-width:420px">Each ring is a player and each slice is a game, clockwise from opening night. Brighter = more minutes. <span style="color:#7e9bd0">✕ = missed through injury or illness.</span></div>
       </div>
+      <div style="position:absolute;left:44px;bottom:40px;font:500 16px 'IBM Plex Mono';color:#d7dbe2">
+        Inner and outer ring: <span style="color:#7e9bd0">■ win</span> &nbsp; <span style="color:#6b7280">■ loss</span>
+      </div>
       <img src="{uri(LOGOS / 'tor_white.png')}" style="position:absolute;right:44px;top:44px;width:110px;opacity:.9">
     </div>"""
     render("rotation-ring", html, S, S + 80)
@@ -584,67 +602,87 @@ def rotation_ring():
 # 10. Shot fans: where each player shoots from, as a polar "fan"
 # ---------------------------------------------------------------------------
 
+def cells(s):
+    """Direction (6 slices of 30 degrees), distance band and points for each shot in s."""
+    dx, dy = s.coordinate_x_raw.astype(float) - 25, s.coordinate_y_raw.astype(float)
+    dist = np.hypot(dx, dy)
+    ang = np.degrees(np.arctan2(dy.clip(lower=0), dx))  # 0 = right baseline, 180 = left baseline
+    three = s.points_attempted == 3
+    band = np.where(three, 2, np.where(dist < 4, 0, 1))  # 0 = rim, 1 = midrange two, 2 = three
+    # bigger zones for the "take more / take less" notes (same idea as Shot Lab)
+    zone = np.select([three & (dy <= 3), three, dist < 4, dist < 14], ["Corner 3", "Above-break 3", "Rim", "Short mid"], default="Long mid")
+    return pd.DataFrame({"dir": np.clip((ang // 30).astype(int), 0, 5), "band": band, "zone": zone,
+                         "pts": np.where(s.scoring_play.astype(bool), s.points_attempted, 0)}, index=s.index)
+
+
 def shot_fans():
+    # league points per shot for every direction/distance cell and every zone: the yardstick for each player
+    lg_s = pbp[pbp.shooting_play.astype(bool) & ~pbp.type_text.str.contains("Free Throw")]
+    lg_s = cells(lg_s[(lg_s.coordinate_y_raw <= 28) & lg_s.coordinate_x_raw.between(0, 50)])
+    lg_cell, lg_zone = lg_s.groupby(["dir", "band"]).pts.mean(), lg_s.groupby("zone").pts.mean()
+
+    def heat(d):
+        # diverging colour for points per shot vs league: cold blue, grey near zero, hot orange
+        t_ = max(-1, min(1, d / 0.3))
+        return (f"color-mix(in oklab, #f08a3c {int(100 * t_)}%, #3a3f4a)" if t_ >= 0
+                else f"color-mix(in oklab, #5b8bd8 {int(-100 * t_)}%, #3a3f4a)")
+
     top8 = shots.athlete_name_1.value_counts().head(8).index.tolist()
-    bands = [("Rim", "#ff6b95", 0, 4), ("Midrange", "#b33a55", 4, 22.15), ("Three", "#7e9bd0", 22.15, 99)]
     cards = []
     for name in top8:
-        s = shots[shots.athlete_name_1 == name]
-        dx, dy = s.coordinate_x_raw.astype(float) - 25, s.coordinate_y_raw.astype(float)
-        dist = np.hypot(dx, dy)
-        ang = np.degrees(np.arctan2(dy.clip(lower=0), dx))  # 0 = right baseline, 180 = left baseline
-        nb = 12                                             # 12 directions, 15 degrees each
-        b = np.clip((ang // (180 / nb)).astype(int), 0, nb - 1)
-        three = s.points_attempted == 3
+        c = cells(shots[shots.athlete_name_1 == name])
         W2, H2 = 300, 190
         cx, cy, R = W2 / 2, 170, 150
+        share_max = 0.30                                   # a direction with 30% of shots fills the radius
         paths = []
-        share_max = 0.17                                    # a direction with 17% of shots fills the radius
-        for i in range(nb):
-            inb = b == i
+        for i in range(6):
             inner = 0.0
-            for band, color, lo, hi in bands:
-                if band == "Three":
-                    sel = inb & three
-                elif band == "Rim":
-                    sel = inb & ~three & (dist < 4)
-                else:
-                    sel = inb & ~three & (dist >= 4)
-                share = sel.sum() / len(s)
+            for band in (0, 1, 2):
+                sel = c[(c.dir == i) & (c.band == band)]
+                share = len(sel) / len(c)
                 if share == 0:
                     continue
-                # stack the bands outward, square root so the AREA matches the share
-                r_in = R * np.sqrt(inner / share_max)
+                r_in = R * np.sqrt(inner / share_max)       # square root so the AREA matches the share
                 inner += share
                 r_out = R * np.sqrt(min(inner, share_max) / share_max)
-                # angle 0 = right, 180 = left; in the picture the basket is at the bottom
-                a0, a1 = np.radians(180 - i * 15 - 1), np.radians(180 - (i + 1) * 15 + 1)
+                # fewer than 8 shots in a cell is too few to judge, so it stays plain grey
+                col = heat(sel.pts.mean() - lg_cell.get((i, band), np.nan)) if len(sel) >= 8 else "#2a2f38"
+                a0, a1 = np.radians(180 - i * 30 - 1), np.radians(180 - (i + 1) * 30 + 1)
                 pts = [(cx + r_out * np.cos(a0), cy - r_out * np.sin(a0)), (cx + r_out * np.cos(a1), cy - r_out * np.sin(a1)),
                        (cx + r_in * np.cos(a1), cy - r_in * np.sin(a1)), (cx + r_in * np.cos(a0), cy - r_in * np.sin(a0))]
                 paths.append(f'<path d="M {pts[0][0]:.1f} {pts[0][1]:.1f} A {r_out:.1f} {r_out:.1f} 0 0 1 {pts[1][0]:.1f} {pts[1][1]:.1f} '
-                             f'L {pts[2][0]:.1f} {pts[2][1]:.1f} A {r_in:.1f} {r_in:.1f} 0 0 0 {pts[3][0]:.1f} {pts[3][1]:.1f} Z" fill="{color}"/>')
+                             f'L {pts[2][0]:.1f} {pts[2][1]:.1f} A {r_in:.1f} {r_in:.1f} 0 0 0 {pts[3][0]:.1f} {pts[3][1]:.1f} Z" fill="{col}" stroke="#0f1217" stroke-width="1.5"/>')
         guide = (f'<path d="M {cx - R} {cy} A {R} {R} 0 0 1 {cx + R} {cy}" fill="none" stroke="#2a303b"/>'
                  f'<line x1="{cx - R}" y1="{cy}" x2="{cx + R}" y2="{cy}" stroke="#2a303b"/>'
                  f'<circle cx="{cx}" cy="{cy}" r="4" fill="#eef0f4"/>')
+        # her zones with 20+ shots, compared with the league: the best one to take more of, the worst to take less of
+        z = c.groupby("zone").pts.agg(["size", "mean"])
+        z = z[z["size"] >= 20].assign(d=lambda d: d["mean"] - lg_zone.reindex(d.index))
+        best, worst = z.d.idxmax(), z.d.idxmin()
+        note = lambda k, label, col: (f'<div style="font:500 13px \'IBM Plex Mono\';color:{col}">{label} {k}: {z.loc[k, "mean"]:.2f} pts '
+                                      f'({z.loc[k, "d"]:+.2f} vs WNBA, {int(z.loc[k, "size"])} shots)</div>')
         r = season.loc[name]
         cards.append(f"""
         <div style="background:#151920;border:1px solid #232934;border-radius:14px;padding:18px 18px 14px;display:grid;gap:4px">
           <svg width="{W2}" height="{H2}">{guide}{"".join(paths)}</svg>
           <div style="font:800 26px/1 'Barlow Condensed';text-transform:uppercase;margin-top:6px">{name}</div>
-          <div style="font:400 13px 'IBM Plex Mono';color:#8a91a0">#{r.jersey} · {len(s)} shots · {100 * r.ts:.1f} TS%</div>
+          <div style="font:400 13px 'IBM Plex Mono';color:#8a91a0">{len(c)} shots · {100 * r.ts:.1f} TS%</div>
+          {note(best, "Take more ▲" if z.loc[best, "d"] > 0 else "Best", "#f5a76a")}
+          {note(worst, "Take less ▼", "#86a8e6") if worst != best else ""}
         </div>""")
-    legend = "".join(f'<span style="display:inline-flex;align-items:center;gap:8px"><i style="width:14px;height:14px;background:{c};display:inline-block;border-radius:3px"></i>{n}</span>'
-                     for n, c, _, _ in bands)
+    scale_bar = "".join(f'<i style="width:34px;height:12px;display:inline-block;background:{heat(v)}"></i>' for v in (-0.3, -0.15, 0, 0.15, 0.3))
     html = f"""
-    <div style="width:1600px;height:900px;background:#0f1217;color:#eef0f4;font-family:Barlow,sans-serif;padding:44px 60px;box-sizing:border-box">
-      <div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:26px">
-        <div><div style="font:800 56px/1 'Barlow Condensed';text-transform:uppercase">Shot fans</div>
-        <div style="font:400 17px Barlow;color:#b7bdc9;margin-top:6px">Each fan opens from the basket. Petal = direction, length = share of her shots, colour = distance.</div></div>
-        <div style="display:flex;gap:22px;font:500 15px 'IBM Plex Mono';color:#d7dbe2">{legend}</div>
+    <div style="width:1600px;height:980px;background:#0f1217;color:#eef0f4;font-family:Barlow,sans-serif;padding:44px 60px;box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:26px;gap:30px">
+        <div><div style="font:800 56px/1 'Barlow Condensed';text-transform:uppercase">Who should take which shots</div>
+        <div style="font:400 17px Barlow;color:#b7bdc9;margin-top:6px;max-width:900px">Each fan opens from the basket, split into rim, midrange and three. Petal length = how often she shoots from there.
+        Colour = points per shot vs the WNBA from the same spot. Grey = fewer than 8 shots.</div></div>
+        <div style="font:500 14px 'IBM Plex Mono';color:#d7dbe2;display:grid;gap:6px;justify-items:end">
+          <div style="display:flex;align-items:center;gap:8px">colder {scale_bar} hotter</div><div style="color:#8a91a0">−0.3 to +0.3 pts per shot</div></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">{"".join(cards)}</div>
     </div>"""
-    render("shot-fans", html, 1600, 900)
+    render("shot-fans", html, 1600, 980)
 
 
 # ---------------------------------------------------------------------------
