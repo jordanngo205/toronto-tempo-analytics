@@ -21,6 +21,9 @@
   .tile.wide .thumb { border-right: 0; border-bottom: 1px solid var(--rule); aspect-ratio: 16 / 10; min-height: 0; }
   .home-hero { grid-template-columns: minmax(0, 1fr); }
 }
+.season-fig svg { display: block; width: 100%; max-width: 720px; margin: 0 auto; height: auto; }
+.season-fig a line.bar { transition: stroke-width 0.1s; }
+.season-fig a:hover line.bar, .season-fig a:focus line.bar { stroke-width: 14; }
 @media (prefers-reduced-motion: reduce) { .tile { transition: none; } .tile:hover { transform: none; } }
 </style>
 
@@ -33,6 +36,14 @@
 </section>
 
 <section class="tiles" id="tiles"></section>
+
+<section class="section wide" id="season">
+  <header><h2>The season in a circle</h2></header>
+  <div class="figure season-fig">
+    <svg id="circle" viewBox="0 0 800 800" role="img" aria-label="Every Tempo game around a circle; click a bar for that game's box score"></svg>
+    <div class="cap">Clockwise from opening night. Each bar points toward the winner: in toward Toronto for a win, out toward the opponent for a loss. Longer bar = bigger margin. Click any bar for that game's recap and box score.</div>
+  </div>
+</section>
 
 <section class="methods">
   <h3>About</h3>
@@ -71,4 +82,40 @@ document.getElementById("tiles").innerHTML = tiles.map(x => `<a class="tile ${x.
   <div class="thumb"><img src="assets/shots/${x.slug}.png" alt="${x.t} preview" loading="lazy"></div>
   <div class="body"><h2>${x.t}</h2><p>${x.p}</p>
   <div class="stat"><span class="v">${x.v}</span><span class="k" style="color:var(--ink-3)">${x.l}</span></div></div></a>`).join("");
+// the season circle: one bar per game, each one a link to that game in Game Center
+(function () {
+  const svg = document.getElementById("circle"), G = g.season, n = G.length, NS = "http://www.w3.org/2000/svg";
+  const C = 400, base = 175, k = 3.3;  // centre, radius of the "zero" circle, pixels per point of margin
+  const mk = (tag, attrs, parent = svg) => { const e = document.createElementNS(NS, tag); for (const a in attrs) e.setAttribute(a, attrs[a]); parent.appendChild(e); return e; };
+  const at = (i, r) => { const a = (-90 + (i + 0.5) * 360 / n) * Math.PI / 180; return [C + r * Math.cos(a), C + r * Math.sin(a)]; };
+  // guide rings at -20, -10, +10, +20 points, and the zero ring
+  for (const m of [-20, -10, 10, 20]) mk("circle", { cx: C, cy: C, r: base + m * k, fill: "none", stroke: "var(--grid)", "stroke-dasharray": "3 4" });
+  mk("circle", { cx: C, cy: C, r: base, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.2 });
+  G.forEach(([num, opp, pf, pa, date], i) => {
+    const mar = pf - pa, win = mar > 0;
+    const [x0, y0] = at(i, base), [x1, y1] = at(i, base - Math.max(-35, Math.min(35, mar)) * k);
+    const a = mk("a", { href: `game-center/#g${num}` });
+    mk("title", {}, a).textContent = `Game ${num} · ${date} · ${win ? "W" : "L"} ${pf}-${pa} vs ${opp} · open the box score`;
+    mk("line", { x1: x0, y1: y0, x2: x1, y2: y1, stroke: win ? "var(--good)" : "var(--bad)", "stroke-width": 9, "stroke-linecap": "round", class: "bar" }, a);
+    // a wide invisible line on top so the bar is easy to click
+    mk("line", { x1: x0, y1: y0, x2: at(i, 330)[0], y2: at(i, 330)[1], stroke: "transparent", "stroke-width": 16 }, a);
+    // opponent logo on the outside
+    const [lx, ly] = at(i, 312);
+    mk("image", { href: `assets/logos/${opp.toLowerCase()}_sm.png`, x: lx - 11, y: ly - 11, width: 22, height: 22 }, a);
+  });
+  // months: an arc over each month's games with a big label
+  const months = {};
+  G.forEach((q, i) => { const m = q[4].split(" ")[0].toUpperCase(); (months[m] = months[m] || []).push(i); });
+  Object.entries(months).forEach(([m, idx], j) => {
+    const i0 = idx[0], i1 = idx.at(-1), r = 340;
+    const a0 = (-90 + i0 * 360 / n + 1) * Math.PI / 180, a1 = (-90 + (i1 + 1) * 360 / n - 1) * Math.PI / 180;
+    mk("path", { d: `M ${C + r * Math.cos(a0)} ${C + r * Math.sin(a0)} A ${r} ${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${C + r * Math.cos(a1)} ${C + r * Math.sin(a1)}`, fill: "none", stroke: "var(--tor)", "stroke-width": 2.5, opacity: 0.6 });
+    const am = (a0 + a1) / 2, t = mk("text", { x: C + 368 * Math.cos(am), y: C + 368 * Math.sin(am) + 7, "text-anchor": "middle", style: "font:800 22px var(--display);fill:var(--tor);letter-spacing:1px" });
+    t.textContent = j === 0 ? `${m} ▸` : m;
+  });
+  // the record in the middle
+  mk("image", { href: "assets/logos/tor_sm.png", x: C - 40, y: C - 78, width: 80, height: 80 });
+  const rec = mk("text", { x: C, y: C + 48, "text-anchor": "middle", style: "font:800 64px var(--display);fill:var(--ink)" });
+  rec.textContent = g.record;
+})();
 </script>

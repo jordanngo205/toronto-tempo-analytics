@@ -242,7 +242,9 @@ for g in meta.itertuples():
     })
 
 # headline numbers for the home page, then write the page
-lab.summary("game-center", {"games": len(games), "record": games[-1]["rec"]})
+# the home page draws the season as a circle, so it gets every game: [game number, opponent, points for, points against, date]
+season = [[g["n"], g["opp"], g["pf"], g["pa"], g["short"]] for g in games]
+lab.summary("game-center", {"games": len(games), "record": games[-1]["rec"], "season": season})
 data = {"games": games, "aw_keys": AWARD_KEYS}
 lab.write_page("game-center", "Game Center", "A full recap for every Toronto Tempo game of 2026: game flow, shot charts, key battles and box scores.",
                Path(__file__).parent / "page.html", data)
