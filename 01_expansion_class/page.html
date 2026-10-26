@@ -360,6 +360,9 @@ function legend(id, keys, withHist) {
   for (let v = lo; v <= hi; v += 50) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 1300 ? "zero" : "gridline", "stroke-dasharray": v === 1300 ? "3 3" : "" }, s); txt(s, m.l - 8, y(v) + 4, v, "lbl", { "text-anchor": "end" }); }
   for (const g of [0, 10, 20, 30, 40]) txt(s, x(g), H - 10, g === 0 ? "start" : "G" + g, "lbl", { "text-anchor": "middle" });
   const ends = [];
+  // turning point 1: the 9-game run where Golden State pulled away, as a shaded band behind the lines
+  const TU = D.elo.turns;
+  el("rect", { x: x(TU.gs.from - 1), y: m.t, width: x(TU.gs.to) - x(TU.gs.from - 1), height: H - m.b - m.t, fill: TEAMS.GS.c, opacity: 0.08 }, s);
   // older teams as grey dashed lines
   for (const k of ["CHI", "ATL"]) {
     el("polyline", { points: P[k].map((v, i) => `${x(i)},${y(v)}`).join(" "), fill: "none", stroke: "var(--hist)", "stroke-width": 1.5, "stroke-dasharray": "4 3" }, s);
@@ -371,6 +374,13 @@ function legend(id, keys, withHist) {
     el("circle", { cx: x(P[k].length - 1), cy: y(P[k].at(-1)), r: 4, fill: TEAMS[k].c, stroke: "var(--panel)", "stroke-width": 2 }, s);
     ends.push({ k, v: P[k].at(-1), i: P[k].length - 1, label: TEAMS[k].name, c: TEAMS[k].c });
   }
+  // labels for the two turning points (white halo so the lines underneath don't cut through the text)
+  txt(s, x((TU.gs.from - 1 + TU.gs.to) / 2), m.t + 14, `GS ${TU.gs.w}-${TU.gs.l}, won by ${TU.gs.mar} a game`, "lbl-ink halo", { "text-anchor": "middle", fill: TEAMS.GS.c });
+  txt(s, x((TU.gs.from - 1 + TU.gs.to) / 2), m.t + 28, `games ${TU.gs.from}–${TU.gs.to}`, "lbl halo", { "text-anchor": "middle" });
+  // turning point 2: Toronto's peak, then the slide
+  el("circle", { cx: x(TU.tor.peak), cy: y(TU.tor.elo), r: 5, fill: "none", stroke: TEAMS.TOR.c, "stroke-width": 2 }, s);
+  txt(s, x(TU.tor.peak) + 8, y(TU.tor.elo) - 20, `TOR ${TU.tor.w1}-${TU.tor.l1}, then ${TU.tor.w2}-${TU.tor.l2}`, "lbl-ink halo", { fill: TEAMS.TOR.c });
+  txt(s, x(TU.tor.peak) + 8, y(TU.tor.elo) - 7, `lost by ${-TU.tor.m2} a game after G${TU.tor.peak}`, "lbl halo");
   // end labels, nudged apart
   ends.sort((a, b) => y(a.v) - y(b.v));
   let prev = -99;

@@ -75,6 +75,28 @@ for key, tid, season, _ in CLASS:
     # start the line at 1300 (before game 1), then add the rating after every game
     elo_paths[key] = [round(NEW_TEAM)] + e.post.round(1).tolist()
 
+# the two turning points on the Elo chart, worked out from each team's results
+def results(tid, season):
+    # one row per regular-season game in date order: win (1/0) and final margin
+    r = tb[(tb.team_id == tid) & (tb.season == season) & (tb.season_type == "2")]
+    return pd.DataFrame({"w": (r.team_score > r.opponent_team_score).astype(int).to_numpy(),
+                         "mar": (r.team_score - r.opponent_team_score).to_numpy()})
+
+
+gs_r, tor_r = results(129689, 2025), results(131935, 2026)
+# 1) the stretch where Golden State pulled away: its best 9-game run by total margin
+best = int(gs_r.mar.rolling(9).sum().idxmax())  # last game of that run (0-based)
+run = gs_r.iloc[best - 8:best + 1]
+# 2) Toronto's peak Elo, and its record before and after that game
+peak = int(np.argmax(elo_paths["TOR"]))  # games played when the rating peaked
+before, after = tor_r.iloc[:peak], tor_r.iloc[peak:]
+turns = {"gs": {"from": best - 7, "to": best + 1, "w": int(run.w.sum()), "l": int(9 - run.w.sum()),
+                "mar": round(float(run.mar.mean()), 1), "big": int((run.mar >= 20).sum())},
+         "tor": {"peak": peak, "elo": round(elo_paths["TOR"][peak]), "w1": int(before.w.sum()), "l1": int(len(before) - before.w.sum()),
+                 "w2": int(after.w.sum()), "l2": int(len(after) - after.w.sum()),
+                 "m1": round(float(before.mar.mean()), 1), "m2": round(float(after.mar.mean()), 1)}}
+print("turning points", turns)
+
 # end-of-2026 league table
 names = tb.drop_duplicates("team_id", keep="last").set_index("team_id")
 # each team's rating after its last 2026 game, best to worst
@@ -283,7 +305,7 @@ data = {
     "logos": logos,
     "class": [{"key": k, "season": s, "name": n} for k, _, s, n in CLASS],
     "elo": {"paths": elo_paths, "table2026": elo_2026, "end": first_season_bar,
-            "params": elo.PARAMS},
+            "params": elo.PARAMS, "turns": turns},
     "fingerprint": fingerprint, "rolling": rolling, "games": games_out, "h2h": h2h, "clutch": clutch,
     "hex": hexmaps, "hex_r": R, "experience": experience, "players": players,
 }
