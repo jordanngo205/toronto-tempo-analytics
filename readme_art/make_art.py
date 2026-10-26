@@ -139,6 +139,36 @@ def banner():
     render("banner", html, W, H)
 
 
+def social():
+    """The banner laid out at 1280 x 640, the size GitHub uses for a repo's social preview
+    (and the site uses for link previews)."""
+    W, H = 1280, 640
+    lines = []
+    for i, g in games.iterrows():
+        length = (g.team_score - 55) / 70 * 430
+        y = 66 + i * 11.6
+        lines.append(f'<rect x="{1040 - length:.0f}" y="{y:.1f}" width="{length:.0f}" height="6.4" rx="3.2" '
+                     f'fill="#fff" opacity="{0.95 if g.margin > 0 else 0.28}"/>')
+    html = f"""
+    <div style="width:{W}px;height:{H}px;position:relative;overflow:hidden;font-family:Barlow,sans-serif;color:#fff;
+                background:linear-gradient(115deg,#140a10 0%,#3d0d1f 45%,{BORDEAUX} 100%)">
+      <svg width="{W}" height="{H}" style="position:absolute;inset:0">{"".join(lines)}</svg>
+      <img src="{uri(LOGOS / 'tor_white.png')}" style="position:absolute;right:30px;top:215px;width:250px;opacity:.96">
+      <div style="position:absolute;left:64px;top:70px;width:640px">
+        <div style="font:500 16px 'IBM Plex Mono';letter-spacing:.18em;opacity:.75">TORONTO TEMPO · WNBA 2026</div>
+        <div style="font:800 150px/0.9 'Barlow Condensed';margin-top:16px">TEMPO LAB</div>
+        <div style="font:700 30px 'Barlow Condensed';text-transform:uppercase;letter-spacing:.03em;margin-top:14px;color:#f3c1d1">
+          Toronto's first season,<br>broken down with data</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;width:560px">
+          {"".join(f'<span style="font:700 22px Barlow Condensed;padding:7px 14px;border:2px solid rgba(255,255,255,.55)">{t}</span>'
+                   for t in [f"{wins}–{losses}", f"Elo {summary['expansion-class']['tor_elo']}", "Win probability", "2027 draft board"])}
+        </div>
+      </div>
+      <div style="position:absolute;left:64px;bottom:30px;font:500 16px 'IBM Plex Mono';opacity:.75">jordanngo205.github.io/toronto-tempo-analytics</div>
+    </div>"""
+    render("social-preview", html, W, H)
+
+
 # ---------------------------------------------------------------------------
 # 3. Season ring: every game around a circle, bar = final margin
 # ---------------------------------------------------------------------------
@@ -727,6 +757,7 @@ def big_board():
 
 if __name__ == "__main__":
     banner()
+    social()
     season_ring()
     player_cards()
     by_the_numbers()
