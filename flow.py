@@ -65,8 +65,8 @@ def margin_steps(g):
     return pts
 
 
-def pregame_odds():
-    """Pregame Elo win probability for Toronto, keyed by game_id."""
+def elo_log():
+    """Elo for every team-game since 2003 (one row per team per game, with the pregame win chance)."""
     # Elo needs history, so load every season since 2003 plus 2025-26
     tb = pd.concat([pq.read_table(RAW / "team_box_hist.parquet").to_pandas(ignore_metadata=True),
                     pq.read_table(RAW / "team_box.parquet").to_pandas(ignore_metadata=True)], ignore_index=True)
@@ -79,7 +79,12 @@ def pregame_odds():
     tb = tb.merge(real, on=["season", "team_id"]).merge(real.rename(columns={"team_id": "opponent_team_id"}), on=["season", "opponent_team_id"])
     tb["game_date"] = pd.to_datetime(tb.game_date)
     tb = tb.sort_values(["game_date", "game_id"])  # Elo has to go in date order
-    log = elo.compute(tb)
+    return elo.compute(tb)
+
+
+def pregame_odds():
+    """Pregame Elo win probability for Toronto, keyed by game_id."""
+    log = elo_log()
     t = log[log.team_id == TOR]
     # two lookups by game id: win probability, and Toronto's Elo before the game
     return dict(zip(t.game_id, t.p_win)), dict(zip(t.game_id, t.pre))
