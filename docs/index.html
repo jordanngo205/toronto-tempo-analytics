@@ -32,9 +32,29 @@
   .tile.wide .thumb { border-right: 0; border-bottom: 1px solid var(--rule); aspect-ratio: 16 / 10; min-height: 0; }
   .home-hero { grid-template-columns: minmax(0, 1fr); }
 }
-.season-fig svg { display: block; width: 100%; max-width: 720px; margin: 0 auto; height: auto; }
+.season-wrap { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.season-fig svg { display: block; width: 100%; height: auto; }
+.season-fig a { cursor: pointer; }
 .season-fig a line.bar { transition: stroke-width 0.1s; }
-.season-fig a:hover line.bar, .season-fig a:focus line.bar { stroke-width: 14; }
+.season-fig a:hover line.bar, .season-fig a:focus line.bar { stroke-width: 17; }
+.season-fig a:hover circle.chip, .season-fig a:focus circle.chip { stroke: var(--ink); stroke-width: 2; }
+.season-key { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.78rem; color: var(--ink-3); margin-top: 8px; }
+.season-key i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.season-side { display: grid; gap: 16px; align-content: start; }
+.season-side h3 { margin: 0 0 6px; }
+.ss-big { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.ss-big div { border-top: 2px solid var(--ink); padding-top: 6px; }
+.ss-big b { display: block; font: 800 1.9rem/1 var(--display); }
+.ss-big span { font-size: 0.72rem; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.ss-month { display: grid; grid-template-columns: 44px 52px minmax(0, 1fr); gap: 10px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--rule); font-size: 0.85rem; }
+.ss-month .m { font: 800 1rem var(--display); color: var(--tor); }
+.ss-dots { display: flex; flex-wrap: wrap; gap: 3px; }
+.ss-dots a { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.ss-game { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--rule); font-size: 0.85rem; color: inherit; text-decoration: none; }
+.ss-game:hover b { color: var(--tor); }
+.ss-game small { color: var(--ink-3); display: block; }
+.ss-game .sc { font: 800 1.15rem var(--display); }
+@media (max-width: 900px) { .season-wrap { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .tile { transition: none; } .tile:hover { transform: none; } }
 </style>
 </head>
@@ -55,9 +75,12 @@
 
 <section class="section wide" id="season">
   <header><h2>The season in a circle</h2></header>
-  <div class="figure season-fig">
-    <svg id="circle" viewBox="0 0 800 800" role="img" aria-label="Every Tempo game around a circle; click a bar for that game's box score"></svg>
-    <div class="cap">Clockwise from opening night. Each bar points toward the winner: in toward Toronto for a win, out toward the opponent for a loss. Longer bar = bigger margin. Click any bar for that game's recap and box score.</div>
+  <div class="season-wrap">
+    <div class="figure season-fig">
+      <svg id="circle" viewBox="0 0 960 960" role="img" aria-label="Every Tempo game around a circle; click a bar for that game's box score"></svg>
+      <div class="season-key"><span><i style="background:var(--good)"></i>win, bar points in</span><span><i style="background:var(--bad)"></i>loss, bar points out</span><span>dashed rings every 10 points of margin · click a bar for the box score</span></div>
+    </div>
+    <div class="figure season-side" id="season-side"></div>
   </div>
 </section>
 
@@ -66,7 +89,7 @@
   <p>All data comes from <a href="https://py.sportsdataverse.org/">sportsdataverse</a>: ESPN play-by-play and box scores, plus WNBA Stats lineups. Every page is static HTML with hand-built SVG charts and no chart library. The Python that builds each page is in the <a href="https://github.com/jordanngo205/toronto-tempo-analytics">GitHub repo</a>. The approach follows the film-and-data breakdowns of <a href="https://riseofthevalkyries.substack.com/">Rise of the Valkyries</a> and the Elo work of <a href="https://neilpaine.substack.com/t/basketball">Neil Paine</a>.</p>
 </section>
 <footer class="footer"><span>Built by Jordan Ngo with sportsdataverse (ESPN play-by-play, box scores, WNBA Stats).</span><a href="https://github.com/jordanngo205/toronto-tempo-analytics">Code on GitHub</a><span>Inspired by Rise of the Valkyries and Neil Paine.</span></footer>
-<script id="data" type="application/json">{"expansion-class":{"tor_elo":1219,"por_elo":1377,"gs_elo":1486,"tor_def_rank":15},"shot-lab":{"xpps":1.056,"pps":1.013,"lg_xpps":1.035,"rim":0.303,"opp_rim":0.336},"rotation-lab":{"players":20,"lineups":24,"best":31.3},"game-flow":{"lead":0.28395454545454546,"runs_for":35,"runs_against":74,"xwins":13.405,"wins":11},"game-center":{"games":44,"record":"11-33","season":[[1,"WSH",65,68,"May 8"],[2,"SEA",86,73,"May 13"],[3,"LA",95,99,"May 15"],[4,"LA",106,96,"May 17"],[5,"PHX",98,90,"May 19"],[6,"MIN",72,100,"May 21"],[7,"POR",80,99,"May 23"],[8,"CHI",111,104,"May 27"],[9,"SEA",93,72,"May 30"],[10,"NY",82,97,"Jun 3"],[11,"CHI",85,68,"Jun 7"],[12,"CON",106,102,"Jun 10"],[13,"WSH",85,86,"Jun 12"],[14,"ATL",77,102,"Jun 14"],[15,"IND",91,113,"Jun 16"],[16,"CON",101,97,"Jun 19"],[17,"ATL",87,94,"Jun 22"],[18,"LA",125,97,"Jun 25"],[19,"PHX",80,89,"Jun 27"],[20,"DAL",76,89,"Jul 5"],[21,"GS",75,83,"Jul 8"],[22,"DAL",95,108,"Jul 10"],[23,"NY",93,91,"Jul 12"],[24,"WSH",62,79,"Jul 14"],[25,"ATL",92,111,"Jul 17"],[26,"LV",83,109,"Jul 20"],[27,"MIN",93,100,"Jul 28"],[28,"MIN",72,104,"Jul 30"],[29,"GS",79,96,"Aug 2"],[30,"GS",81,92,"Aug 4"],[31,"POR",83,97,"Aug 6"],[32,"ATL",95,107,"Aug 10"],[33,"DAL",88,94,"Aug 12"],[34,"IND",95,101,"Aug 18"],[35,"WSH",82,93,"Aug 19"],[36,"POR",82,79,"Aug 21"],[37,"LV",78,88,"Aug 23"],[38,"SEA",78,90,"Aug 26"],[39,"LV",73,93,"Aug 28"],[40,"PHX",69,101,"Aug 29"],[41,"IND",85,103,"Sep 18"],[42,"NY",69,106,"Sep 20"],[43,"CHI",85,97,"Sep 22"],[44,"CON",81,95,"Sep 24"]]},"draft-lab":{"pool":742,"top":"JuJu Watkins"}}</script>
+<script id="data" type="application/json">{"expansion-class":{"tor_elo":1219,"por_elo":1377,"gs_elo":1486,"tor_def_rank":15},"shot-lab":{"xpps":1.056,"pps":1.013,"lg_xpps":1.035,"rim":0.303,"opp_rim":0.336},"rotation-lab":{"players":20,"lineups":24,"best":31.3},"game-flow":{"lead":0.28395454545454546,"runs_for":35,"runs_against":74,"xwins":13.405,"wins":11},"game-center":{"games":44,"record":"11-33","season":[[1,"WSH",65,68,"May 8",1,"Washington Mystics","Marina Mabrey",27],[2,"SEA",86,73,"May 13",1,"Seattle Storm","Marina Mabrey",26],[3,"LA",95,99,"May 15",0,"Los Angeles Sparks","Brittney Sykes",27],[4,"LA",106,96,"May 17",0,"Los Angeles Sparks","Brittney Sykes",38],[5,"PHX",98,90,"May 19",0,"Phoenix Mercury","Brittney Sykes",31],[6,"MIN",72,100,"May 21",0,"Minnesota Lynx","Kia Nurse",23],[7,"POR",80,99,"May 23",1,"Portland Fire","Kiki Rice",19],[8,"CHI",111,104,"May 27",0,"Chicago Sky","Nyara Sabally",29],[9,"SEA",93,72,"May 30",1,"Seattle Storm","Marina Mabrey",18],[10,"NY",82,97,"Jun 3",0,"New York Liberty","Brittney Sykes",17],[11,"CHI",85,68,"Jun 7",1,"Chicago Sky","Brittney Sykes",25],[12,"CON",106,102,"Jun 10",1,"Connecticut Sun","Brittney Sykes",38],[13,"WSH",85,86,"Jun 12",0,"Washington Mystics","Marina Mabrey",27],[14,"ATL",77,102,"Jun 14",1,"Atlanta Dream","Isabelle Harrison",17],[15,"IND",91,113,"Jun 16",0,"Indiana Fever","Laura Juskaite",19],[16,"CON",101,97,"Jun 19",0,"Connecticut Sun","Marina Mabrey",37],[17,"ATL",87,94,"Jun 22",0,"Atlanta Dream","Marina Mabrey",23],[18,"LA",125,97,"Jun 25",1,"Los Angeles Sparks","Marina Mabrey",53],[19,"PHX",80,89,"Jun 27",1,"Phoenix Mercury","Nyara Sabally",14],[20,"DAL",76,89,"Jul 5",1,"Dallas Wings","Marina Mabrey",19],[21,"GS",75,83,"Jul 8",1,"Golden State Valkyries","Isabelle Harrison",24],[22,"DAL",95,108,"Jul 10",1,"Dallas Wings","Marina Mabrey",34],[23,"NY",93,91,"Jul 12",1,"New York Liberty","Marina Mabrey",30],[24,"WSH",62,79,"Jul 14",1,"Washington Mystics","Julie Allemand",15],[25,"ATL",92,111,"Jul 17",1,"Atlanta Dream","Marina Mabrey",26],[26,"LV",83,109,"Jul 20",1,"Las Vegas Aces","Isabelle Harrison",26],[27,"MIN",93,100,"Jul 28",0,"Minnesota Lynx","Marina Mabrey",25],[28,"MIN",72,104,"Jul 30",1,"Minnesota Lynx","Laura Juskaite",19],[29,"GS",79,96,"Aug 2",0,"Golden State Valkyries","Nyara Sabally",19],[30,"GS",81,92,"Aug 4",0,"Golden State Valkyries","Nyara Sabally",21],[31,"POR",83,97,"Aug 6",0,"Portland Fire","Nyara Sabally",17],[32,"ATL",95,107,"Aug 10",0,"Atlanta Dream","Marina Mabrey",36],[33,"DAL",88,94,"Aug 12",0,"Dallas Wings","Marina Mabrey",23],[34,"IND",95,101,"Aug 18",1,"Indiana Fever","Marina Mabrey",22],[35,"WSH",82,93,"Aug 19",0,"Washington Mystics","Kiki Rice",19],[36,"POR",82,79,"Aug 21",1,"Portland Fire","Isabelle Harrison",25],[37,"LV",78,88,"Aug 23",1,"Las Vegas Aces","Kia Nurse",19],[38,"SEA",78,90,"Aug 26",0,"Seattle Storm","Kiki Rice",24],[39,"LV",73,93,"Aug 28",0,"Las Vegas Aces","Isabelle Harrison",15],[40,"PHX",69,101,"Aug 29",0,"Phoenix Mercury","Isabelle Harrison",16],[41,"IND",85,103,"Sep 18",1,"Indiana Fever","Laura Juskaite",22],[42,"NY",69,106,"Sep 20",1,"New York Liberty","Laura Juskaite",28],[43,"CHI",85,97,"Sep 22",0,"Chicago Sky","Isabelle Harrison",21],[44,"CON",81,95,"Sep 24",0,"Connecticut Sun","Kiki Rice",28]]},"draft-lab":{"pool":742,"top":"JuJu Watkins"}}</script>
 <script>
 // headline numbers that each page's build.py saved (docs/assets/summary.json)
 const S = JSON.parse(document.getElementById("data").textContent);
@@ -101,38 +124,70 @@ document.getElementById("tiles").innerHTML = tiles.map(x => `<a class="tile ${x.
 // the season circle: one bar per game, each one a link to that game in Game Center
 (function () {
   const svg = document.getElementById("circle"), G = g.season, n = G.length, NS = "http://www.w3.org/2000/svg";
-  const C = 400, base = 175, k = 3.3;  // centre, radius of the "zero" circle, pixels per point of margin
+  const C = 480, base = 225, k = 3.0;  // centre, radius of the "zero" circle, pixels per point of margin
   const mk = (tag, attrs, parent = svg) => { const e = document.createElementNS(NS, tag); for (const a in attrs) e.setAttribute(a, attrs[a]); parent.appendChild(e); return e; };
-  const at = (i, r) => { const a = (-90 + (i + 0.5) * 360 / n) * Math.PI / 180; return [C + r * Math.cos(a), C + r * Math.sin(a)]; };
-  // guide rings at -20, -10, +10, +20 points, and the zero ring
-  for (const m of [-20, -10, 10, 20]) mk("circle", { cx: C, cy: C, r: base + m * k, fill: "none", stroke: "var(--grid)", "stroke-dasharray": "3 4" });
-  mk("circle", { cx: C, cy: C, r: base, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.2 });
-  G.forEach(([num, opp, pf, pa, date], i) => {
-    const mar = pf - pa, win = mar > 0;
+  const ang = i => (-90 + (i + 0.5) * 360 / n) * Math.PI / 180;
+  const at = (i, r) => [C + r * Math.cos(ang(i)), C + r * Math.sin(ang(i))];
+  const mon = q => q[4].split(" ")[0].toUpperCase();
+  // guide rings every 10 points (margin), and the zero ring
+  for (const mm of [-30, -20, -10, 10, 20, 30]) mk("circle", { cx: C, cy: C, r: base + mm * k, fill: "none", stroke: "var(--rule)", "stroke-dasharray": "3 5" });
+  mk("circle", { cx: C, cy: C, r: base, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.4 });
+  G.forEach(([num, opp, pf, pa, date, home, oppName, top, topPts], i) => {
+    const mar = pf - pa, win = mar > 0, col = win ? "var(--good)" : "var(--bad)";
     const [x0, y0] = at(i, base), [x1, y1] = at(i, base - Math.max(-35, Math.min(35, mar)) * k);
     const a = mk("a", { href: `game-center/#g${num}` });
-    mk("title", {}, a).textContent = `Game ${num} · ${date} · ${win ? "W" : "L"} ${pf}-${pa} vs ${opp} · open the box score`;
-    mk("line", { x1: x0, y1: y0, x2: x1, y2: y1, stroke: win ? "var(--good)" : "var(--bad)", "stroke-width": 9, "stroke-linecap": "round", class: "bar" }, a);
-    // a wide invisible line on top so the bar is easy to click
-    mk("line", { x1: x0, y1: y0, x2: at(i, 330)[0], y2: at(i, 330)[1], stroke: "transparent", "stroke-width": 16 }, a);
-    // opponent logo on the outside
-    const [lx, ly] = at(i, 312);
-    mk("image", { href: `assets/logos/${opp.toLowerCase()}_sm.png`, x: lx - 11, y: ly - 11, width: 22, height: 22 }, a);
+    mk("title", {}, a).textContent = `Game ${num} · ${date} · ${home ? "vs" : "at"} ${oppName}\n${win ? "Won" : "Lost"} ${pf}-${pa} (${mar > 0 ? "+" : ""}${mar})\nTop scorer: ${top}, ${topPts} pts\nClick for the box score`;
+    mk("line", { x1: x0, y1: y0, x2: x1, y2: y1, stroke: col, "stroke-width": 12, "stroke-linecap": "round", class: "bar" }, a);
+    // a wide invisible line over bar + label + logo so the whole spoke is easy to click
+    const [hx, hy] = at(i, 400);
+    mk("line", { x1: x0, y1: y0, x2: hx, y2: hy, stroke: "transparent", "stroke-width": 22 }, a);
+    // score just inside the logo ring: wins in bold ink, losses lighter
+    const [tx, ty] = at(i, 350);
+    const st = mk("text", { x: tx, y: ty + 4, "text-anchor": "middle", style: `font:${win ? 600 : 400} 12px var(--mono);fill:${win ? "var(--ink)" : "var(--ink-3)"}` }, a);
+    st.textContent = `${pf}-${pa}`;
+    // opponent logo on a white chip; "@" games get a dashed chip so home and away read at a glance
+    const [lx, ly] = at(i, 395);
+    mk("circle", { cx: lx, cy: ly, r: 19, fill: "var(--panel)", stroke: "var(--rule)", "stroke-width": 1.2, "stroke-dasharray": home ? "" : "3 2", class: "chip" }, a);
+    mk("image", { href: `assets/logos/${opp.toLowerCase()}_sm.png`, x: lx - 13, y: ly - 13, width: 26, height: 26 }, a);
   });
-  // months: an arc over each month's games with a big label
+  // months: an arc over each month's games and a big label, plus a START marker at opening night
   const months = {};
-  G.forEach((q, i) => { const m = q[4].split(" ")[0].toUpperCase(); (months[m] = months[m] || []).push(i); });
-  Object.entries(months).forEach(([m, idx], j) => {
-    const i0 = idx[0], i1 = idx.at(-1), r = 340;
-    const a0 = (-90 + i0 * 360 / n + 1) * Math.PI / 180, a1 = (-90 + (i1 + 1) * 360 / n - 1) * Math.PI / 180;
-    mk("path", { d: `M ${C + r * Math.cos(a0)} ${C + r * Math.sin(a0)} A ${r} ${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${C + r * Math.cos(a1)} ${C + r * Math.sin(a1)}`, fill: "none", stroke: "var(--tor)", "stroke-width": 2.5, opacity: 0.6 });
-    const am = (a0 + a1) / 2, t = mk("text", { x: C + 368 * Math.cos(am), y: C + 368 * Math.sin(am) + 7, "text-anchor": "middle", style: "font:800 22px var(--display);fill:var(--tor);letter-spacing:1px" });
-    t.textContent = j === 0 ? `${m} ▸` : m;
-  });
+  G.forEach((q, i) => (months[mon(q)] = months[mon(q)] || []).push(i));
+  for (const [mo, idx] of Object.entries(months)) {
+    const r = 428, a0 = ang(idx[0]) - 0.5 * 2 * Math.PI / n + 0.012, a1 = ang(idx.at(-1)) + 0.5 * 2 * Math.PI / n - 0.012;
+    mk("path", { d: `M ${C + r * Math.cos(a0)} ${C + r * Math.sin(a0)} A ${r} ${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${C + r * Math.cos(a1)} ${C + r * Math.sin(a1)}`, fill: "none", stroke: "var(--tor)", "stroke-width": 3, opacity: 0.55 });
+    const am = (a0 + a1) / 2, w = idx.filter(i => G[i][2] > G[i][3]).length;
+    const t = mk("text", { x: C + 455 * Math.cos(am), y: C + 455 * Math.sin(am) + 8, "text-anchor": "middle", style: "font:800 26px var(--display);fill:var(--tor);letter-spacing:1px" });
+    t.textContent = mo;
+    const t2 = mk("text", { x: C + 455 * Math.cos(am), y: C + 455 * Math.sin(am) + 26, "text-anchor": "middle", style: "font:500 12px var(--mono);fill:var(--ink-3)" });
+    t2.textContent = `${w}-${idx.length - w}`;
+  }
+  const a0 = ang(0) - Math.PI / n, sx = C + 428 * Math.cos(a0), sy = C + 428 * Math.sin(a0);
+  mk("path", { d: `M ${sx - 7} ${sy - 9} L ${sx + 9} ${sy} L ${sx - 7} ${sy + 9} Z`, fill: "var(--tor)" });
+  const stt = mk("text", { x: sx - 14, y: sy + 5, "text-anchor": "end", style: "font:600 12px var(--mono);fill:var(--tor)" }); stt.textContent = "START";
   // the record in the middle
-  mk("image", { href: "assets/logos/tor_sm.png", x: C - 40, y: C - 78, width: 80, height: 80 });
-  const rec = mk("text", { x: C, y: C + 48, "text-anchor": "middle", style: "font:800 64px var(--display);fill:var(--ink)" });
-  rec.textContent = g.record;
+  mk("image", { href: "assets/logos/tor_sm.png", x: C - 52, y: C - 112, width: 104, height: 104 });
+  const rec = mk("text", { x: C, y: C + 52, "text-anchor": "middle", style: "font:800 92px var(--display);fill:var(--ink)" }); rec.textContent = g.record;
+  const avg = G.reduce((s, q) => s + q[2] - q[3], 0) / n;
+  const sub = mk("text", { x: C, y: C + 84, "text-anchor": "middle", style: "font:500 14px var(--mono);fill:var(--ink-3);letter-spacing:2px" });
+  sub.textContent = `AVG MARGIN ${avg > 0 ? "+" : ""}${avg.toFixed(1)}`;
+
+  // --- side panel: the season in numbers, all worked out from the games above ---
+  const W = q => q[2] > q[3], rec2 = L => `${L.filter(W).length}-${L.filter(q => !W(q)).length}`;
+  const home = G.filter(q => q[5]), away = G.filter(q => !q[5]), close = G.filter(q => Math.abs(q[2] - q[3]) <= 5);
+  // longest streaks
+  const streak = want => { let best = [0, 0, 0], cur = 0; G.forEach((q, i) => { cur = W(q) === want ? cur + 1 : 0; if (cur > best[0]) best = [cur, i - cur + 1, i]; }); return best; };
+  const ws = streak(true), ls = streak(false);
+  const byMar = [...G].sort((a, b) => (b[2] - b[3]) - (a[2] - a[3])), best = byMar[0], worst = byMar.at(-1);
+  const gameRow = (q, label) => `<a class="ss-game" href="game-center/#g${q[0]}"><div><b>${label}</b><small>${q[4]} · ${q[5] ? "vs" : "at"} ${q[6]} · top scorer ${q[7]} (${q[8]})</small></div><span class="sc num">${q[2]}-${q[3]}</span></a>`;
+  document.getElementById("season-side").innerHTML = `
+    <div class="ss-big"><div><b>${rec2(home)}</b><span>at home</span></div><div><b>${rec2(away)}</b><span>on the road</span></div><div><b>${rec2(close)}</b><span>within 5 pts</span></div></div>
+    <div><h3>Month by month</h3>${Object.entries(months).map(([mo, idx]) => `<div class="ss-month"><span class="m">${mo}</span><span class="num">${rec2(idx.map(i => G[i]))}</span>
+      <span class="ss-dots">${idx.map(i => `<a href="game-center/#g${G[i][0]}" title="${G[i][4]} · ${G[i][2]}-${G[i][3]} ${G[i][5] ? "vs" : "at"} ${G[i][1]}" style="background:${W(G[i]) ? "var(--good)" : "var(--bad)"}"></a>`).join("")}</span></div>`).join("")}</div>
+    <div><h3>Streaks</h3>
+      <div class="ss-game" style="border-top:0"><div><b>Longest winning streak: ${ws[0]}</b><small>${G[ws[1]][4]} to ${G[ws[2]][4]}</small></div></div>
+      <div class="ss-game"><div><b>Longest losing streak: ${ls[0]}</b><small>${G[ls[1]][4]} to ${G[ls[2]][4]}</small></div></div></div>
+    <div><h3>Best and worst</h3>${gameRow(best, `Biggest win: +${best[2] - best[3]}`)}${gameRow(worst, `Worst loss: ${worst[2] - worst[3]}`)}</div>`;
 })();
 </script>
 
