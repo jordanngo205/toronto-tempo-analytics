@@ -14,7 +14,12 @@
 <link rel="icon" href="../assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=6d4e777e">
+<link rel="stylesheet" href="../assets/site.css?v=a26f3f01">
+<!-- KaTeX turns the $$...$$ formulas in the "How it's worked out" panels into typeset math -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}]})"></script>
 <style>
 .strip { display: grid; grid-template-columns: repeat(22, minmax(0, 1fr)); gap: 4px; }
 .strip button { border: 1px solid var(--rule); background: var(--panel); padding: 4px 2px 0; cursor: pointer; display: grid; justify-items: center; gap: 2px; font: 500 0.6rem var(--mono); color: var(--ink-3); position: relative; }
@@ -137,7 +142,7 @@ td.hl { font-weight: 600; color: var(--tor); }
 </head>
 <body>
 <div class="wrap">
-<nav class="nav" aria-label="Tempo Lab"><a class="brand" href="../"><img src="../assets/logos/tor_sm.png" alt="">Tempo Lab</a><div class="links"><a href="../expansion-class/">Expansion Class</a><a href="../shot-lab/">Shot Lab</a><a href="../rotation-lab/">Rotation Lab</a><a href="../game-flow/">Game Flow</a><a href="../game-center/" aria-current="page">Game Center</a><a href="../draft-lab/">Draft Lab</a><a href="../posters/">Posters</a></div></nav>
+<nav class="nav" aria-label="Tempo Lab"><a class="brand" href="../"><img src="../assets/logos/tor_sm.png" alt="">Tempo Lab</a><div class="links"><a href="../expansion-class/">Expansion Class</a><a href="../shot-lab/">Shot Lab</a><a href="../rotation-lab/">Rotation Lab</a><a href="../game-flow/">Game Flow</a><a href="../game-center/" aria-current="page">Game Center</a><a href="../draft-lab/">Draft Lab</a><a href="../players/">Players</a></div></nav>
 
 
 <section class="hero">
@@ -169,11 +174,10 @@ td.hl { font-weight: 600; color: var(--tor); }
     <svg id="gs-card" role="img" aria-label="Game Score breakdown by player"></svg>
     <div class="gs-legend" id="gs-legend"></div>
   </div>
-  <details class="math"><summary>The math</summary>
-    <div class="f">Game Score = PTS + 0.4 × FGM − 0.7 × FGA − 0.4 × (FTA − FTM)
-           + 0.7 × OREB + 0.3 × DREB + STL + 0.7 × AST + 0.7 × BLK − 0.4 × PF − TOV</div>
-    <p>John Hollinger's Game Score: one number for a player's box score, on roughly the same scale as points. Hollinger put about 10 at an average game and 40 at an outstanding one. The bars split it into shooting (points and shot attempts), rebounding, playmaking, defense, turnovers and fouls.</p>
-  </details>
+  <div class="math"><h3>How Game Score is worked out</h3>
+    <p>John Hollinger's Game Score turns a box score into one number on roughly the same scale as points. Hollinger put about 10 at an average game and 40 at an outstanding one. The bars above show the six pieces it's built from.</p>
+    <div class="mathbox"><div class="mb-label">The formula</div>$$\begin{aligned}\text{Game Score} = {} & \underbrace{\text{PTS} + 0.4\,\text{FGM} - 0.7\,\text{FGA} - 0.4\,(\text{FTA} - \text{FTM})}_{\text{shooting}} + \underbrace{0.7\,\text{OREB} + 0.3\,\text{DREB}}_{\text{rebounding}} \\ & + \underbrace{0.7\,\text{AST}}_{\text{playmaking}} + \underbrace{\text{STL} + 0.7\,\text{BLK}}_{\text{defense}} - \underbrace{\text{TOV}}_{\text{turnovers}} - \underbrace{0.4\,\text{PF}}_{\text{fouls}}\end{aligned}$$<p class="mb-note">PTS points, FGM/FGA field goals made/attempted, FTM/FTA free throws, OREB/DREB offensive/defensive rebounds, AST assists, STL steals, BLK blocks, TOV turnovers, PF fouls.</p></div>
+  </div>
 </section>
 
 <section class="section">
@@ -191,7 +195,7 @@ td.hl { font-weight: 600; color: var(--tor); }
   <div class="figure">
     <svg id="wpc" viewBox="0 0 640 300" role="img" aria-label="Toronto's chance to win through the game"></svg>
     <div class="wp-swings" id="wp-swings"></div>
-    <details class="math" id="wp-math"></details>
+    <div class="math" id="wp-math"></div>
   </div>
 </section>
 
@@ -497,17 +501,14 @@ function leaders() {
 
 // "The math" box for win probability: the formula with the fitted numbers and the test result
 (function () {
-  const M = D.wp_math, term = v => `${v < 0 ? "−" : "+"} ${Math.abs(v)}`;  // "+ -0.05" reads badly, so write the sign out
-  document.getElementById("wp-math").innerHTML = `<summary>The math</summary>
-    <p>A logistic regression trained on every play of the 2025 season, then refit on 2025 and 2026 for this page.</p>
-    <div class="f">P(home team wins) = 1 / (1 + e^(−z))
-
-z = ${M.b0 < 0 ? "−" : ""}${Math.abs(M.b0)} ${term(M.b1)} × margin / √(minutes left + 1)
-          ${term(M.b2)} × logit(pregame odds) × (seconds left / 2400)
-          ${term(M.b3)} × margin</div>
-    <dl><dt>margin</dt><dd>home score minus away score after the play</dd>
-      <dt>pregame odds</dt><dd>Elo's chance before tip-off: 1 / (1 + 10^(−(home Elo + 60 − away Elo) / 400)); logit(p) = ln(p / (1 − p))</dd>
-      <dt>win chance added</dt><dd>P after the play minus P with the old score at the same moment, so the clock running isn't credited to anyone</dd></dl>
+  // a number as a TeX term with its sign written out ("+ -0.05" reads badly); the first term keeps only a minus
+  const M = D.wp_math, tx = (v, first) => first ? `${v}` : `${v < 0 ? "-" : "+"} ${Math.abs(v)}`;
+  document.getElementById("wp-math").innerHTML = `<h3>How the win chance is worked out</h3>
+    <p>In plain words: a lead is worth more the less time is left, and the stronger team is favoured at tip-off, but that edge fades as the game is played. The model weighs those two things and squeezes the result into a chance between 0% and 100% with a logistic curve, an S-shape that can get close to 0 or 100 but never past them. It learned the weights from every play of the 2025 season.</p>
+    <div class="mathbox"><div class="mb-label">The model</div>$$P(\\text{home team wins}) = \\frac{1}{1 + e^{-z}}$$
+$$z = ${tx(M.b0, true)} ${tx(M.b1)}\\,\\underbrace{\\frac{m}{\\sqrt{\\tau + 1}}}_{\\text{lead, counts more late}} ${tx(M.b2)}\\,\\underbrace{\\operatorname{logit}(p_0)\\cdot\\frac{s}{2400}}_{\\text{pregame edge, fades}} ${tx(M.b3)}\\,m$$
+$$p_0 = \\frac{1}{1 + 10^{-(E_{\\text{home}} + 60 - E_{\\text{away}})/400}} \\qquad \\operatorname{logit}(p) = \\ln\\frac{p}{1-p}$$
+$$\\text{win chance added} = P(m_{\\text{after}},\\, s) - P(m_{\\text{before}},\\, s)$$<p class="mb-note">m = home score minus away score, τ = minutes left, s = seconds left, p₀ = Elo's pregame chance for the home team. Win chance added compares the same moment before and after a play, so the clock running isn't credited to anyone.</p></div>
     <p>Tested on ${M.games} games from 2026 that it never saw (${M.plays.toLocaleString()} plays): log loss ${M.logloss} vs ${M.logloss_pregame_only} for the pregame odds alone, Brier score ${M.brier}. Lower is better for both; always guessing 50% scores 0.693 and 0.25.</p>`;
 })();
 

@@ -14,7 +14,12 @@
 <link rel="icon" href="../assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=6d4e777e">
+<link rel="stylesheet" href="../assets/site.css?v=a26f3f01">
+<!-- KaTeX turns the $$...$$ formulas in the "How it's worked out" panels into typeset math -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}]})"></script>
 <style>
 .heat-wrap { overflow-x: auto; }
 .heat-wrap svg { min-width: 760px; }
@@ -47,7 +52,7 @@
 </head>
 <body>
 <div class="wrap">
-<nav class="nav" aria-label="Tempo Lab"><a class="brand" href="../"><img src="../assets/logos/tor_sm.png" alt="">Tempo Lab</a><div class="links"><a href="../expansion-class/">Expansion Class</a><a href="../shot-lab/">Shot Lab</a><a href="../rotation-lab/" aria-current="page">Rotation Lab</a><a href="../game-flow/">Game Flow</a><a href="../game-center/">Game Center</a><a href="../draft-lab/">Draft Lab</a><a href="../posters/">Posters</a></div></nav>
+<nav class="nav" aria-label="Tempo Lab"><a class="brand" href="../"><img src="../assets/logos/tor_sm.png" alt="">Tempo Lab</a><div class="links"><a href="../expansion-class/">Expansion Class</a><a href="../shot-lab/">Shot Lab</a><a href="../rotation-lab/" aria-current="page">Rotation Lab</a><a href="../game-flow/">Game Flow</a><a href="../game-center/">Game Center</a><a href="../draft-lab/">Draft Lab</a><a href="../players/">Players</a></div></nav>
 
 
 <section class="hero">
@@ -69,6 +74,14 @@
 
 <section class="section wide">
   <header>
+    <h2>The rotation ring</h2>
+    <p class="lede">The grid above as a circle: each ring is a player and each slice a game. Brighter means more minutes, ✕ marks an injury, and blue on the inner and outer rings marks the 11 wins.</p>
+  </header>
+  <figure class="art"><a href="../assets/art/rotation-ring.png" target="_blank" rel="noopener"><img src="../assets/art/rotation-ring.png" alt="Rotation ring" loading="lazy"></a></figure>
+</section>
+
+<section class="section wide">
+  <header>
     <h2 id="inj-head">No team lost more to injury</h2>
     <p class="lede" id="inj-lede"></p>
   </header>
@@ -76,7 +89,7 @@
     <div class="figure"><h3>Game Score lost to injury, per game</h3><div class="inj-bars" id="inj-bars"></div></div>
     <div class="figure"><h3>Toronto's injuries</h3><div class="inj-list" id="inj-list"></div></div>
   </div>
-  <details class="math" id="inj-math"></details>
+  <div class="math" id="inj-math"></div>
 </section>
 
 <section class="section">
@@ -415,16 +428,10 @@ const last = n => n.split(" ").slice(-1)[0];
   if (top.t !== "TOR") document.getElementById("inj-head").textContent = "How much each team lost to injury";
   document.getElementById("inj-lede").innerHTML = `Toronto had players out injured for <strong>${I.league.find(r => r.t === "TOR").games} player-games</strong>, worth <strong>${T.gs_pg} points of Game Score every night</strong>${top.t === "TOR" ? `, the most in the league (${next.t} was next at ${next.gs_pg})` : ""}. Each missing game is counted at that player's average Game Score, so losing a starter counts more than losing the 12th player.
     Across every 2026 game, each point of missing Game Score cost about <strong>${I.slope.toFixed(2)} points of final margin</strong> (90% range ${I.slope_lo.toFixed(2)}–${I.slope_hi.toFixed(2)}). Add Toronto's back and the average margin goes from ${T.mar} to ${T.mar_healthy}, worth about <strong>${Math.round(T.healthy)} wins instead of ${T.wins}</strong> (range ${Math.round(T.healthy_lo)}–${Math.round(T.healthy_hi)}). Injuries explain part of the season, not all of it: a healthy Toronto still projects well below .500.`;
-  document.getElementById("inj-math").innerHTML = `<summary>The math</summary>
-    <div class="f">Game Score lost in a game = Σ (average Game Score of each player out injured)
-
-home margin = home strength − away strength + home edge + β × (Game Score lost by away team − lost by home team) + noise
-β = ${I.slope.toFixed(3)}  (90% range ${I.slope_lo.toFixed(3)} to ${I.slope_hi.toFixed(3)} = β ± 1.645 standard errors)
-
-healthy margin = real margin + β × Game Score Toronto lost that game
-P(win if healthy) = Φ(healthy margin / ${I.sd})        Φ = normal curve, ${I.sd} = typical miss of the fit in points
-expected healthy wins = Σ P(win if healthy) over all ${I.tor.games} games</div>
-    <p>Fitted by least squares on every 2026 game, one row per game. "Out injured" means a box-score did-not-play with an injury or illness reason; coach's decisions and personal reasons don't count.</p>`;
+  document.getElementById("inj-math").innerHTML = `<h3>How the injury cost is worked out</h3>
+    <p>Three steps. First, across every 2026 game, measure how much one point of missing Game Score changes the final margin. Second, add the Game Score Toronto was missing back into each of its games. Third, turn each healthy margin into a chance of winning, using how far real results usually land from the fit.</p>
+    <div class="mathbox"><div class="mb-label">The model</div>$$\\text{margin}_g = S_{\\text{home}} - S_{\\text{away}} + h + \\beta\\,\\underbrace{\\big(L_{\\text{away}} - L_{\\text{home}}\\big)}_{\\text{Game Score out injured}} + \\varepsilon_g, \\qquad \\beta = ${I.slope.toFixed(3)}$$
+$$P(\\text{win} \\mid \\text{healthy})_g = \\Phi\\!\\left(\\frac{\\text{margin}_g + \\beta\\,L_g}{${I.sd}}\\right), \\qquad \\text{healthy wins} = \\sum_{g=1}^{${I.tor.games}} P(\\text{win} \\mid \\text{healthy})_g$$<p class="mb-note">S = team strength, h = home edge, L = the Game Score of players out injured (each counted at her season average), Φ = the normal curve, ${I.sd} = how many points a typical game lands from the fit. β's 90% range is ${I.slope_lo.toFixed(3)} to ${I.slope_hi.toFixed(3)}. Fitted by least squares, one row per 2026 game; coach's decisions and personal reasons don't count as injuries.</p></div>`;
   const max = Math.max(...I.league.map(r => r.gs_pg));
   document.getElementById("inj-bars").innerHTML = I.league.map(r => `<div class="inj-bar ${r.t === "TOR" ? "tor" : ""}" title="${r.games} player-games, ${r.mins.toLocaleString()} minutes">
     <span class="ab">${K.logo(r.t)} ${r.t}</span><span class="tr"><i style="width:${r.gs_pg / max * 100}%"></i></span><span class="num">${r.gs_pg.toFixed(1)}</span></div>`).join("");

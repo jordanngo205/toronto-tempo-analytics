@@ -14,7 +14,12 @@
 <link rel="icon" href="../assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=6d4e777e">
+<link rel="stylesheet" href="../assets/site.css?v=a26f3f01">
+<!-- KaTeX turns the $$...$$ formulas in the "How it's worked out" panels into typeset math -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}]})"></script>
 <style>
 .gg-wrap { overflow-x: auto; }
 .gg-wrap svg { min-width: 700px; }
@@ -28,7 +33,7 @@
 </head>
 <body>
 <div class="wrap">
-<nav class="nav" aria-label="Tempo Lab"><a class="brand" href="../"><img src="../assets/logos/tor_sm.png" alt="">Tempo Lab</a><div class="links"><a href="../expansion-class/">Expansion Class</a><a href="../shot-lab/">Shot Lab</a><a href="../rotation-lab/">Rotation Lab</a><a href="../game-flow/" aria-current="page">Game Flow</a><a href="../game-center/">Game Center</a><a href="../draft-lab/">Draft Lab</a><a href="../posters/">Posters</a></div></nav>
+<nav class="nav" aria-label="Tempo Lab"><a class="brand" href="../"><img src="../assets/logos/tor_sm.png" alt="">Tempo Lab</a><div class="links"><a href="../expansion-class/">Expansion Class</a><a href="../shot-lab/">Shot Lab</a><a href="../rotation-lab/">Rotation Lab</a><a href="../game-flow/" aria-current="page">Game Flow</a><a href="../game-center/">Game Center</a><a href="../draft-lab/">Draft Lab</a><a href="../players/">Players</a></div></nav>
 
 
 <section class="hero">
@@ -58,6 +63,14 @@
     <svg id="worm" viewBox="0 0 640 260" role="img" aria-label="Margin through the selected game" style="margin-top:10px"></svg>
     <div class="cap">The black line is the selected game, with its biggest lead and deficit marked. Faint lines are the other 43 games, and the shaded band covers the middle half of all games. Shaded blocks mark scoring runs of 8+ points.</div>
   </div>
+</section>
+
+<section class="section wide">
+  <header>
+    <h2>Unknown Pressures</h2>
+    <p class="lede">Every game's margin from tip-off to the final buzzer, stacked like the Joy Division album cover. Peaks mean Toronto led, and the pink lines are the 11 wins.</p>
+  </header>
+  <figure class="art"><a href="../assets/art/ridgeline.png" target="_blank" rel="noopener"><img src="../assets/art/ridgeline.png" alt="All 44 games as stacked margin lines" loading="lazy"></a></figure>
 </section>
 
 <section class="section">

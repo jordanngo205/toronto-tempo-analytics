@@ -14,7 +14,12 @@
 <link rel="icon" href="../assets/logos/tor_sm.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=6d4e777e">
+<link rel="stylesheet" href="../assets/site.css?v=a26f3f01">
+<!-- KaTeX turns the $$...$$ formulas in the "How it's worked out" panels into typeset math -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}]})"></script>
 <style>
 .podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .pod { background: var(--panel); border: 1px solid var(--rule); border-top: 6px solid var(--tor); display: grid; grid-template-columns: 96px 1fr; gap: 14px; padding: 14px; align-items: center; min-width: 0; }
@@ -67,7 +72,7 @@
 </head>
 <body>
 <div class="wrap">
-<nav class="nav" aria-label="Tempo Lab"><a class="brand" href="../"><img src="../assets/logos/tor_sm.png" alt="">Tempo Lab</a><div class="links"><a href="../expansion-class/">Expansion Class</a><a href="../shot-lab/">Shot Lab</a><a href="../rotation-lab/">Rotation Lab</a><a href="../game-flow/">Game Flow</a><a href="../game-center/">Game Center</a><a href="../draft-lab/" aria-current="page">Draft Lab</a><a href="../posters/">Posters</a></div></nav>
+<nav class="nav" aria-label="Tempo Lab"><a class="brand" href="../"><img src="../assets/logos/tor_sm.png" alt="">Tempo Lab</a><div class="links"><a href="../expansion-class/">Expansion Class</a><a href="../shot-lab/">Shot Lab</a><a href="../rotation-lab/">Rotation Lab</a><a href="../game-flow/">Game Flow</a><a href="../game-center/">Game Center</a><a href="../draft-lab/" aria-current="page">Draft Lab</a><a href="../players/">Players</a></div></nav>
 
 
 <section class="hero">
@@ -155,6 +160,14 @@
     <div class="figure"><div class="tbl-wrap"><table id="board-tbl"></table></div></div>
     <div class="figure card" id="card"></div>
   </div>
+</section>
+
+<section class="section wide">
+  <header>
+    <h2>The 2027 big board</h2>
+    <p class="lede">The top 10 at the default setting (60% talent, 40% fit), as a poster.</p>
+  </header>
+  <figure class="art"><a href="../assets/art/big-board.png" target="_blank" rel="noopener"><img src="../assets/art/big-board.png" alt="The 2027 big board poster" loading="lazy"></a></figure>
 </section>
 
 <section class="section">
