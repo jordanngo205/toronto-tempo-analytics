@@ -148,6 +148,50 @@ def curve(s):
 
 dist = {"Tempo": curve(tor_shots), "Opponents": curve(opp_shots), "League": curve(lg)}
 
+# --- what each shot is worth, ring by ring (Andrew Weatherman's "midrange is worth a 28% three" chart) --------
+# Each shot gets its and-one free throw added, and each miss gets whether the shooting team got the rebound back.
+seq = p.sort_values(["game_id", "game_play_number"])
+nxt = seq.shift(-1)  # the play right after each play
+same_game = nxt.game_id == seq.game_id
+# and-one: the next play is a "1 of 1" free throw by the same player who just scored
+and1 = same_game & seq.scoring_play.astype(bool) & (nxt.type_text == "Free Throw - 1 of 1") & (nxt.athlete_id_1 == seq.athlete_id_1)
+shots["value"] = shots.pts + (and1 & nxt.scoring_play.astype(bool)).reindex(shots.index).astype(int)
+# offensive rebound after a miss: 1 = shooting team got it, 0 = defense got it.
+# Team rebounds (no player named) are usually dead balls, so they're left out, like Weatherman does.
+reb = same_game & nxt.type_text.isin(["Offensive Rebound", "Defensive Rebound"]) & nxt.athlete_name_1.notna()
+shots["oreb"] = np.where(reb.reindex(shots.index) & ~shots.made, (nxt.type_text == "Offensive Rebound").reindex(shots.index), np.nan)
+# how far inside the 3-point line a two was taken (corners: the straight 21.95 ft line; elsewhere: the 22.15 ft arc)
+gap = np.where(y <= 3, 21.95 - dx.abs(), 22.15 - shots.dist)
+shots["long2"] = ~shots.three & (gap <= 2) & (shots.dist >= 15)  # "manure line": a long two within 2 ft of the arc
+# the four zones from Weatherman's chart (rim is 6 ft or closer there), plus the manure line on its own
+shots["wz"] = np.select([shots.three, shots.dist <= 6, shots.dist < 15], ["Three", "Rim", "Short mid"], default="Long mid")
+
+
+def rings(s):
+    """Points per shot (and-ones included) for each 1-ft ring, twos and threes kept apart.
+    A ring with fewer than 40 shots borrows from the rings next to it, like the distance curve."""
+    out = {}
+    for kind, sub, lo, hi in [("two", s[~s.three], 0, 23), ("three", s[s.three], 21, 27)]:
+        b = sub.assign(r=sub.dist.astype(int).clip(lo, hi)).groupby("r").value.agg(["size", "sum"]).reindex(range(lo, hi + 1)).fillna(0)
+        n, v, vals = b["size"].to_numpy(), b["sum"].to_numpy(), []
+        for i in range(len(b)):
+            w = 0
+            while n[max(0, i - w):i + w + 1].sum() < 40 and w < 8:
+                w += 1
+            m = n[max(0, i - w):i + w + 1].sum()
+            vals.append(round(float(v[max(0, i - w):i + w + 1].sum() / m), 3) if m else None)
+        out[kind] = {"from": lo, "pps": vals}
+    # zone cards: share of shots, FG%, points per shot, offensive rebound rate on misses
+    def card(z):
+        return {"n": int(len(z)), "share": round(len(z) / len(s), 3), "fg": round(z.made.mean(), 3),
+                "pps": round(z.value.mean(), 3), "oreb": round(float(z.oreb.mean()), 3)}
+    out["zones"] = {k: card(s[s.wz == k]) for k in ["Rim", "Short mid", "Long mid", "Three"]}
+    out["zones"]["Manure line"] = card(s[s.long2])
+    return out
+
+
+worth = {"Tempo": rings(shots[shots.team_id == TOR]), "Opponents": rings(shots[in_tor & (shots.team_id != TOR)]), "League": rings(shots)}
+
 # --- how every team's plays ended (Sportradar "defending pick actions" style, for all plays) -------------
 # A "play" ends in one of: a shooting-foul trip to the line, a field-goal attempt from a zone, or a turnover.
 # And-one free throws ("1 of 1") are left out because the made basket already counted as the play.
@@ -192,7 +236,7 @@ for side in ("def", "off"):
 
 # everything the page needs
 data = {"outcomes": outcomes, "views": views, "players": names, "dots": dots, "opp_dots": opp_dots, "quality": quality,
-        "dist": dist, "hex_r": R, "families": [f for f, _ in FAMILIES]}
+        "dist": dist, "worth": worth, "hex_r": R, "families": [f for f, _ in FAMILIES]}
 # headline numbers for the home page
 lab.summary("shot-lab", {"xpps": views["Tempo"]["xpps"], "pps": views["Tempo"]["pps"], "lg_xpps": views["League"]["xpps"],
                          "rim": views["Tempo"]["rim"], "opp_rim": views["Opponents"]["rim"]})

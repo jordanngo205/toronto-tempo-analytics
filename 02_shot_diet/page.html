@@ -17,6 +17,19 @@
 .dot-key { display: inline-flex; gap: 12px; align-items: center; font-size: 0.8rem; color: var(--ink-3); }
 .dot-key svg { width: 14px; height: 14px; vertical-align: middle; }
 .ends { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0 8px; font-family: var(--display); font-weight: 700; font-size: 0.95rem; }
+/* "what every shot is worth" rings: one orange hue, light = cheap shot, dark = valuable */
+:root { --w1: #fbeee3; --w2: #f6d6bd; --w3: #efb68c; --w4: #e4915c; --w5: #cf6a32; --w6: #a3461b; }
+.wr-key { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; font-size: 0.72rem; margin-bottom: 14px; }
+.wr-key b { font: 700 0.75rem var(--display); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); margin-right: 8px; }
+.wr-key span { padding: 3px 9px; color: var(--ink); }
+.wr-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-bottom: 6px; }
+.wr-card { border-top: 2px solid var(--ink); padding-top: 6px; display: grid; gap: 1px; font-size: 0.78rem; color: var(--ink-2); }
+.wr-card h4 { margin: 0; font: 800 1.05rem var(--display); text-transform: uppercase; color: var(--ink); }
+.wr-card .rng { color: var(--ink-3); font-size: 0.72rem; }
+.wr-card .like { color: var(--w5); font-weight: 700; font-size: 0.9rem; margin-top: 3px; }
+.wr-card.l2 { border-top-color: var(--w5); }
+#wr { display: block; width: 100%; max-width: 760px; margin: 0 auto; height: auto; overflow: hidden; }
+@media (max-width: 760px) { .wr-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 
 <section class="hero">
@@ -71,6 +84,23 @@
     <div class="legend"><span class="chip has-logo"><img class="logo" src="../assets/logos/tor_sm.png" alt="">Tempo</span><span class="chip" style="--c:var(--hist)">Rest of the WNBA (150+ FGA)</span><span class="muted">Dot size = attempts</span></div>
     <svg id="qm" viewBox="0 0 640 440" role="img" aria-label="Expected points per shot vs shot making for every WNBA player"></svg>
     <div class="cap">Expected points per shot is the league average for the zone of each attempt, so it measures shot location only. Shot making is actual points per shot minus expected. Above the line, the player made more than their locations predict.</div>
+  </div>
+</section>
+
+<section class="section wide">
+  <header>
+    <h2 id="wr-head">What every shot is worth</h2>
+    <div class="toggle" id="wr-side" role="group" aria-label="Whose shots">
+      <button type="button" data-v="Tempo" aria-pressed="true">Tempo</button>
+      <button type="button" data-v="Opponents" aria-pressed="false">Opponents vs TOR</button>
+      <button type="button" data-v="League" aria-pressed="false">WNBA</button>
+    </div>
+  </header>
+  <div class="figure">
+    <div class="wr-key" id="wr-key"></div>
+    <div class="wr-cards" id="wr-cards"></div>
+    <svg id="wr" role="img" aria-label="Points per shot by distance from the rim, shown as an equivalent 3-point percentage"></svg>
+    <svg id="wr-strip" viewBox="0 0 640 78" role="img" aria-label="Each zone's equivalent 3-point percentage"></svg>
   </div>
 </section>
 
@@ -310,6 +340,70 @@ draw();  // first draw when the page loads
   // count how many Tempo shooters are below the line for the paragraph above the chart
   const tq = Q.filter(q => q.t === "TOR"), below = tq.filter(q => q.pps < q.x).length;
   document.getElementById("qm-lede").innerHTML = `<strong>${below} of Toronto's ${tq.length}</strong> high-volume shooters made less than their shot locations predict. Marina Mabrey was the clear exception, and Nyara Sabally the only other one above the line. Harrison, Conde, Sykes and Nurse all had normal shot locations and finished well below expected.`;
+})();
+
+/* 02b what every shot is worth (rings) */
+(function () {
+  const Wd = D.worth;
+  // equivalent 3P% buckets: [upper bound, colour, label]
+  const STEPS = [[0.27, "var(--w1)", "Under 27%"], [0.30, "var(--w2)", "27–29%"], [0.33, "var(--w3)", "30–32%"],
+                 [0.36, "var(--w4)", "33–35%"], [0.40, "var(--w5)", "36–39%"], [9, "var(--w6)", "40%+"]];
+  const colour = pps => pps == null ? "var(--grid)" : STEPS.find(s => pps / 3 < s[0])[1];
+  document.getElementById("wr-key").innerHTML = `<b>Like this % from three</b>` + STEPS.map(([, c, l]) => `<span style="background:${c}">${l}</span>`).join("");
+  // the five zone cards: [key, title, distance range]
+  const CARDS = [["Short mid", "Short mid", "6 to 15 ft"], ["Rim", "Rim", "6 ft or closer"], ["Long mid", "Long mid", "15 ft to the arc"],
+                 ["Manure line", "Long 2 💩", "last 2 ft inside the arc"], ["Three", "Three", "beyond the arc"]];
+  const s = document.getElementById("wr"), strip = document.getElementById("wr-strip");
+  const draw = who => {
+    const w = Wd[who], Z = w.zones;
+    // headline: what a midrange two (6 ft out to the arc) was worth, said as a 3-point percentage
+    const mid = (Z["Short mid"].pps * Z["Short mid"].n + Z["Long mid"].pps * Z["Long mid"].n) / (Z["Short mid"].n + Z["Long mid"].n);
+    const whose = { Tempo: "A Tempo", Opponents: "An opponent's", League: "The average WNBA" }[who];
+    document.getElementById("wr-head").textContent = `${whose} midrange shot was worth a ${pct(mid / 3, 0)} three`;
+    document.getElementById("wr-cards").innerHTML = CARDS.map(([k, n, r]) => `<div class="wr-card${k === "Manure line" ? " l2" : ""}"><h4>${n}</h4><span class="rng">${r}</span>
+      <span class="like">Like ${pct(Z[k].pps / 3, 0)} from three</span><span><b class="num">${pct(Z[k].fg, 0)}</b> FG · <b class="num">${Z[k].n.toLocaleString()}</b> shots (${pct(Z[k].share, 0)})</span>
+      <span title="Share of misses where the shooting team got the rebound (team rebounds left out)"><b class="num">${pct(Z[k].oreb, 0)}</b> of misses rebounded</span></div>`).join("");
+    s.innerHTML = "";
+    // rings first, then the court lines on top. 10 px per foot, 31 ft deep
+    const S = 10, Y0 = 5.25, depth = 28, X = v => v * S, Y = v => (v + Y0) * S;
+    s.setAttribute("viewBox", `0 0 500 ${Y(depth)}`);
+    const defs = el("defs", {}, s), c3 = Math.sqrt(22.15 ** 2 - 9);
+    // inside-the-arc shape (for twos) and everything else (for threes)
+    const arcPath = `M ${X(25 - c3)} 0 L ${X(25 - c3)} ${Y(3)} A ${22.15 * S} ${22.15 * S} 0 0 0 ${X(25 + c3)} ${Y(3)} L ${X(25 + c3)} 0 Z`;
+    el("path", { d: arcPath }, el("clipPath", { id: "wr-in" }, defs));
+    el("path", { d: `M 0 0 H 500 V ${Y(depth)} H 0 Z ${arcPath}`, "clip-rule": "evenodd" }, el("clipPath", { id: "wr-out" }, defs));
+    const rings = el("g", {}, s);
+    for (const [kind, clip] of [["two", "wr-in"], ["three", "wr-out"]]) {
+      const g = el("g", { "clip-path": `url(#${clip})` }, rings);
+      // the last ring of each kind also fills everything past it (deep threes, or the 23+ ft twos)
+      w[kind].pps.forEach((v, i) => {
+        const d = w[kind].from + i, last = i === w[kind].pps.length - 1;
+        const ring = el("circle", { cx: X(25), cy: Y(0), r: (d + (last ? 15 : 0.5)) * S, fill: "none", stroke: colour(v), "stroke-width": last ? 30 * S : S }, g);
+        hover(ring, `<b>${d}${last ? "+" : "–" + (d + 1)} ft · ${kind === "two" ? "2-pointers" : "3-pointers"}</b><div class="num">${v == null ? "–" : v.toFixed(2) + " pts per shot · like " + pct(v / 3, 0) + " from three"}</div>`);
+      });
+      // draw rings from the outside in, so each smaller ring sits on top of the bigger ones
+      [...g.children].reverse().forEach(c => g.appendChild(c));
+    }
+    // a thin white line between rings, like the original
+    el("rect", { x: 0, y: 0, width: 500, height: Y(depth) }, el("clipPath", { id: "wr-all" }, defs));
+    const lines = el("g", { "clip-path": "url(#wr-all)", "pointer-events": "none" }, s);
+    for (let d = 1; d <= 34; d++) el("circle", { cx: X(25), cy: Y(0), r: d * S, fill: "none", stroke: "var(--panel)", "stroke-width": 0.8, opacity: 0.7 }, lines);
+    const court = K.court(s, { depth });
+    court.g.setAttribute("pointer-events", "none");
+    s.setAttribute("viewBox", `0 0 500 ${Y(depth)}`);
+    // bottom strip: every zone's equivalent 3P% on one line from 20% to 45%
+    strip.innerHTML = "";
+    const xs = scale(0.20, 0.45, 30, 610);
+    el("line", { x1: 30, x2: 610, y1: 50, y2: 50, stroke: "var(--ink-3)" }, strip);
+    for (let v = 0.20; v <= 0.4501; v += 0.05) { el("line", { x1: xs(v), x2: xs(v), y1: 46, y2: 54, stroke: "var(--ink-3)" }, strip); txt(strip, xs(v), 70, pct(v, 0), "lbl", { "text-anchor": "middle" }); }
+    const items = CARDS.map(([k, n]) => ({ k, n, v: Z[k].pps / 3 })).sort((a, b) => a.v - b.v);
+    // labels alternate above the line at two heights so close zones don't collide
+    items.forEach((it, i) => {
+      el("circle", { cx: xs(it.v), cy: 50, r: 6, fill: colour(it.v * 3), stroke: "var(--ink)", "stroke-width": 1 }, strip);
+      txt(strip, xs(it.v), i % 2 ? 22 : 36, `${it.n.replace(" 💩", "")} ${pct(it.v, 0)}`, "lbl-ink", { "text-anchor": "middle", style: "font-size:11px" });
+    });
+  };
+  K.toggle(document.getElementById("wr-side"), draw)("Tempo");
 })();
 
 /* 03 distance */
