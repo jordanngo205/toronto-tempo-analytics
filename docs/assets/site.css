@@ -164,10 +164,22 @@ summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-s
   .section:not(:has(> header)) > :not(:first-child) { margin-top: 16px; }
 }
 
-/* "The math": a collapsed box under a chart with the formula behind it */
-.math { margin-top: 12px; border-top: 1px solid var(--rule); padding-top: 8px; font-size: 0.85rem; color: var(--ink-2); }
-.math summary { cursor: pointer; font: 700 0.8rem var(--display); text-transform: uppercase; letter-spacing: 0.08em; color: var(--tor); }
-.math .f { font-family: var(--mono); font-size: 0.8rem; background: var(--grid); color: var(--ink); padding: 10px 12px; margin: 8px 0; overflow-x: auto; white-space: pre; line-height: 1.6; }
+/* "How it's worked out": the formula behind a chart, shown in the same section */
+.math { min-width: 0; max-width: 100%; margin-top: 14px; border-top: 2px solid var(--tor); padding-top: 10px; font-size: 0.88rem; color: var(--ink-2); }
+.math h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.math p { margin: 6px 0; max-width: 75ch; }
+.math .f { max-width: 100%; font-family: var(--mono); font-size: 0.8rem; background: var(--grid); color: var(--ink); padding: 10px 12px; margin: 8px 0; overflow-x: auto; white-space: pre; line-height: 1.6; }
 .math dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 12px; margin: 6px 0; }
 .math dt { font-family: var(--mono); font-size: 0.78rem; color: var(--ink); }
 .math dd { margin: 0; }
+
+/* README pictures shown on the page they belong to */
+.art { margin: 0; }
+.art img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--rule); }
+
+/* typeset formulas (KaTeX) in a bordered panel, like a figure in a paper */
+.mathbox { border: 1px solid var(--rule); border-radius: 14px; background: var(--panel); padding: 16px 22px 12px; margin: 12px 0; overflow-x: auto; max-width: 100%; }
+.mb-label { font: 500 0.75rem var(--mono); letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-3); }
+.mathbox .katex-display { margin: 14px 0; }
+.mathbox .katex { font-size: 1.1em; color: var(--ink); }
+.mb-note { font-size: 0.85rem; color: var(--ink-2); margin: 8px 0 4px; }
