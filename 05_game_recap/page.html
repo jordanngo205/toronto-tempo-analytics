@@ -111,6 +111,11 @@ td.hl { font-weight: 600; color: var(--tor); }
 .award .aw-val { font-family: var(--display); font-weight: 800; font-size: 1.4rem; line-height: 1; }
 .award.none { opacity: 0.6; }
 @media (max-width: 760px) { .potg-card { grid-template-columns: auto minmax(0, 1fr); } .potg-gs { grid-column: 1 / -1; justify-items: start; } .hs.xl { width: 96px; height: 96px; } }
+.wp-swings { display: grid; margin-top: 10px; }
+.wp-sw { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 0; border-top: 1px solid var(--rule); font-size: 0.85rem; }
+.wp-sw .n { width: 20px; height: 20px; border-radius: 50%; color: #fff; display: grid; place-items: center; font: 700 0.7rem var(--body); }
+.wp-sw b { display: block; font-weight: 600; } .wp-sw small { color: var(--ink-3); }
+.wp-sw .d { font: 800 1.1rem var(--display); }
 </style>
 
 <section class="hero">
@@ -149,6 +154,17 @@ td.hl { font-weight: 600; color: var(--tor); }
     <h2>The best games that night</h2>
   </header>
   <div class="figure"><div class="night-list" id="night-list"></div></div>
+</section>
+
+<section class="section">
+  <header>
+    <h2 id="wp-h">Toronto's chance to win</h2>
+    <p class="lede" id="wp-lede"></p>
+  </header>
+  <div class="figure">
+    <svg id="wpc" viewBox="0 0 640 300" role="img" aria-label="Toronto's chance to win through the game"></svg>
+    <div class="wp-swings" id="wp-swings"></div>
+  </div>
 </section>
 
 <section class="section">
@@ -226,7 +242,7 @@ function select(n, push) {
   [...strip.children].forEach(b => b.setAttribute("aria-pressed", +b.dataset.n === cur.n));
   // replaceState changes the link without reloading. try/catch because some viewers block it
   if (push) try { history.replaceState(null, "", "#g" + cur.n); } catch (e) {}
-  board(); potgCard(); awards(); lineScore(); context(); leaders(); gsCard(); night(); flowChart(); courts(); battles(); boxScore();
+  board(); potgCard(); awards(); lineScore(); wpChart(); context(); leaders(); gsCard(); night(); flowChart(); courts(); battles(); boxScore();
 }
 
 // the scoreboard. The home team goes on the right, like a TV scoreboard
@@ -351,6 +367,7 @@ const TIPS = {
   "Off night": "The shooting part of Game Score: points and makes minus misses",
   "Cold blooded": "Last 5 minutes of the 4th or overtime, with the score within 5",
   "Speed demon": "Scored within 6 seconds of her team winning the ball",
+  "Hero": "Her one play that raised her team's chance of winning the most, from the win-probability model",
   "Defuser": "Under 5 seconds left on the shot clock. The play-by-play has no shot clock, so it is estimated from when each possession started",
 };
 // ESPN-style daily awards for this game (both teams). Each award: [title, what it means, score, how to show it, who can win]
@@ -369,7 +386,7 @@ function awards() {
       ["Spark plug", "Best off the bench", x => x.r[16], v => v.toFixed(1), x => !x.r[1]],
       ["Facilitator", "Most assists", x => x.r[5], v => v, pos(x => x.r[5])],
       ["Cold blooded", "Clutch points", x => g.clutch[x.r[0]] || 0, v => v, pos(x => g.clutch[x.r[0]] || 0)],
-      ["Hero", "Go-ahead points", x => aw(x, "goahead"), v => v, pos(x => aw(x, "goahead"))],
+      ["Hero", "Biggest swing in win chance", x => g.wp.wpa[x.r[0]] ?? 0, v => `+${v.toFixed(1)}%`, pos(x => g.wp.wpa[x.r[0]] ?? 0)],
       ["Difference maker", "Best plus-minus", x => x.r[15], v => fmt(v, 0)],
       ["Lone wolf", "Best in a loss", x => x.r[16], v => v.toFixed(1), x => !won(x)],
     ]],
@@ -448,6 +465,54 @@ function leaders() {
   const extra = cats.some(([, i]) => [g.box.tor, g.box.opp].some(B => B.reduce((b, x) => x[i] > b[i] ? x : b, B[0])[0] === potg[0]))
     ? "" : `<div class="cap">Player of the game: <b>${potg[0]}</b> (${potg.at(-1)}), Game Score ${potg[16]}: ${potg[3]} pts, ${potg[4]} reb, ${potg[5]} ast.</div>`;
   document.getElementById("leaders").innerHTML = col("tor", "TOR", "Toronto Tempo") + col("opp", g.opp, g.opp_name) + extra;
+}
+
+// Toronto's win chance after every play (from winprob.py), with the three biggest swings marked
+function wpChart() {
+  const s = document.getElementById("wpc"), g = cur, W = g.wp, P = W.pts;
+  s.replaceChildren();
+  const Wd = 640, H = 300, m = { l: 40, r: 12, t: 34, b: 26 };
+  const end = Math.max(2400, P.at(-1)[0]);
+  const x = scale(0, end, m.l, Wd - m.r), y = scale(0, 100, H - m.b, m.t);
+  for (const v of [0, 25, 50, 75, 100]) { el("line", { x1: m.l, x2: Wd - m.r, y1: y(v), y2: y(v), class: v === 50 ? "zero" : "gridline" }, s); txt(s, m.l - 6, y(v) + 4, v + "%", "lbl", { "text-anchor": "end" }); }
+  const marks = [["Tip", 0], ["Q2", 600], ["Half", 1200], ["Q4", 1800], ["End", 2400]]; if (end > 2400) marks.push(["OT", 2700]);
+  marks.forEach(([l, tt]) => { el("line", { x1: x(tt), x2: x(tt), y1: m.t, y2: H - m.b, class: "gridline" }, s); txt(s, x(tt), H - 8, l, "lbl", { "text-anchor": "middle" }); });
+  // area above 50% in Toronto bordeaux, below in the opponent's colour
+  const line = P.map((p, i) => `${i ? "L" : "M"}${x(p[0]).toFixed(1)} ${y(p[1]).toFixed(1)}`).join("");
+  const id = "wpclip" + g.n, defs = el("defs", {}, s);
+  el("rect", { x: 0, y: 0, width: Wd, height: y(50) }, el("clipPath", { id: id + "u" }, defs));
+  el("rect", { x: 0, y: y(50), width: Wd, height: H }, el("clipPath", { id: id + "d" }, defs));
+  const area = line + `L${x(P.at(-1)[0])} ${y(50)}L${x(0)} ${y(50)}Z`;
+  el("path", { d: area, fill: "var(--tor)", opacity: 0.22, "clip-path": `url(#${id}u)` }, s);
+  el("path", { d: area, fill: g.opp_color, opacity: 0.22, "clip-path": `url(#${id}d)` }, s);
+  el("path", { d: line, fill: "none", stroke: "var(--ink)", "stroke-width": 1.6, "stroke-linejoin": "round" }, s);
+  // the three biggest swings: numbered dots on the line, numbers explained in the list under the chart
+  const at = tt => { let c = P[0]; for (const q of P) { if (q[0] <= tt) c = q; else break; } return c[1]; };
+  W.swings.forEach(([tt, d], i) => {
+    const cx = x(tt), cy = y(at(tt));
+    el("circle", { cx, cy, r: 9, fill: d > 0 ? "var(--tor)" : g.opp_color, stroke: "var(--panel)", "stroke-width": 2 }, s);
+    txt(s, cx, cy + 4, i + 1, "lbl", { "text-anchor": "middle", style: "fill:#fff;font-weight:700;font-size:10px" });
+  });
+  txt(s, m.l, 16, "Toronto's chance to win", "lbl-ink", { style: "font-size:13px" });
+  // hover: dot on the line and the chance at that moment
+  const dot = el("circle", { r: 4, fill: "var(--ink)", opacity: 0 }, s);
+  const hit = el("rect", { x: m.l, y: m.t, width: Wd - m.l - m.r, height: H - m.t - m.b, class: "hit" }, s);
+  hit.addEventListener("pointermove", ev => {
+    const p = K.svgPoint(s, ev), tt = (p.x - m.l) / (Wd - m.l - m.r) * end, v = at(tt);
+    dot.setAttribute("cx", x(tt)); dot.setAttribute("cy", y(v)); dot.setAttribute("opacity", 1);
+    K.tip(`<b>${mmss(tt)}</b><div class="num">Toronto ${v.toFixed(0)}% to win</div>`, ev);
+  });
+  hit.addEventListener("pointerleave", () => { dot.setAttribute("opacity", 0); K.hide(); });
+  document.getElementById("wp-swings").innerHTML = W.swings.map(([tt, d, text, who, sc], i) => `<div class="wp-sw">
+    <span class="n" style="background:${d > 0 ? "var(--tor)" : g.opp_color}">${i + 1}</span>
+    <div><b>${text}</b><small class="num">${mmss(tt)} · score ${sc} (TOR first)</small></div>
+    <span class="d num" style="color:${d > 0 ? "var(--tor)" : "var(--ink-2)"}">${d > 0 ? "+" : ""}${d.toFixed(1)}%</span></div>`).join("");
+  // headline and lede from the numbers
+  const won = win(g), start = P[0][1];
+  document.getElementById("wp-h").textContent = won
+    ? (W.extreme < 25 ? `Came back from a ${W.extreme.toFixed(0)}% chance` : `Toronto's chance to win never fell below ${W.extreme.toFixed(0)}%`)
+    : (W.extreme > 75 ? `Let a ${W.extreme.toFixed(0)}% chance slip away` : `Toronto's chance to win peaked at ${W.extreme.toFixed(0)}%`);
+  document.getElementById("wp-lede").innerHTML = `Toronto started at <strong>${start.toFixed(0)}%</strong> by the win-probability model, which reads the score, the time left and how good both teams were before tip-off. (It's fitted on how 2025-26 games actually played out, so its tip-off number can differ a little from the pregame Elo odds of ${(g.p * 100).toFixed(0)}%.) The numbered plays are the three that moved Toronto's chance the most, listed under the chart.`;
 }
 
 function flowChart() {

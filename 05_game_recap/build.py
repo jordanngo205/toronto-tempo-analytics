@@ -14,6 +14,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import flow
 import lab
+import winprob
 from common import load
 
 TOR = flow.TOR
@@ -202,6 +203,36 @@ def nightly(date, gid, n=8):
     return {"top": out, "players": int(len(d)), "games": int(d.game_id.nunique()), "tor_best_rank": best_rank}
 
 
+# --- win probability (see winprob.py) -------------------------------------------------------
+WP = winprob.plays(2026)
+
+
+def win_chance(gid, tor_home):
+    """Toronto's win chance through one game, the biggest swing plays, and each player's win probability added."""
+    g = winprob.game(WP[WP.game_id == gid], tor_home)
+    tor_side = g.team_id == TOR
+    # Toronto's change in win chance on each play (wpa is for the team that made the play)
+    d_tor = np.where(tor_side, g.wpa, -g.wpa)
+    # the line: the start, every play that moved the chance by half a point or more, and the end
+    keep = (np.abs(d_tor) >= 0.005) | g.scoring_play.astype(bool)
+    keep.iloc[0] = True  # always start at tip-off
+    pts = [[round(float(a)), round(float(b) * 100, 1)] for a, b in zip(g.t[keep], g.wp[keep])]
+    pts.append([round(float(g.t.max())), 100.0 if g.m.iloc[-1] * (1 if tor_home else -1) > 0 else 0.0])
+    # the three plays that moved Toronto's chance the most, either way
+    big = g.assign(d=d_tor).loc[lambda d: d.athlete_name_1.notna()].reindex(columns=["t", "d", "text", "athlete_name_1", "home_score", "away_score"])
+    big = big.loc[big.d.abs().sort_values(ascending=False).index[:3]]
+    swings = [[round(float(r.t)), round(float(r.d) * 100, 1), str(r.text), r.athlete_name_1,
+               f"{int(r.home_score if tor_home else r.away_score)}-{int(r.away_score if tor_home else r.home_score)}"] for r in big.itertuples()]
+    # each player's single biggest swing for her own team (the play-by-play can't charge defenders for the other
+    # team's baskets, so adding up a player's swings over a game would only count the good half)
+    wpa = g.dropna(subset=["athlete_name_1"]).groupby("athlete_name_1").wpa.max()
+    won = g.m.iloc[-1] * (1 if tor_home else -1) > 0
+    # the lowest chance Toronto came back from in a win, or the highest it let slip in a loss
+    extreme = float(g.wp.min() if won else g.wp.max())
+    return {"pts": pts, "swings": swings, "wpa": {k: round(float(v) * 100, 1) for k, v in wpa.items()},
+            "extreme": round(extreme * 100, 1)}
+
+
 games = []
 wins = 0  # running win count so each game can show the record after it
 for g in meta.itertuples():
@@ -236,6 +267,7 @@ for g in meta.itertuples():
         "night": nightly(g.game_date.date(), g.game_id),
         "clutch": clutch_points(gp),
         "aw": award_counts(gp),
+        "wp": win_chance(g.game_id, g.team_home_away == "home"),
         # headshot link for every player who played (empty when ESPN has none)
         "heads": {r.athlete_display_name: r.athlete_headshot_href for r in
                   pb[(pb.game_id == g.game_id) & (pb.minutes > 0)].itertuples() if isinstance(r.athlete_headshot_href, str)},
