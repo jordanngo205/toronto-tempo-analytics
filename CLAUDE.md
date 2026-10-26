@@ -22,8 +22,12 @@ Shared styles live in `docs/assets/site.css`, shared chart helpers in `docs/asse
 - **Always light mode.** No dark palette, no `prefers-color-scheme` blocks; `:root` sets `color-scheme: light`.
 - **Every abbreviation is explained** where it's used (BPM, TS%, Game Score…), in a hover tooltip (`title` or the chart
   tip). The owner doesn't want explainer paragraphs, how-to-read captions, glossaries or method boxes on the page.
-- **Formulas** for models and probabilities go in a collapsed `<details class="math">` box ("The math") under the chart,
-  with fitted numbers filled in from the build's data, never typed by hand.
+- **Formulas** for models and probabilities sit open in the same section as their chart (`<div class="math">`,
+  "How … is worked out"): a plain-words paragraph first, then a `.mathbox` panel with KaTeX `$$...$$` equations
+  (`\underbrace` to label the parts), with fitted numbers filled in from the build's data, never typed by hand.
+  Only `$$` is a math delimiter; `%` and `#` inside TeX need a backslash.
+- **README graphics** also appear on the page they belong to (copied into docs/assets/art by 07_players/build.py);
+  the card set is the Players page. There is no separate posters page.
 - **Headlines** say what the chart shows ("Toronto was last in four defensive categories"), not slogans.
 
 ## Facts
