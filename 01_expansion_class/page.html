@@ -213,7 +213,7 @@ summary { cursor: pointer; color: var(--ink-2); font-family: var(--mono); font-s
     </header>
     <div class="figure">
       <div class="legend" id="luck-legend"></div>
-      <svg id="luck-chart" viewBox="0 0 640 260" role="img" aria-label="How many wins Toronto got in 100,000 simulated seasons"></svg>
+      <svg id="luck-chart" viewBox="0 0 640 284" role="img" aria-label="How many wins Toronto got in 100,000 simulated seasons"></svg>
       <div class="math" id="luck-math"></div>
     </div>
   </section>
@@ -727,7 +727,7 @@ function legend(id, keys, withHist) {
 const hover = (node, html) => { node.addEventListener("pointermove", ev => showTip(html, ev)); node.addEventListener("pointerleave", hideTip); };
 (function () {
   const L = D.sim.luck, s = document.getElementById("luck-chart");
-  const W = 640, H = 260, m = { l: 40, r: 12, t: 26, b: 30 };
+  const W = 640, H = 284, m = { l: 40, r: 12, t: 26, b: 54 };
   const share = h => h.map(v => v / h.reduce((a, b) => a + b, 0));
   const G = share(L.game.hist), Pr = share(L.pre.hist);
   const hi = Math.max(...G, ...Pr), maxW = 30;  // nobody wins 30+ in these sims
@@ -739,12 +739,13 @@ const hover = (node, html) => { node.addEventListener("pointermove", ev => showT
     const b = el("rect", { x: x(w), y: y(Pr[w] || 0), width: bw - 1, height: y(0) - y(Pr[w] || 0), fill: "var(--hist)" }, s);
     hover(a, `<b>${w} wins</b><div class="num">${pct(G[w] || 0, 1)} of seasons (game-by-game odds)</div>`);
     hover(b, `<b>${w} wins</b><div class="num">${pct(Pr[w] || 0, 1)} of seasons (preseason odds)</div>`);
-    if (w % 5 === 0) txt(s, x(w), H - 10, w, "lbl", { "text-anchor": "middle" });
+    if (w % 5 === 0) txt(s, x(w), H - m.b + 18, w, "lbl", { "text-anchor": "middle" });
   }
   // the real season
   el("line", { x1: x(L.real), x2: x(L.real), y1: m.t - 6, y2: H - m.b, stroke: "var(--ink)", "stroke-dasharray": "4 3" }, s);
   txt(s, x(L.real) + 6, m.t + 4, `Real season: ${L.real} wins`, "lbl-ink halo");
-  txt(s, W - m.r, H - 10, "wins in a 44-game season", "lbl", { "text-anchor": "end" });
+  // axis title on its own line under the numbers, centred, so it never sits on a tick label
+  txt(s, (m.l + W - m.r) / 2, H - 6, "Wins in a 44-game season", "lbl", { "text-anchor": "middle" });
   document.getElementById("luck-legend").innerHTML = `<span class="chip" style="--c:var(--tor)">Game-by-game odds</span><span class="chip" style="--c:var(--hist)">Preseason odds</span>`;
   const verdict = L.game.le_real >= 0.2 ? "No. It was close to what Elo expected" : L.game.le_real >= 0.05 ? "A little" : "Yes";
   document.getElementById("luck-h").textContent = `Was 11-33 bad luck? ${verdict.split(".")[0]}.`;

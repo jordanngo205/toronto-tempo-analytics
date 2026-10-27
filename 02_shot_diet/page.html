@@ -346,7 +346,7 @@ draw();  // first draw when the page loads
   // horizontal grid lines every 0.1 (the 0 line is darker)
   for (let v = y0; v <= y1 + 1e-9; v += 0.1) { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: Math.abs(v) < 1e-9 ? "zero" : "gridline" }, s); txt(s, m.l - 6, y(v) + 4, fmt(v, 1), "lbl", { "text-anchor": "end" }); }
   // x axis labels every 0.05
-  for (let v = x0; v <= x1 + 1e-9; v += 0.05) txt(s, x(v), H - m.b + 16, v.toFixed(2), "lbl", { "text-anchor": "middle" });
+  for (let v = x0; v <= x1 + 1e-9; v += 0.05) txt(s, x(v), H - m.b + 22, v.toFixed(2), "lbl", { "text-anchor": "middle" });
   // dashed line at the league's average expected value
   el("line", { x1: x(L.xpps), x2: x(L.xpps), y1: m.t, y2: H - m.b, class: "gridline", "stroke-dasharray": "3 3", stroke: "var(--ink-3)" }, s);
   txt(s, (m.l + W - m.r) / 2, H - 4, "Expected pts/shot from shot location →", "lbl", { "text-anchor": "middle" });
@@ -375,7 +375,7 @@ draw();  // first draw when the page loads
 /* 02c who took the hard shots: expected FG% from the make-probability model vs actual FG% */
 (function () {
   const R = D.difficulty, s = document.getElementById("df"), T = D.xfg_test;
-  const W = 640, rowH = 36, m = { l: 150, r: 70, t: 30 }, H = m.t + R.length * rowH + 30;
+  const W = 640, rowH = 36, m = { l: 150, r: 92, t: 30 }, H = m.t + R.length * rowH + 30;
   s.setAttribute("viewBox", `0 0 ${W} ${H}`);
   const lo = Math.floor(Math.min(...R.flatMap(r => [r.x, r.fg])) * 20) / 20, hi = Math.ceil(Math.max(...R.flatMap(r => [r.x, r.fg])) * 20) / 20;
   const x = scale(lo, hi, m.l, W - m.r);
