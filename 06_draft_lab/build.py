@@ -100,8 +100,7 @@ cs["ts"] = cs.points / (2 * (cs.field_goals_attempted + 0.44 * cs.free_throws_at
 cs["three_rate"] = cs.three_point_field_goals_attempted / cs.field_goals_attempted       # share of shots that are 3s
 cs["mpg"] = cs.minutes / cs.gp
 # team strength: the minutes-weighted average BPM of everyone on her team that season.
-# Box plus-minus is inflated on teams that blow everyone out, so "bpm_vs_team" = her BPM minus her team's average
-# says how much she stood out from her own teammates.
+# "bpm_vs_team" = her BPM minus her team's average = how much she stood out from her own teammates.
 cs["_bm"] = cs.box_bpm * cs.minutes
 _t = cs.groupby(["team_id", "season"])[["_bm", "minutes"]].transform("sum")
 cs["team_bpm"] = _t["_bm"] / _t["minutes"]
@@ -113,19 +112,36 @@ cs["gmsc"] = (cs.points + 0.4 * cs.field_goals_made - 0.7 * cs.field_goals_attem
               + 0.3 * cs.defensive_rebounds + cs.steals + 0.7 * cs.assists + 0.7 * cs.blocks
               - 0.4 * cs.fouls - cs.turnovers) / cs.gp
 
+# Two-season averages: her last season and the one before, weighted by minutes. One season can be a fluke
+# (hot shooting, an injury, a new role); two seasons is a steadier read. Tested on held-out draft classes this raised
+# the correlation with WNBA minutes from 0.593 to 0.633. If the season before has under 300 minutes, the last one is used alone.
+TWO_Y = ["box_bpm", "box_dbpm", "gmsc", "team_bpm", "pts40", "ast40", "stl40", "mpg", "ts"]
+cs = cs.sort_values("minutes").drop_duplicates(["athlete_id", "season"], keep="last").sort_values(["athlete_id", "season"])
+prev = cs.groupby("athlete_id").shift(1)  # her row from the season before (if any)
+ok_prev = (prev.season == cs.season - 1) & (prev.minutes >= 300)
+for f in TWO_Y:
+    both = (cs[f] * cs.minutes + prev[f] * prev.minutes) / (cs.minutes + prev.minutes)
+    cs[f + "_2y"] = np.where(ok_prev & prev[f].notna(), both, cs[f])
+
 FEATURES = ["gmsc", "team_bpm", "bpm_vs_team", "mpg", "box_bpm", "box_obpm", "box_dbpm", "pts40", "reb40", "ast40", "stl40", "blk40", "tov40", "ts", "three_rate", "height"]
 LABELS = {"gmsc": "Game Score per game", "team_bpm": "Team strength (team BPM)", "bpm_vs_team": "BPM vs own team", "mpg": "Minutes per game", "box_bpm": "Box plus-minus", "box_obpm": "Offensive BPM", "box_dbpm": "Defensive BPM", "pts40": "Points / 40",
           "reb40": "Rebounds / 40", "ast40": "Assists / 40", "stl40": "Steals / 40", "blk40": "Blocks / 40",
           "tov40": "Turnovers / 40", "ts": "True shooting %", "three_rate": "3-point attempt rate", "height": "Height"}
 
 # ---------------------------------------------------------------------------
-# 3. History: every draftee 2018-2025 -> did she get WNBA minutes?
+# 3. History: every draftee 2018-2026 -> did she get WNBA minutes?
 # ---------------------------------------------------------------------------
 dr = read("wnba_draft")
 dr = dr[dr.season.between(2018, 2025)].copy()
 # ESPN uses the same athlete id in college and the WNBA. In this table it's inside the player's link (".../id/3149391/...")
 dr["athlete_id"] = dr.link_web.astype(str).str.extract(r"/id/(\d+)")[0]
 dr["height"] = dr.athlete_height.map(inches)
+# the 2026 class comes from a separate file with different column names; the id is inside athlete_uid ("...~a:4433790")
+d6 = read("wnba_draft_2026")
+d6 = pd.DataFrame({"season": 2026, "overall_pick": d6.overall_pick, "round_number": d6["round"],
+                   "athlete_id": d6.athlete_uid.astype(str).str.extract(r"a:(\d+)")[0],
+                   "athlete_display_name": d6.athlete_display_name, "height": d6.athlete_height.map(inches)})
+dr = pd.concat([dr[d6.columns], d6], ignore_index=True)
 
 # WNBA minutes per player per season, 2003-2026
 wn = pd.concat([read("player_box_hist")[["season", "athlete_id", "minutes"]], read("player_box")[["season", "athlete_id", "minutes"]]])
@@ -143,31 +159,41 @@ for d in dr.itertuples():
     # outcome: total WNBA minutes in the draft year and the year after
     pro = sum(wmin.get((d.athlete_id, yr), 0) for yr in (d.season, d.season + 1))
     rows.append({"name": d.athlete_display_name, "year": int(d.season), "pick": int(d.overall_pick), "rd": int(d.round_number), "pro_min": float(pro),
-                 "height": d.height, **{f: c[f] for f in FEATURES if f != "height"}})
+                 "rook": float(wmin.get((d.athlete_id, d.season), 0)),
+                 "height": d.height, **{f: c[f] for f in FEATURES if f != "height"}, **{f + "_2y": c[f + "_2y"] for f in TWO_Y}})
 hist = pd.DataFrame(rows).dropna(subset=["box_bpm"])
+# The 2026 class has played only one WNBA season so far. Estimate their two-season total from their rookie minutes,
+# using a straight line (on square roots) fitted on the 2018-2024 classes, where rookie and two-season minutes
+# line up very closely (r = 0.95). They help train the model but are left out of every accuracy test and chart.
+old = hist[hist.year <= 2024]
+ra, rb = np.polyfit(np.sqrt(old.rook), np.sqrt(old.pro_min), 1)
+hist["estimated"] = hist.year == 2026
+hist.loc[hist.estimated, "pro_min"] = (ra * np.sqrt(hist.loc[hist.estimated, "rook"]) + rb) ** 2
 hist["log_pick"] = np.log(hist.pick)
 hist["sqrt_min"] = np.sqrt(hist.pro_min)  # square root so a few huge-minute stars don't dominate
 
 # how much of WNBA minutes the draft slot alone explains (a straight line on log(pick))
-A = np.c_[np.ones(len(hist)), hist.log_pick]
-coef_pick = np.linalg.lstsq(A, hist.sqrt_min, rcond=None)[0]
-hist["resid"] = hist.sqrt_min - A @ coef_pick  # positive = played more than her draft slot predicted
+real = hist[~hist.estimated].copy()  # classes with two real WNBA seasons
+A = np.c_[np.ones(len(real)), real.log_pick]
+coef_pick = np.linalg.lstsq(A, real.sqrt_min, rcond=None)[0]
+real["resid"] = real.sqrt_min - A @ coef_pick  # positive = played more than her draft slot predicted
 
 # correlation of each college number with (a) WNBA minutes and (b) minutes beyond the draft slot
 translate = []
 for f in FEATURES:
-    ok = hist[f].notna()
+    ok = real[f].notna()
     translate.append({"f": f, "label": LABELS[f],
-                      "r_min": round(float(np.corrcoef(hist.loc[ok, f], hist.loc[ok, "sqrt_min"])[0, 1]), 3),
-                      "r_resid": round(float(np.corrcoef(hist.loc[ok, f], hist.loc[ok, "resid"])[0, 1]), 3)})
+                      "r_min": round(float(np.corrcoef(real.loc[ok, f], real.loc[ok, "sqrt_min"])[0, 1]), 3),
+                      "r_resid": round(float(np.corrcoef(real.loc[ok, f], real.loc[ok, "resid"])[0, 1]), 3)})
 
 # my talent model: ridge regression from college numbers to sqrt(WNBA minutes)
 # minutes per game says how big her college role was. Adding it raised the held-out correlation from 0.569 to 0.594
 # and the top-5 hit rate from 75% to 81% (leave-one-class-out), so it stays in.
-# team_bpm (team strength) lets the model discount box plus-minus earned on teams that blow everyone out.
-# Game Score per game sums up her whole box-score line per game. Tested on held-out classes, the two together
-# keep accuracy the same (r 0.593, top-5 hit rate 81%) and take the UConn BPM boost out of the board.
-MODEL_F = ["mpg", "box_bpm", "box_dbpm", "pts40", "reb40", "ast40", "stl40", "blk40", "ts", "height", "gmsc", "team_bpm"]
+# team_bpm (team strength): players from strong programs got more WNBA minutes, so it has a positive weight.
+# Game Score per game sums up her whole box-score line per game.
+# Most numbers are two-season averages (the _2y columns, see section 2).
+MODEL_F = ["mpg_2y", "box_bpm_2y", "box_dbpm_2y", "pts40_2y", "reb40", "ast40_2y", "stl40_2y", "blk40", "ts_2y", "height",
+           "gmsc_2y", "team_bpm_2y"]
 train = hist.dropna(subset=MODEL_F)
 mu, sd = train[MODEL_F].mean(), train[MODEL_F].std()
 X = np.c_[np.ones(len(train)), (train[MODEL_F] - mu) / sd]
@@ -181,7 +207,7 @@ model_r = float(np.corrcoef(pred_hist, train.sqrt_min)[0, 1])  # how well it fit
 # ---------------------------------------------------------------------------
 # 3b. How accurate is it? Test on draft classes the model has never seen
 # ---------------------------------------------------------------------------
-# "Leave one year out": hide one draft class, train on the other 7, predict the hidden one.
+# "Leave one year out": hide one draft class, train on all the others (2026 included), predict the hidden one.
 # Repeat for every year. This is a fair test because the model never saw the answers.
 def ridge_predict(tr, te, cols):
     m_, s_ = tr[cols].mean(), tr[cols].std()
@@ -192,7 +218,7 @@ def ridge_predict(tr, te, cols):
 
 
 cv = []
-for yr in sorted(train.year.unique()):
+for yr in sorted(train[~train.estimated].year.unique()):  # only test on classes with two real seasons
     tr, te = train[train.year != yr], train[train.year == yr]
     cv.append(pd.DataFrame({
         "name": te.name, "year": yr, "pick": te.pick, "rd": te.rd, "actual": te.pro_min,
@@ -364,10 +390,10 @@ prospects = [{
 # history points for the scatter: last college BPM vs WNBA minutes in first two seasons
 hist_pts = [{"n": r["name"], "y": int(r.year), "pick": int(r.pick), "rd": int(r.rd), "bpm": round(r.box_bpm, 1), "min": int(r.pro_min),
              "blk": round(r.blk40, 2) if pd.notna(r.blk40) else None, "ht": None if pd.isna(r.height) else int(r.height)}
-            for _, r in hist.iterrows()]
+            for _, r in real.iterrows()]
 
 data = {"needs": needs, "translate": translate, "hist": hist_pts, "prospects": prospects,
-        "model": {"r": round(model_r, 3), "n": int(len(train)), "features": [LABELS[f] for f in MODEL_F],
+        "model": {"r": round(model_r, 3), "n": int(len(train)), "features": [LABELS[f.replace("_2y", "")] + (" (2 seasons)" if f.endswith("_2y") else "") for f in MODEL_F],
                   "weights": [round(float(b), 3) for b in beta[1:]]},
         "pool_n": int(len(pool)), "pct_labels": list(PCT.values()), "validation": validation,
         "likes": likes, "my_board": my_board, "likes_gap": 6, "likes_top": 30}
