@@ -198,8 +198,20 @@ train = hist.dropna(subset=MODEL_F)
 mu, sd = train[MODEL_F].mean(), train[MODEL_F].std()
 X = np.c_[np.ones(len(train)), (train[MODEL_F] - mu) / sd]
 lam = 5.0  # ridge penalty: keeps the weights small so the model doesn't overfit ~300 players
-I = np.eye(X.shape[1]); I[0, 0] = 0  # don't shrink the intercept
-beta = np.linalg.solve(X.T @ X + lam * I, X.T @ train.sqrt_min)
+# Some inputs get a stronger or weaker penalty than the rest (a bigger number = that weight gets shrunk more):
+#   - team strength x3: it's partly a stand-in for the draft slot (big programs get drafted higher, and high picks
+#     get minutes), so I don't want it to dominate.
+#   - points per 40 x0.5: let her own scoring carry more of the load instead.
+# Tested on held-out classes this keeps accuracy the same or slightly better.
+PENALTY = {"team_bpm_2y": 3.0, "pts40_2y": 0.5}
+
+
+def penalty_matrix(cols):
+    """ridge penalty for each column; 0 for the intercept so it isn't shrunk"""
+    return np.diag([0.0] + [lam * PENALTY.get(c, 1.0) for c in cols])
+
+
+beta = np.linalg.solve(X.T @ X + penalty_matrix(MODEL_F), X.T @ train.sqrt_min)
 pred_hist = X @ beta
 model_r = float(np.corrcoef(pred_hist, train.sqrt_min)[0, 1])  # how well it fits the history
 
@@ -212,8 +224,7 @@ model_r = float(np.corrcoef(pred_hist, train.sqrt_min)[0, 1])  # how well it fit
 def ridge_predict(tr, te, cols):
     m_, s_ = tr[cols].mean(), tr[cols].std()
     Xtr = np.c_[np.ones(len(tr)), (tr[cols] - m_) / s_]
-    Ii = np.eye(Xtr.shape[1]); Ii[0, 0] = 0
-    b_ = np.linalg.solve(Xtr.T @ Xtr + lam * Ii, Xtr.T @ tr.sqrt_min)
+    b_ = np.linalg.solve(Xtr.T @ Xtr + penalty_matrix(cols), Xtr.T @ tr.sqrt_min)
     return np.c_[np.ones(len(te)), (te[cols] - m_) / s_] @ b_
 
 
