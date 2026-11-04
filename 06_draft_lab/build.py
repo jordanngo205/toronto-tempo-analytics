@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
+from scipy.stats import norm
 
 # let this file import lab.py and common.py from the main folder
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -99,9 +100,15 @@ for col, src in [("pts40", "points"), ("reb40", "rebounds"), ("dreb40", "defensi
 cs["ts"] = cs.points / (2 * (cs.field_goals_attempted + 0.44 * cs.free_throws_attempted))  # true shooting %
 cs["three_rate"] = cs.three_point_field_goals_attempted / cs.field_goals_attempted       # share of shots that are 3s
 cs["mpg"] = cs.minutes / cs.gp
+# Hollinger's Game Score per game: one number for a whole box-score line. It's a per-game number,
+# so it rewards a big role (lots of shots, points and minutes), which is what scouts and mock drafts lean on.
+cs["gmsc"] = (cs.points + 0.4 * cs.field_goals_made - 0.7 * cs.field_goals_attempted
+              - 0.4 * (cs.free_throws_attempted - cs.free_throws_made) + 0.7 * cs.offensive_rebounds
+              + 0.3 * cs.defensive_rebounds + cs.steals + 0.7 * cs.assists + 0.7 * cs.blocks
+              - 0.4 * cs.fouls - cs.turnovers) / cs.gp
 
-FEATURES = ["mpg", "box_bpm", "box_obpm", "box_dbpm", "pts40", "reb40", "ast40", "stl40", "blk40", "tov40", "ts", "three_rate", "height"]
-LABELS = {"mpg": "Minutes per game", "box_bpm": "Box plus-minus", "box_obpm": "Offensive BPM", "box_dbpm": "Defensive BPM", "pts40": "Points / 40",
+FEATURES = ["gmsc", "mpg", "box_bpm", "box_obpm", "box_dbpm", "pts40", "reb40", "ast40", "stl40", "blk40", "tov40", "ts", "three_rate", "height"]
+LABELS = {"gmsc": "Game Score per game", "mpg": "Minutes per game", "box_bpm": "Box plus-minus", "box_obpm": "Offensive BPM", "box_dbpm": "Defensive BPM", "pts40": "Points / 40",
           "reb40": "Rebounds / 40", "ast40": "Assists / 40", "stl40": "Steals / 40", "blk40": "Blocks / 40",
           "tov40": "Turnovers / 40", "ts": "True shooting %", "three_rate": "3-point attempt rate", "height": "Height"}
 
@@ -249,17 +256,28 @@ pool.loc[pool.season != 2026, ["draft_prob", "projected_pick"]] = np.nan
 Xp = np.c_[np.ones(len(pool)), (pool[MODEL_F] - mu) / sd]
 pool["proj_min"] = np.clip(Xp @ beta, 0, None) ** 2   # undo the square root -> minutes in first two seasons
 
-# TALENT = half my model, half sportsdataverse's draft probability, kept on their real scales so a big
-# talent gap stays big (percentiles squash the top of the class together and hid that).
-#   - model part: z-score of sqrt(projected minutes)
-#   - draft part: z-score of the draft probability's log-odds. Probabilities are very skewed (most near 0%,
-#     a few above 70%); log-odds spread them out evenly so neither part can swamp the other
-model_z = z(np.sqrt(pool.proj_min))
-has_dp = pool.draft_prob.notna()
-p_ = pool.draft_prob.clip(1e-4, 1 - 1e-4)
-logodds = np.log(p_ / (1 - p_))
-dp_z = (logodds - logodds[has_dp].mean()) / logodds[has_dp].std()
-blend = 0.5 * model_z + 0.5 * dp_z
+# TALENT = 35% my model, 65% sportsdataverse's projected draft pick (leaning toward consensus).
+# Both parts are turned into "normal scores" of their rank: rank the class, then map the ranks onto a bell curve.
+# Why ranks: my model's raw scores have a long tail at the top (box plus-minus on a team that wins by 30 can make
+# a 7-point scorer look like a star), and that tail let a few players run away from consensus. Ranks keep the order
+# but stop one extreme number from swamping the blend.
+# 35/65 was picked by testing: it keeps the model's say on the order but agrees with consensus on the top 30
+# (rank correlation 0.90, up from 0.62 with the old 50/50 draft-probability blend).
+MODEL_W = 0.35
+has_dp = pool.projected_pick.notna()
+
+
+def normal_score(s):
+    """rank -> where that rank sits on a bell curve (best ~ +3, middle = 0)"""
+    n = s.notna().sum()
+    r = s.rank(ascending=False)  # 1 = best
+    return pd.Series(norm.ppf((n - r + 0.5) / n), index=s.index)
+
+
+model_z = normal_score(pool.proj_min)
+pick_z = pd.Series(np.nan, index=pool.index)
+pick_z[has_dp] = normal_score(-pool.projected_pick[has_dp])  # earlier pick = better
+blend = MODEL_W * model_z + (1 - MODEL_W) * pick_z
 # players without a projection (no 2025-26 season): estimate the blend from the model part,
 # using a straight line fitted on the players who have both
 slope, icpt = np.polyfit(model_z[has_dp], blend[has_dp], 1)
