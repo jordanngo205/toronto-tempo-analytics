@@ -15,7 +15,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
-from scipy.stats import norm
 
 # let this file import lab.py and common.py from the main folder
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -100,6 +99,13 @@ for col, src in [("pts40", "points"), ("reb40", "rebounds"), ("dreb40", "defensi
 cs["ts"] = cs.points / (2 * (cs.field_goals_attempted + 0.44 * cs.free_throws_attempted))  # true shooting %
 cs["three_rate"] = cs.three_point_field_goals_attempted / cs.field_goals_attempted       # share of shots that are 3s
 cs["mpg"] = cs.minutes / cs.gp
+# team strength: the minutes-weighted average BPM of everyone on her team that season.
+# Box plus-minus is inflated on teams that blow everyone out, so "bpm_vs_team" = her BPM minus her team's average
+# says how much she stood out from her own teammates.
+cs["_bm"] = cs.box_bpm * cs.minutes
+_t = cs.groupby(["team_id", "season"])[["_bm", "minutes"]].transform("sum")
+cs["team_bpm"] = _t["_bm"] / _t["minutes"]
+cs["bpm_vs_team"] = cs.box_bpm - cs.team_bpm
 # Hollinger's Game Score per game: one number for a whole box-score line. It's a per-game number,
 # so it rewards a big role (lots of shots, points and minutes), which is what scouts and mock drafts lean on.
 cs["gmsc"] = (cs.points + 0.4 * cs.field_goals_made - 0.7 * cs.field_goals_attempted
@@ -107,8 +113,8 @@ cs["gmsc"] = (cs.points + 0.4 * cs.field_goals_made - 0.7 * cs.field_goals_attem
               + 0.3 * cs.defensive_rebounds + cs.steals + 0.7 * cs.assists + 0.7 * cs.blocks
               - 0.4 * cs.fouls - cs.turnovers) / cs.gp
 
-FEATURES = ["gmsc", "mpg", "box_bpm", "box_obpm", "box_dbpm", "pts40", "reb40", "ast40", "stl40", "blk40", "tov40", "ts", "three_rate", "height"]
-LABELS = {"gmsc": "Game Score per game", "mpg": "Minutes per game", "box_bpm": "Box plus-minus", "box_obpm": "Offensive BPM", "box_dbpm": "Defensive BPM", "pts40": "Points / 40",
+FEATURES = ["gmsc", "team_bpm", "bpm_vs_team", "mpg", "box_bpm", "box_obpm", "box_dbpm", "pts40", "reb40", "ast40", "stl40", "blk40", "tov40", "ts", "three_rate", "height"]
+LABELS = {"gmsc": "Game Score per game", "team_bpm": "Team strength (team BPM)", "bpm_vs_team": "BPM vs own team", "mpg": "Minutes per game", "box_bpm": "Box plus-minus", "box_obpm": "Offensive BPM", "box_dbpm": "Defensive BPM", "pts40": "Points / 40",
           "reb40": "Rebounds / 40", "ast40": "Assists / 40", "stl40": "Steals / 40", "blk40": "Blocks / 40",
           "tov40": "Turnovers / 40", "ts": "True shooting %", "three_rate": "3-point attempt rate", "height": "Height"}
 
@@ -158,7 +164,10 @@ for f in FEATURES:
 # my talent model: ridge regression from college numbers to sqrt(WNBA minutes)
 # minutes per game says how big her college role was. Adding it raised the held-out correlation from 0.569 to 0.594
 # and the top-5 hit rate from 75% to 81% (leave-one-class-out), so it stays in.
-MODEL_F = ["mpg", "box_bpm", "box_dbpm", "pts40", "reb40", "ast40", "stl40", "blk40", "ts", "height"]
+# team_bpm (team strength) lets the model discount box plus-minus earned on teams that blow everyone out.
+# Game Score per game sums up her whole box-score line per game. Tested on held-out classes, the two together
+# keep accuracy the same (r 0.593, top-5 hit rate 81%) and take the UConn BPM boost out of the board.
+MODEL_F = ["mpg", "box_bpm", "box_dbpm", "pts40", "reb40", "ast40", "stl40", "blk40", "ts", "height", "gmsc", "team_bpm"]
 train = hist.dropna(subset=MODEL_F)
 mu, sd = train[MODEL_F].mean(), train[MODEL_F].std()
 X = np.c_[np.ones(len(train)), (train[MODEL_F] - mu) / sd]
@@ -256,32 +265,9 @@ pool.loc[pool.season != 2026, ["draft_prob", "projected_pick"]] = np.nan
 Xp = np.c_[np.ones(len(pool)), (pool[MODEL_F] - mu) / sd]
 pool["proj_min"] = np.clip(Xp @ beta, 0, None) ** 2   # undo the square root -> minutes in first two seasons
 
-# TALENT = 35% my model, 65% sportsdataverse's projected draft pick (leaning toward consensus).
-# Both parts are turned into "normal scores" of their rank: rank the class, then map the ranks onto a bell curve.
-# Why ranks: my model's raw scores have a long tail at the top (box plus-minus on a team that wins by 30 can make
-# a 7-point scorer look like a star), and that tail let a few players run away from consensus. Ranks keep the order
-# but stop one extreme number from swamping the blend.
-# 35/65 was picked by testing: it keeps the model's say on the order but agrees with consensus on the top 30
-# (rank correlation 0.90, up from 0.62 with the old 50/50 draft-probability blend).
-MODEL_W = 0.35
-has_dp = pool.projected_pick.notna()
-
-
-def normal_score(s):
-    """rank -> where that rank sits on a bell curve (best ~ +3, middle = 0)"""
-    n = s.notna().sum()
-    r = s.rank(ascending=False)  # 1 = best
-    return pd.Series(norm.ppf((n - r + 0.5) / n), index=s.index)
-
-
-model_z = normal_score(pool.proj_min)
-pick_z = pd.Series(np.nan, index=pool.index)
-pick_z[has_dp] = normal_score(-pool.projected_pick[has_dp])  # earlier pick = better
-blend = MODEL_W * model_z + (1 - MODEL_W) * pick_z
-# players without a projection (no 2025-26 season): estimate the blend from the model part,
-# using a straight line fitted on the players who have both
-slope, icpt = np.polyfit(model_z[has_dp], blend[has_dp], 1)
-talent_z = np.where(has_dp, blend, icpt + slope * model_z)
+# TALENT = my model only: z-score of sqrt(projected minutes). No mock drafts or draft projections go in,
+# so the board is our own read of the college numbers (sportsdataverse's pick is only shown for comparison).
+talent_z = z(np.sqrt(pool.proj_min))
 talent_z = (talent_z - talent_z.mean()) / talent_z.std()
 
 # FIT = fixes Toronto's weak spots: rim protection, defensive rebounding, defense in general, size, steals
@@ -367,7 +353,7 @@ prospects = [{
     "pts": round(r.points / r.gp, 1), "reb": round(r.rebounds / r.gp, 1), "ast": round(r.assists / r.gp, 1),
     "blk": round(r.blocks / r.gp, 1), "stl": round(r.steals / r.gp, 1),
     "blk40": round(r.blk40, 2), "dreb40": round(r.dreb40, 1), "ts": round(r.ts, 3), "bpm": round(r.box_bpm, 1),
-    "dbpm": round(r.box_dbpm, 1), "three": round(r.three_rate, 3),
+    "dbpm": round(r.box_dbpm, 1), "gs": round(r.gmsc, 1), "three": round(r.three_rate, 3),
     "dp": None if pd.isna(r.draft_prob) else round(float(r.draft_prob), 3), "pick": None if pd.isna(r.projected_pick) else round(float(r.projected_pick), 1),
     "season": int(r.season), "tr": int(r.talent_rank), "fr": int(r.fit_rank),  # which college season the numbers come from (2026 = 2025-26)
     "pmin": round(float(r.proj_min)), "talent": round(float(r.talent), 1), "fit": round(float(r.fit), 1),

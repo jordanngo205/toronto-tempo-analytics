@@ -113,7 +113,7 @@
 <section class="section wide">
   <header>
     <h2>Best player available, or best fit?</h2>
-    <p class="lede">Talent blends my model, which projects WNBA minutes from college numbers, with sportsdataverse's draft projection. Fit measures how much a player helps where Toronto was worst: blocks, defensive rebounds, defensive BPM, height and steals. Both are standard scores within this senior class: 50 is average and every 10 points is one standard deviation, so a gap of 20 points is a big gap. Score blends the two using the slider. Click a player to see her full profile.</p>
+    <p class="lede">Talent is my model alone, which projects WNBA minutes from college numbers. No mock drafts go in. Fit measures how much a player helps where Toronto was worst: blocks, defensive rebounds, defensive BPM, height and steals. Both are standard scores within this senior class: 50 is average and every 10 points is one standard deviation, so a gap of 20 points is a big gap. Score blends the two using the slider. Click a player to see her full profile.</p>
   </header>
   <div class="controls">
     <label class="slider" for="w"><span>Best player available</span><input id="w" type="range" min="0" max="100" value="40" aria-label="Weight on talent vs fit"><span>Fill Toronto's needs</span></label>
@@ -165,7 +165,7 @@
 <section class="methods">
   <h3>Method</h3>
   <p><b>Who's eligible:</b> college players whose first season was 2023-24, which makes 2026-27 their senior year, with 400+ minutes in 2025-26. Anyone drafted in 2026 is removed. International prospects and early entrants aren't included, and the 2027 draft order hasn't been set yet.</p>
-  <p><b>Talent model:</b> a ridge regression trained on every WNBA draftee from 2018 to 2025. It predicts the square root of WNBA minutes in her first two seasons from her last college season: minutes per game, BPM, defensive BPM, points, rebounds, assists, steals and blocks per 40, true shooting and height. The talent score is 35% this model's rank and 65% sportsdataverse's projected draft pick, both as ranks on a bell curve so one extreme stat line can't run away from consensus. <b>Fit:</b> the average z-score of blocks/40, defensive rebounds/40, defensive BPM and height, plus half-weight steals/40. College data covers ESPN-tracked games only, and BPM comes from sportsdataverse's player value file.</p>
+  <p><b>Talent model:</b> a ridge regression trained on every WNBA draftee from 2018 to 2025. It predicts the square root of WNBA minutes in her first two seasons from her last college season: minutes per game, Game Score per game, BPM, defensive BPM, team strength (her team's average BPM, so stats earned in blowouts count for less), points, rebounds, assists, steals and blocks per 40, true shooting and height. The talent score is this model's projection as a standard score. <b>Fit:</b> the average z-score of blocks/40, defensive rebounds/40, defensive BPM and height, plus half-weight steals/40. College data covers ESPN-tracked games only, and BPM comes from sportsdataverse's player value file.</p>
   <p><b>Validation:</b> leave-one-draft-class-out. For each of 2018–2025, the model is retrained on the other seven classes and scored on the held-out class, so every accuracy number on this page comes from players the model never saw. "Rotation player" means 500+ WNBA minutes in her first two seasons. The limits: about 200 players is a small sample, minutes measure opportunity as well as quality, and the model can't see age, length, athleticism, injuries or strength of schedule.</p>
 </section>
 <!--FOOTER-->
@@ -202,7 +202,7 @@ function ranked(by = order) {
   const top3 = ranked("model").slice(0, 3);
   document.getElementById("podium").innerHTML = top3.map((p, i) => `<div class="pod">${face(p)}<div><div class="rank">No. ${i + 1} on the board</div>
     <div class="nm">${p.name}</div><div class="sc">${p.school} · ${p.pos} · ${ft(p.ht)}</div>
-    <div class="sc num" style="margin-top:4px">${p.pts} pts · ${p.reb} reb · ${p.blk} blk · BPM ${p.bpm}</div></div></div>`).join("");
+    <div class="sc num" style="margin-top:4px">${p.pts} pts · ${p.reb} reb · ${p.blk} blk · BPM ${p.bpm} · GmSc ${p.gs}</div></div></div>`).join("");
   const needsLast = D.needs.filter(n => n.rank === n.teams).length;
   document.getElementById("dek").innerHTML = `Toronto finished 11–33 and ranked last in ${needsLast} of the ${D.needs.length} categories below. This page ranks all <strong>${D.pool_n}</strong> college seniors with real minutes in 2025-26 on two questions: how good are they, and do they fix what broke in 2026?`;
 })();
@@ -337,10 +337,10 @@ const tbl = document.getElementById("board-tbl"), card = document.getElementById
 function drawBoard() {
   const R = ranked().slice(0, 25);
   if (!selected || !R.find(p => p.id === selected)) selected = R[0]?.id;
-  tbl.innerHTML = `<tr><th>#</th><th>Prospect</th><th>Ht</th><th>PTS</th><th>REB</th><th>BLK</th><th title="True shooting: points per shooting attempt, counting threes and free throws. Points ÷ (2 × (FGA + 0.44 × FTA)).">TS%</th><th title="Box plus-minus: points per 100 possessions added vs an average player, from box-score stats. 0 = average.">BPM</th><th title="35% my model's rank (projected WNBA minutes), 65% sportsdataverse's projected draft pick, as a standard score: 50 = class average, 10 = one standard deviation.">Talent</th><th title="How well her college numbers match Toronto's weak spots: blocks, defensive rebounds, defensive BPM, height and steals. Same scale as Talent.">Fit</th><th>Score</th><th title="Rank by my model alone (projected WNBA minutes) among all seniors">Model #</th><th title="Rank by sportsdataverse's projected draft pick">Cons. #</th></tr>` +
+  tbl.innerHTML = `<tr><th>#</th><th>Prospect</th><th>Ht</th><th>PTS</th><th>REB</th><th>BLK</th><th title="True shooting: points per shooting attempt, counting threes and free throws. Points ÷ (2 × (FGA + 0.44 × FTA)).">TS%</th><th title="Box plus-minus: points per 100 possessions added vs an average player, from box-score stats. 0 = average.">BPM</th><th title="Hollinger Game Score per game: PTS + 0.4·FGM − 0.7·FGA − 0.4·(FTA − FTM) + 0.7·ORB + 0.3·DRB + STL + 0.7·AST + 0.7·BLK − 0.4·PF − TOV. About 10 is a solid game.">GmSc</th><th title="My model's projected WNBA minutes, as a standard score: 50 = class average, 10 = one standard deviation.">Talent</th><th title="How well her college numbers match Toronto's weak spots: blocks, defensive rebounds, defensive BPM, height and steals. Same scale as Talent.">Fit</th><th>Score</th><th title="Rank by my model alone (projected WNBA minutes) among all seniors">Model #</th><th title="Rank by sportsdataverse's projected draft pick">Cons. #</th></tr>` +
     R.map((p, i) => `<tr data-id="${p.id}" class="${p.id === selected ? "sel" : ""}"><td>${i + 1}</td>
       <td><div class="who">${face(p, "face sm")}<div><b>${p.name}</b><small>${p.school} · ${p.pos}${p.season === 2025 ? " · 2024-25 stats" : ""}</small><span class="arch">${p.arch}</span></div></div></td>
-      <td>${ft(p.ht)}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.blk}</td><td>${(100 * p.ts).toFixed(1)}</td><td>${p.bpm}</td>
+      <td>${ft(p.ht)}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.blk}</td><td>${(100 * p.ts).toFixed(1)}</td><td>${p.bpm}</td><td>${p.gs}</td>
       <td class="num" title="Talent score">${p.talent.toFixed(0)}</td>
       <td class="num" title="Fit score">${p.fit.toFixed(0)}</td>
       <td><b>${p.score.toFixed(0)}</b></td><td class="num muted">${p.mr}</td><td class="num muted">${p.cr ?? "–"}</td></tr>`).join("");
@@ -355,7 +355,7 @@ function drawCard() {
   if (!p) { card.innerHTML = ""; return; }
   card.innerHTML = `<div style="display:flex;gap:14px;align-items:center">${face(p)}<div style="min-width:0"><div class="eyebrow">${p.school}</div><div class="nm">${p.name}</div><span class="arch">${p.arch}</span>
     <div class="muted" style="font-size:.85rem">${p.pos} · ${ft(p.ht)} · ${p.gp} games · ${p.mpg} mpg · ${p.season === 2025 ? "2024-25" : "2025-26"}</div></div></div>
-    ${p.season === 2025 ? `<div class="muted" style="font-size:.82rem;margin-top:10px;padding:8px 10px;background:var(--grid)">No games in 2025-26, so these numbers are from her 2024-25 season, and sportsdataverse has no draft projection for her. Her talent score comes from my model alone.</div>` : ""}
+    ${p.season === 2025 ? `<div class="muted" style="font-size:.82rem;margin-top:10px;padding:8px 10px;background:var(--grid)">No games in 2025-26, so these numbers are from her 2024-25 season, and sportsdataverse has no draft projection for her.</div>` : ""}
     <div class="kv" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 6px">
       <div><b class="num" style="font:800 1.6rem var(--display)">${p.pts}</b><div class="muted" style="font-size:.75rem">PPG</div></div>
       <div><b class="num" style="font:800 1.6rem var(--display)">${p.reb}</b><div class="muted" style="font-size:.75rem">RPG</div></div>
